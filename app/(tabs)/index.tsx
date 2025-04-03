@@ -1,20 +1,19 @@
-import { Image, Platform } from "react-native";
-
-import { HelloWave } from "@/components/HelloWave";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/ui/card";
-import { SafeAreaView } from "react-native-safe-area-context";
 import OnboardingScreen from "@/components/pages/onboarding/onboarding";
+import { Button, ButtonText } from "@/components/ui/button";
+import { View } from "react-native";
 export default function HomeScreen() {
   return (
-    <SafeAreaView className="flex-1">
-      <OnboardingScreen/>
-      </SafeAreaView>
+    <ThemedView className="flex-1">
+      <OnboardingScreen />
+      <View className="p-5 items-center justify-center">
+        <Button className="bg-blue-500 w-full h-20 " variant="solid" size="xl">
+          <ButtonText>Next</ButtonText>
+        </Button>
+      </View>
+    </ThemedView>
   );
 }
-
 
 {
   /*
@@ -69,5 +68,4 @@ export default function HomeScreen() {
         </ThemedText>
       </ThemedView>
     </ParallaxScrollView>*/
-
 }

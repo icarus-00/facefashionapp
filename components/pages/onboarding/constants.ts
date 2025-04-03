@@ -1,17 +1,20 @@
 import { SliderProps } from "@/components/atoms/slider/interface";
+const image1 = require("@/assets/images/onboarding/6ba5ff7971edcecaca983ef32c260ca8f545dd5e.png");
+const image2 = require("@/assets/images/onboarding/2102d9dac756c58d37a7d3e7c15af8cb925db375.png");
+const image3 = require("@/assets/images/onboarding/12978031_5094663.jpg");
 const data = [
     {
-        image: "https://images.unsplash.com/vector-1741061132044-edb3bc9eee95?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        image: image1,
         title: "Welcome to the app",
         description: "This is a sample onboarding screen",
     },
     {
-        image: "https://images.unsplash.com/vector-1741061132103-c1a33900908b?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        image: image2,
         title: "Explore the features",
         description: "Discover the amazing features of this app",
     },
     {
-        image: "https://images.unsplash.com/vector-1740835550101-2e659fc9b09e?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        image: image3,
         title: "Get started",
         description: "Let's get started with the app",
     }
