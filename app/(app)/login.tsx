@@ -27,7 +27,6 @@ export default function LoginScreen() {
       await login(email, password);
       console.log("Login successful");
       ToastGlue("Welcome back. You are logged in");
-      router.replace("/(app)/(auth)/(tabs)");
     } catch (error: any) {
       setError(error.message);
     } finally {

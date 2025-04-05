@@ -19,7 +19,7 @@ type User = {
 
 type UserContextType = {
   current: User | null;
-  isLoading: boolean; // Add loading state
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
@@ -76,7 +76,7 @@ export default function UserProvider({
     try {
       await account.create(ID.unique(), email, password);
       await login(email, password);
-      ToastGlue("Account created");
+      ToastGlue("Account created successfully");
     } catch (error) {
       console.error("Registration error:", error);
       ToastGlue("Registration failed");
@@ -84,9 +84,9 @@ export default function UserProvider({
     }
   }
 
-  async function init(): Promise<void> {
-    setIsLoading(true);
+  async function checkSession(): Promise<void> {
     try {
+      setIsLoading(true);
       const loggedIn = await account.get();
       setUser(loggedIn as User);
     } catch (err) {
@@ -100,9 +100,10 @@ export default function UserProvider({
     ToastGlue(message);
   }
 
+  // Only check session once on component mount
   useEffect(() => {
-    init();
-  }, []); // Remove the dependencies to prevent infinite loops
+    checkSession();
+  }, []); // Empty dependency array prevents infinite loop
 
   return (
     <UserContext.Provider
