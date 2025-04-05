@@ -1,0 +1,170 @@
+import React, { useRef, useState, useEffect } from "react";
+import { View, FlatList, Dimensions, StyleSheet } from "react-native";
+import { Button, ButtonText } from "@/components/ui/button";
+import Slider from "@/components/atoms/slider/slider";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withDelay,
+} from "react-native-reanimated";
+import data from "./constants";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+const { width } = Dimensions.get("window");
+
+type RootStackParamList = {
+  Home: undefined;
+  Login: undefined;
+};
+
+type OnboardingScreenProps = {
+  navigation: NativeStackNavigationProp<RootStackParamList>;
+};
+
+export default function OnboardingScreen() {
+  // Keep track of current slide index
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [showLoginScreen, setShowLoginScreen] = useState<boolean>(false);
+  const isLastSlide = currentIndex === data.length - 1;
+
+  // Animation values
+  const buttonScale = useSharedValue(1);
+  const logoScale = useSharedValue(0.8);
+
+  // Handle Next button press
+  const handleNextPress = () => {
+    // Bounce animation for button
+    buttonScale.value = withSequence(
+      withSpring(1.2, { damping: 4 }),
+      withSpring(1, { damping: 10 })
+    );
+
+    if (isLastSlide) {
+      // Show login screen when on last slide
+      setShowLoginScreen(true);
+    }
+  };
+
+  // Handle login button press
+  const handleLoginPress = () => {
+    // Bounce animation for login button
+    buttonScale.value = withSequence(
+      withSpring(1.2, { damping: 4 }),
+      withSpring(1, { damping: 10 })
+    );
+
+    // Navigate to actual login screen
+    setTimeout(() => {
+      console.log("Navigating to login screen...");
+    }, 400);
+  };
+
+  // Animated styles
+  const buttonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: buttonScale.value }],
+    };
+  });
+
+  const logoAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: withSpring(showLoginScreen ? 1 : 0.8) }],
+      opacity: withSpring(showLoginScreen ? 1 : 0),
+    };
+  });
+
+  // Handle slide change from slider component
+  const handleSlideChange = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  // Reset login screen when going back to slides
+  useEffect(() => {
+    if (currentIndex < data.length - 1) {
+      setShowLoginScreen(false);
+    }
+  }, [currentIndex]);
+
+  return (
+    <View style={styles.container}>
+      {!showLoginScreen ? (
+        <View style={styles.onboardingContainer}>
+          {/* Slider component for onboarding */}
+          <View style={styles.sliderContainer}>
+            <Slider data={data} onSlideChange={handleSlideChange} />
+          </View>
+
+          {/* Next button */}
+          <View style={styles.buttonContainer}>
+            <Animated.View style={buttonAnimatedStyle}>
+              <Button
+                className="bg-blue-500 h-14 w-full"
+                variant="solid"
+                size="xl"
+                onPress={handleNextPress}
+              >
+                <ButtonText>{isLastSlide ? "Continue" : "Next"}</ButtonText>
+              </Button>
+            </Animated.View>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.loginScreen}>
+          <Animated.Text style={[styles.logo, logoAnimatedStyle]}>
+            renderwear
+          </Animated.Text>
+
+          <Animated.View
+            style={[styles.loginButtonContainer, buttonAnimatedStyle]}
+          >
+            <Button
+              className="bg-blue-500 w-full"
+              variant="solid"
+              size="xl"
+              onPress={handleLoginPress}
+            >
+              <ButtonText className="text-white">Login</ButtonText>
+            </Button>
+          </Animated.View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  onboardingContainer: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+  },
+  sliderContainer: {
+    flex: 1,
+  },
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  loginScreen: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 30,
+    backgroundColor: "white",
+  },
+  logo: {
+    fontSize: 36,
+    fontWeight: "bold",
+    marginBottom: 50,
+    color: "#333",
+  },
+  loginButtonContainer: {
+    width: "100%",
+  },
+});

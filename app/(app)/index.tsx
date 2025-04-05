@@ -5,7 +5,7 @@ import { View } from "react-native";
 export default function HomeScreen() {
   return (
     <ThemedView className="flex-1">
-      <OnboardingScreen />
+      <OnboardingScreen path={"/login"} />
     </ThemedView>
   );
 }

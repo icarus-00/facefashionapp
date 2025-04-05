@@ -1,7 +1,7 @@
 import { Text, View, StyleSheet, Dimensions, FlatList } from "react-native";
 import { Image } from "expo-image";
 import { SliderProps } from "./interface";
-import React from "react";
+import React, { useRef, useImperativeHandle, forwardRef } from "react";
 import Animated, {
   useSharedValue,
   useDerivedValue,
@@ -82,51 +82,85 @@ const Pagination = ({
   );
 };
 
-const Slider = ({ data }: { data: SliderProps[] }) => {
-  // Create shared value to track scroll position
-  const scrollX = useSharedValue(0);
+// Use forwardRef to make the component accept a ref
+const Slider = forwardRef(
+  (
+    {
+      data,
+      onSlideChange,
+    }: {
+      data: SliderProps[];
+      onSlideChange?: (index: number) => void;
+    },
+    ref
+  ) => {
+    // Create shared value to track scroll position
+    const scrollX = useSharedValue(0);
+    const flatListRef = useRef<FlatList>(null);
 
-  const handleScroll = (event: any) => {
-    // Update shared value on scroll
-    scrollX.value = event.nativeEvent.contentOffset.x;
-  };
+    // Expose methods to parent component via ref
+    useImperativeHandle(ref, () => ({
+      goToSlide: (index: number) => {
+        if (flatListRef.current) {
+          flatListRef.current.scrollToIndex({ index, animated: true });
+        }
+      },
+    }));
 
-  return (
-    <View style={styles.container}>
-      {/* Main content that scrolls */}
-      <FlatList
-        data={data}
-        renderItem={({ item }) => (
-          <View style={styles.slideItemContainer}>
-            {/* Image section - top 60% */}
-            <View style={styles.imageContainer}>
-              <Image
-                source={item.image}
-                style={styles.image}
-                contentFit="contain"
-              />
+    const handleScroll = (event: any) => {
+      // Update shared value on scroll
+      scrollX.value = event.nativeEvent.contentOffset.x;
+
+      // Calculate current index and notify parent component
+      const slideIndex = Math.round(scrollX.value / width);
+      if (onSlideChange) {
+        onSlideChange(slideIndex);
+      }
+    };
+
+    return (
+      <View style={styles.container}>
+        {/* Main content that scrolls */}
+        <FlatList
+          ref={flatListRef}
+          data={data}
+          renderItem={({ item }) => (
+            <View style={styles.slideItemContainer}>
+              {/* Image section - top 60% */}
+              <View style={styles.imageContainer}>
+                <Image
+                  source={item.image}
+                  style={styles.image}
+                  contentFit="contain"
+                />
+              </View>
+
+              {/* Text section - bottom 40% */}
+              <View style={styles.textContainer}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.description}>{item.description}</Text>
+              </View>
             </View>
+          )}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          pagingEnabled
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          keyExtractor={(_, index) => index.toString()}
+          getItemLayout={(_, index) => ({
+            length: width,
+            offset: width * index,
+            index,
+          })}
+        />
 
-            {/* Text section - bottom 40% */}
-            <View style={styles.textContainer}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.description}>{item.description}</Text>
-            </View>
-          </View>
-        )}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        pagingEnabled
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        keyExtractor={(_, index) => index.toString()}
-      />
-
-      {/* Fixed pagination overlay */}
-      <Pagination data={data} scrollX={scrollX} />
-    </View>
-  );
-};
+        {/* Fixed pagination overlay */}
+        <Pagination data={data} scrollX={scrollX} />
+      </View>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   container: {

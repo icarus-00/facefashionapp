@@ -1,0 +1,238 @@
+import {
+  Text,
+  View,
+  StyleSheet,
+  Dimensions,
+  FlatList,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
+import { Image } from "expo-image";
+import { SliderProps } from "./interface";
+import React, { useRef, useEffect } from "react";
+import Animated, {
+  useSharedValue,
+  useDerivedValue,
+  interpolate,
+  Extrapolation,
+  SharedValue,
+} from "react-native-reanimated";
+
+const { width } = Dimensions.get("screen");
+
+type DotItemProps = {
+  index: number;
+  scrollX: Animated.SharedValue<number>;
+};
+
+// Individual dot component with animations
+const DotItem = ({ index, scrollX }: DotItemProps) => {
+  // Create animated width using useDerivedValue
+  const dotWidth = useDerivedValue(() => {
+    const inputRange = [
+      (index - 1) * width,
+      index * width,
+      (index + 1) * width,
+    ];
+
+    return interpolate(
+      scrollX.value,
+      inputRange,
+      [8, 15, 8], // Min width, Max width, Min width
+      Extrapolation.CLAMP
+    );
+  });
+
+  // Create animated opacity for more visual feedback
+  const dotOpacity = useDerivedValue(() => {
+    const inputRange = [
+      (index - 1) * width,
+      index * width,
+      (index + 1) * width,
+    ];
+
+    return interpolate(
+      scrollX.value,
+      inputRange,
+      [0.5, 1, 0.5],
+      Extrapolation.CLAMP
+    );
+  });
+
+  return (
+    <Animated.View
+      style={{
+        width: dotWidth,
+        height: 8,
+        backgroundColor: "#553ea0",
+        borderRadius: 5,
+        marginHorizontal: 5,
+        opacity: dotOpacity,
+      }}
+    />
+  );
+};
+
+type PaginationProps = {
+  data: SliderProps[];
+  scrollX: SharedValue<number>;
+};
+
+const Pagination = ({ data, scrollX }: PaginationProps) => {
+  return (
+    <View style={styles.paginationContainer}>
+      {data.map((_, i) => (
+        <DotItem key={i} index={i} scrollX={scrollX} />
+      ))}
+    </View>
+  );
+};
+
+interface SliderComponentProps {
+  data: SliderProps[];
+  initialIndex?: number;
+  onSlideChange?: (index: number) => void;
+}
+
+const Slider: React.FC<SliderComponentProps> = ({
+  data,
+  initialIndex = 0,
+  onSlideChange,
+}) => {
+  // Create shared value to track scroll position
+  const scrollX = useSharedValue(0);
+  const flatListRef = useRef<FlatList>(null);
+  const currentIndexRef = useRef<number>(initialIndex || 0);
+
+  // Set initial index on mount
+  useEffect(() => {
+    if (initialIndex > 0 && initialIndex < data.length && flatListRef.current) {
+      flatListRef.current.scrollToIndex({
+        index: initialIndex,
+        animated: false,
+      });
+      scrollX.value = initialIndex * width;
+      currentIndexRef.current = initialIndex;
+
+      if (onSlideChange) {
+        onSlideChange(initialIndex);
+      }
+    }
+  }, []);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    // Update shared value on scroll
+    scrollX.value = event.nativeEvent.contentOffset.x;
+  };
+
+  const handleMomentumScrollEnd = (
+    event: NativeSyntheticEvent<NativeScrollEvent>
+  ) => {
+    const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+
+    if (slideIndex !== currentIndexRef.current) {
+      currentIndexRef.current = slideIndex;
+
+      // Notify parent component of slide change
+      if (onSlideChange && slideIndex >= 0 && slideIndex < data.length) {
+        onSlideChange(slideIndex);
+      }
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Main content that scrolls */}
+      <FlatList
+        ref={flatListRef}
+        data={data}
+        renderItem={({ item }) => (
+          <View style={styles.slideItemContainer}>
+            {/* Image section - top 60% */}
+            <View style={styles.imageContainer}>
+              <Image
+                source={item.image}
+                style={styles.image}
+                contentFit="contain"
+              />
+            </View>
+
+            {/* Text section - bottom 40% */}
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.description}>{item.description}</Text>
+            </View>
+          </View>
+        )}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        pagingEnabled
+        onScroll={handleScroll}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        scrollEventThrottle={16}
+        keyExtractor={(_, index) => index.toString()}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+      />
+
+      {/* Fixed pagination overlay */}
+      <Pagination data={data} scrollX={scrollX} />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    position: "relative",
+  },
+  slideItemContainer: {
+    width,
+    height: "100%",
+    flexDirection: "column",
+  },
+  imageContainer: {
+    height: "60%", // Top 60% for image
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  textContainer: {
+    height: "40%", // Bottom 40% for text
+    width: "100%",
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    paddingTop: 20, // Extra padding to make room for pagination
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  description: {
+    fontSize: 16,
+    textAlign: "center",
+    marginVertical: 10,
+  },
+  paginationContainer: {
+    position: "absolute",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    // Position at the boundary between image and text
+    top: "65%",
+    paddingVertical: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.7)", // Optional: semi-transparent background for better visibility
+    zIndex: 10,
+  },
+});
+
+export default Slider;

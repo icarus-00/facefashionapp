@@ -1,7 +1,14 @@
+// context/authcontext.tsx
 import { ID } from "react-native-appwrite";
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { account } from "@/services/config/appwrite";
-import { toast } from "@/components/atoms/toast/toast";
+import { ToastGlue } from "@/context/toastContext";
 
 // Define types for the user and context
 type User = {
@@ -12,10 +19,11 @@ type User = {
 
 type UserContextType = {
   current: User | null;
+  isLoading: boolean; // Add loading state
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
-  toast: (message: string) => void;
+  Toast: (message: string) => void;
 };
 
 // Create the context with an initial undefined value
@@ -33,44 +41,73 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
-export default function UserProvider({ children }: UserProviderProps): JSX.Element {
+export default function UserProvider({
+  children,
+}: UserProviderProps): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   async function login(email: string, password: string): Promise<void> {
-    await account.createEmailPasswordSession(email, password);
-    const userDetails = await account.get();
-    setUser(userDetails as User);
-    toast('Welcome back. You are logged in');
+    try {
+      await account.createEmailPasswordSession(email, password);
+      const userDetails = await account.get();
+      setUser(userDetails as User);
+      ToastGlue("Welcome back. You are logged in");
+    } catch (error) {
+      console.error("Login error:", error);
+      ToastGlue("Login failed. Please check your credentials.");
+      throw error;
+    }
   }
 
   async function logout(): Promise<void> {
-    await account.deleteSession("current");
-    setUser(null);
-    toast('Logged out');
+    try {
+      await account.deleteSession("current");
+      setUser(null);
+      ToastGlue("Logged out");
+    } catch (error) {
+      console.error("Logout error:", error);
+      ToastGlue("Failed to log out");
+      throw error;
+    }
   }
 
   async function register(email: string, password: string): Promise<void> {
-    await account.create(ID.unique(), email, password);
-    await login(email, password);
-    toast('Account created');
+    try {
+      await account.create(ID.unique(), email, password);
+      await login(email, password);
+      ToastGlue("Account created");
+    } catch (error) {
+      console.error("Registration error:", error);
+      ToastGlue("Registration failed");
+      throw error;
+    }
   }
 
   async function init(): Promise<void> {
+    setIsLoading(true);
     try {
       const loggedIn = await account.get();
       setUser(loggedIn as User);
-      toast('Welcome back. You are logged in');
     } catch (err) {
       setUser(null);
+    } finally {
+      setIsLoading(false);
     }
+  }
+
+  function Toast(message: string): void {
+    ToastGlue(message);
   }
 
   useEffect(() => {
     init();
-  }, []);
+  }, []); // Remove the dependencies to prevent infinite loops
 
   return (
-    <UserContext.Provider value={{ current: user, login, logout, register, toast }}>
+    <UserContext.Provider
+      value={{ current: user, isLoading, login, logout, register, Toast }}
+    >
       {children}
     </UserContext.Provider>
   );

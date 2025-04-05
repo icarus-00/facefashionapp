@@ -8,14 +8,14 @@ module.exports = {
   safelist: [
     {
       pattern:
-        /(bg|border|text|stroke|fill)-(primary|secondary|tertiary|error|success|warning|info|typography|outline|background|indicator)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|error|warning|muted|success|info|light|dark|primary)/,
+        /(bg|border|text|stroke|fill)-(primary|secondary|offwhite|tertiary|error|success|warning|info|typography|outline|background|indicator)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|error|warning|muted|success|info|light|dark|primary)/,
     },
   ],
   theme: {
     extend: {
       colors: {
         primary: {
-          0: 'rgb(var(--color-primary-0)/<alpha-value>)',
+          
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
           100: 'rgb(var(--color-primary-100)/<alpha-value>)',
           200: 'rgb(var(--color-primary-200)/<alpha-value>)',
@@ -41,6 +41,20 @@ module.exports = {
           800: 'rgb(var(--color-secondary-800)/<alpha-value>)',
           900: 'rgb(var(--color-secondary-900)/<alpha-value>)',
           950: 'rgb(var(--color-secondary-950)/<alpha-value>)',
+        },
+        offwhite: {
+          0: 'rgb(var(--color-offwhite-0)/<alpha-value>)',
+          50: 'rgb(var(--color-offwhite-50)/<alpha-value>)',
+          100: 'rgb(var(--color-offwhite-100)/<alpha-value>)',
+          200: 'rgb(var(--color-offwhite-200)/<alpha-value>)',
+          300: 'rgb(var(--color-offwhite-300)/<alpha-value>)',
+          400: 'rgb(var(--color-offwhite-400)/<alpha-value>)',
+          500: 'rgb(var(--color-offwhite-500)/<alpha-value>)',
+          600: 'rgb(var(--color-offwhite-600)/<alpha-value>)',
+          700: 'rgb(var(--color-offwhite-700)/<alpha-value>)',
+          800: 'rgb(var(--color-offwhite-800)/<alpha-value>)',
+          900: 'rgb(var(--color-offwhite-900)/<alpha-value>)',
+          950: 'rgb(var(--color-offwhite-950)/<alpha-value>)',
         },
         tertiary: {
           50: 'rgb(var(--color-tertiary-50)/<alpha-value>)',

@@ -2,16 +2,24 @@ import { ThemedView } from "@/components/ThemedView";
 import OnboardingScreen from "@/components/pages/onboarding/onboarding";
 import { Button, ButtonText } from "@/components/ui/button";
 import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 export default function HomeScreen() {
   return (
-    <ThemedView className="flex-1">
-      <OnboardingScreen />
-      <View className="p-5 items-center justify-center">
-        <Button className="bg-blue-500 w-full h-20 " variant="solid" size="xl">
-          <ButtonText>Next</ButtonText>
-        </Button>
-      </View>
-    </ThemedView>
+    <SafeAreaView className="flex-1 bg-white">
+      <ThemedView className="flex-1">
+        {/*<OnboardingScreen />*/}
+        <View className="p-5 items-center justify-center">
+          <Button
+            className="bg-blue-500 w-full h-20 "
+            variant="solid"
+            size="xl"
+          >
+            <ButtonText>hello</ButtonText>
+          </Button>
+        </View>
+      </ThemedView>
+    </SafeAreaView>
   );
 }
 
