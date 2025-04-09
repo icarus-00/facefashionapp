@@ -6,10 +6,7 @@ import { Text } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Box } from "@/components/ui/box";
-import databaseService, {
-  ActorWithImage,
-  OutfitWithImage,
-} from "@/services/database/db";
+import databaseService, { ActorWithImage } from "@/services/database/db";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { AddIcon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
@@ -18,32 +15,31 @@ const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
 const spacing = 12;
 const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
-const itemHeight = itemWidth;
+const itemHeight = itemWidth * 1.5;
 
 // Define default image
 const DEFAULT_IMAGE = "https://placehold.co/900x1600";
 
 // Create a union type for actor data items
-type Outfititem = OutfitWithImage | { id: number; isPlaceholder: true };
+type ActorItem = ActorWithImage | { id: number; isPlaceholder: true };
 
 // Props for ActorCard component
-interface OutfirCardProps {
-  item: Outfititem;
+interface ActorCardProps {
+  item: ActorItem;
   loading: boolean;
   index: number;
 }
 
-export default function Outfit(): React.JSX.Element {
-  const [actors, setActors] = useState<OutfitWithImage[]>([]);
+export default function Actor(): React.JSX.Element {
+  const [actors, setActors] = useState<ActorWithImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [slectingOutfit, setSelectingOutfit] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
       setLoading(true);
       try {
-        const data = await databaseService.ListOutfits();
+        const data = await databaseService.listActors();
         console.log(data);
         setActors(data);
       } catch (error) {
@@ -53,24 +49,26 @@ export default function Outfit(): React.JSX.Element {
         setRefreshing(false);
       }
     };
-    fetchData();
+    if (refreshing) {
+      fetchData();
+    }
   }, [refreshing]);
 
   // Actor card component with placeholder
-  function OutfitCard({
+  function ActorCard({
     item,
     loading,
     index,
-  }: OutfirCardProps): React.JSX.Element {
+  }: ActorCardProps): React.JSX.Element {
     const [fallbackImage, setFallbackImage] = useState<boolean>(false);
     const router = useRouter();
     // Check if item is a placeholder
     const isPlaceholder = "isPlaceholder" in item;
 
     // Safe way to get actor name
-    const getOutfitName = (): string => {
+    const getActorName = (): string => {
       if (isPlaceholder) return "Loading...";
-      return item.outfitName || "Unknown outfit";
+      return item.actorName || "Unknown Actor";
     };
 
     // Safe way to render image
@@ -83,13 +81,11 @@ export default function Outfit(): React.JSX.Element {
 
       try {
         // Use the imageUrl from ActorWithImage
-        const outfitItem = item as OutfitWithImage;
+        const actorItem = item as ActorWithImage;
         return (
           ///backlog: fix images biggger than 1 mb not rendering
           <Image
-            source={{
-              uri: fallbackImage ? DEFAULT_IMAGE : outfitItem.imageUrl,
-            }}
+            source={{ uri: fallbackImage ? DEFAULT_IMAGE : actorItem.imageUrl }}
             style={{ width: "100%", height: "100%" }}
             resizeMode="cover"
             onError={() => setFallbackImage(true)}
@@ -107,12 +103,12 @@ export default function Outfit(): React.JSX.Element {
 
     return (
       <Pressable
-        className="overflow-hidden rounded-lg shadow-md shadow-black"
+        className="overflow-hidden rounded-lg shadow-md"
         style={{ width: itemWidth, margin: spacing / 2 }}
         onPress={() => {
           if (!("isPlaceholder" in item)) {
             router.push({
-              pathname: "../outfit/[get]",
+              pathname: "../actor/[get]",
               params: { id: item.$id },
             });
           }
@@ -126,7 +122,7 @@ export default function Outfit(): React.JSX.Element {
             {renderActorImage()}
             <View className="absolute bottom-0 w-full bg-black/50 p-2">
               <Text className="text-white font-medium text-center">
-                {getOutfitName()}
+                {getActorName()}
               </Text>
             </View>
           </View>
@@ -178,14 +174,14 @@ export default function Outfit(): React.JSX.Element {
   };
 
   // Generate placeholder data with proper typing
-  const getPlaceholderData = (): Outfititem[] => {
+  const getPlaceholderData = (): ActorItem[] => {
     return Array.from({ length: 4 }, (_, index) => ({
       id: index,
       isPlaceholder: true,
     }));
   };
 
-  const displayData: Outfititem[] = loading ? getPlaceholderData() : actors;
+  const displayData: ActorItem[] = loading ? getPlaceholderData() : actors;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -195,7 +191,7 @@ export default function Outfit(): React.JSX.Element {
           data={displayData}
           estimatedItemSize={itemHeight}
           renderItem={({ item, index }) => (
-            <OutfitCard item={item} loading={loading} index={index} />
+            <ActorCard item={item} loading={loading} index={index} />
           )}
           keyExtractor={(item, index) => {
             if ("isPlaceholder" in item) {

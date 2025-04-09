@@ -18,7 +18,7 @@ type User = {
 };
 
 type UserContextType = {
-  current: User | null;
+  current: User | null; //check if there's a user
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -51,10 +51,11 @@ export default function UserProvider({
     try {
       await account.createEmailPasswordSession(email, password);
       const userDetails = await account.get();
+
       setUser(userDetails as User);
       ToastGlue("Welcome back. You are logged in");
     } catch (error) {
-      console.error("Login error:", error);
+      //console.error("Login error:", error);
       ToastGlue("Login failed. Please check your credentials.");
       throw error;
     }

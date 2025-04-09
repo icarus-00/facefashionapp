@@ -12,7 +12,7 @@ import { Heading } from "@/components/ui/heading";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "@/components/ui/card";
-
+import { LinearGradient } from "expo-linear-gradient";
 const RenderWearApp = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -22,8 +22,27 @@ const RenderWearApp = () => {
         style={styles.backgroundImage}
         resizeMode="cover"
       >*/}
+        <View className="flex-1 items-center justify-between w-full p-0">
+          <ImageBackground
+            source={{
+              uri: "https://cloud.appwrite.io/v1/storage/buckets/67e850540015dbf17f6e/files/67f19fae00140eeaabb9/view?project=67e8502e001a780507c5",
+            }} // Replace with your logo URL
+            className="w-full aspect-[9/13] object-cover"
+            style={{
+              flex: 1,
+            }}
+          >
+            <LinearGradient
+              colors={["rgba(0, 0, 0, 0)", "rgba(255, 255, 255, 1)"]}
+              style={{
+                ...StyleSheet.absoluteFillObject,
+              }}
+            />
+          </ImageBackground>
+        </View>
         <VStack style={styles.contentContainer} space="md">
           {/* Header */}
+
           <View className=" h-[120px] my-10 justify-center items-center">
             <Center>
               <Heading className="text-primary-500 font-extrabold" size="4xl">

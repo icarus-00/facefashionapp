@@ -17,5 +17,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
-, "app/(auth)/(tabs)/actor.jsx"  ]
+, "app/(auth)/(tabs)/actor.tsx", "services/database/db.ts"  ]
 }
