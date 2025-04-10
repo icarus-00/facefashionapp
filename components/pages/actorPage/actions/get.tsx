@@ -35,20 +35,19 @@ const Loading = () => {
     </Center>
   );
 };
-export default function GetOutfit({ paramid }: { paramid?: string }) {
-  //const { id } = useLocalSearchParams() || { paramid };
+export default function GetActor({paramid}: {paramid?: string}) {
   const id = paramid;
-  const [outfit, setOutfit] = useState<OutfitWithImage>();
+  const [actor, setActor] = useState<ActorWithImage>();
   const [loading, setLoading] = useState(true);
   console.log(id);
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
       setLoading(true);
       try {
-        const data = await databaseService.getOutfit(id as string);
+        const data = await databaseService.getActor(id as string);
 
         console.log(data);
-        setOutfit(data);
+        setActor(data);
       } catch (error) {
         console.error("Error fetching actors: ", error);
       } finally {
@@ -60,26 +59,36 @@ export default function GetOutfit({ paramid }: { paramid?: string }) {
   return (
     <SafeAreaView className="flex-1">
       <VStack className="flex-1">
-        <View className="w-full aspect-square">
-          <Image
-            source={{ uri: outfit?.imageUrl }}
-            className="w-full h-full aspect-square"
-          />
-        </View>
-
-        <View className="flex-1 w-full p-5 gap-5">
-          <Text className="font-extrabold text-4xl ">Item Info</Text>
-          <View className="flex-row flex-1 w-full ">
-            <View className="flex-1 gap-5 w-full">
-              <Text>
-                <Text className="text-typography-500">Describtion: </Text>
-                <Text className="font-bold">{outfit?.outfitName}</Text>
-              </Text>
-              <Text className="text-typography-500">Brand: </Text>
-              <Text className="text-typography-500">Size: </Text>
-            </View>
-            <View className="flex-1"></View>
+        <Center className="flex-[3_3_0] w-full p-5">
+          <View className="w-full flex-row items-center px-0 py-2">
+            <BackButton />
+            <View className="flex-1" />
           </View>
+
+          <Image
+            source={{ uri: actor?.imageUrl }}
+            className="w-full h-full rounded-lg"
+            resizeMode="cover"
+          />
+        </Center>
+        <View className="flex-[1_1_0] w-full p-5">
+          <Text className="font-extrabold text-4xl ">Actor Profile</Text>
+          <View className="flex-row flex-auto">
+            <View className="flex-1">
+              <Text>
+                <Text className="text-typography-500">Actor Name: </Text>
+                <Text className="font-bold">{actor?.actorName}</Text>
+              </Text>
+            </View>
+            <View className="flex-1">
+              <Text>Actor Age: </Text>
+            </View>
+          </View>
+        </View>
+        <View className="p-5 flex-grow-0">
+          <Button size="full">
+            <ButtonText>Dress up</ButtonText>
+          </Button>
         </View>
       </VStack>
     </SafeAreaView>

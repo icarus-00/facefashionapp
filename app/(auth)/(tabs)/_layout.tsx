@@ -15,23 +15,46 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: "absolute",
-          },
-          default: {},
-        }),
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: Colors["light"].tabIconSelected[500],
+        animation: "shift",
+        tabBarItemStyle: {
+          width: "100%",
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+        },
+        tabBarIconStyle: {
+          width: "100%",
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+        },
+        tabBarStyle: {
+          backgroundColor: Colors["light"].primary[500],
+          borderRadius: 50,
+          marginHorizontal: 20,
+          marginBottom: 40,
+          height: 60,
+          position: "absolute",
+          overflow: "hidden",
+          justifyContent: "center",
+          alignItems: "center",
+          flex: 1,
+          alignContent: "center",
+          paddingHorizontal: 20,
+
+          borderWidth: 1,
+          borderColor: "#0f0d23",
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
+
           tabBarIcon: ({ color }) => (
             <AntDesign name="home" size={28} color={color} />
           ),

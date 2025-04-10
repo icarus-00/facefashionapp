@@ -4,7 +4,10 @@ export default function AuthLayout() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="actor" options={{ headerShown: false }} />
-      <Stack.Screen name="outfit" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="outfit"
+        options={{ headerShown: false, presentation: "transparentModal" }}
+      />
     </Stack>
   );
 }
