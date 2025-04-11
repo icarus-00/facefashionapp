@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Box } from "@/components/ui/box";
 import databaseService, { ActorWithImage } from "@/services/database/db";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { AddIcon } from "@/components/ui/icon";
+import { AddIcon, ArrowLeftIcon, CloseIcon, Icon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
 import GetActor from "./actions/get";
 import {
@@ -24,6 +24,8 @@ import {
   GestureDetector,
 } from "react-native-gesture-handler";
 import { FlingGesture } from "react-native-gesture-handler/lib/typescript/handlers/gestures/flingGesture";
+import { ModalCloseButton, ModalHeader } from "@/components/ui/modal";
+import { AntDesign } from "@expo/vector-icons";
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
@@ -52,21 +54,18 @@ const ModalComponent = ({
   visible: boolean;
   onPress: () => void;
 }) => {
-  const gesture = Gesture.Fling().direction(Directions.DOWN);
   return (
-    <GestureDetector gesture={gesture}>
-      <Modal
-        accessible
-        animationType="slide"
-        visible={visible}
-        onRequestClose={onPress}
-        className="relative flex-1 justify-center items-center"
-      >
-        <View className="flex-1 bg-black/25">
-          <GetActor paramid={id} />
-        </View>
-      </Modal>
-    </GestureDetector>
+    <Modal
+      accessible
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onPress}
+    >
+      <View className="flex-1 bg-black/25">
+        <GetActor paramid={id} />
+      </View>
+    </Modal>
   );
 };
 
