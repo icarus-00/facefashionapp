@@ -21,12 +21,14 @@ import { ModalHeader, ModalCloseButton } from "@/components/ui/modal";
 import GetOutfit from "../outfit/[get]";
 import OutFitPageComp from "@/components/pages/outfitPage/view";
 import Index from "@/components/pages/outfitPage";
-
+import useStore from "@/store/lumaGeneration/useStore";
 // Define types for our data
 export default function outfit() {
-  const { selecting } = (useLocalSearchParams() as { selecting?: boolean }) || {
-    selecting: false,
-  };
+  const { getLength, actorImageID, outfitImageID } = useStore();
+  const selecting = getLength() > 0 ? true : false;
+  console.log(selecting);
+  console.log(getLength());
+  console.log(actorImageID);
 
   return (
     <SafeAreaView className="flex-1 ">

@@ -25,7 +25,7 @@ const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
 const spacing = 12;
 const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
-const itemHeight = itemWidth;
+const itemHeight = itemWidth * 1.5;
 
 // Define default image
 const DEFAULT_IMAGE = "https://placehold.co/900x1600";

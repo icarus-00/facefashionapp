@@ -49,7 +49,6 @@ const AppLayout = () => {
 };
 
 export default function RootLayout() {
-  
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -66,20 +65,21 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView>
-      <ToastProvider>
-        <UserProvider>
+    <ToastProvider>
+      <UserProvider>
+        <GestureHandlerRootView>
           <ThemeProvider
             value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
           >
             <GluestackUIProvider mode="light">
               <AppLayout />
+
               <ToastInitializer />
               <StatusBar />
             </GluestackUIProvider>
           </ThemeProvider>
-        </UserProvider>
-      </ToastProvider>
-    </GestureHandlerRootView>
+        </GestureHandlerRootView>
+      </UserProvider>
+    </ToastProvider>
   );
 }

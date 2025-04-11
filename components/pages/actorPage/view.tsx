@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ThemedView } from "@/components/ThemedView";
-import {
-  View,
-  Image,
-  Dimensions,
-  Pressable,
-  FlatList,
-  Modal,
-} from "react-native";
+import { View, Image, Dimensions, Pressable, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "react-native";
 import { FlashList } from "@shopify/flash-list";
@@ -18,6 +11,8 @@ import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { AddIcon, ArrowLeftIcon, CloseIcon, Icon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
 import GetActor from "./actions/get";
+import { SpeedDial } from "@rneui/themed";
+import Modal from "react-native-modal";
 import {
   Directions,
   Gesture,
@@ -57,14 +52,15 @@ const ModalComponent = ({
   return (
     <Modal
       accessible
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onPress}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      swipeThreshold={50}
+      isVisible={visible}
+      onBackButtonPress={onPress}
+      swipeDirection={"down"}
+      onSwipeComplete={onPress}
     >
-      <View className="flex-1 bg-black/25">
-        <GetActor paramid={id} />
-      </View>
+      <GetActor paramid={id} onClose={onPress} />
     </Modal>
   );
 };
@@ -227,6 +223,7 @@ export default function ActorPageComp(): React.JSX.Element {
   const displayData: ActorItem[] = loading ? getPlaceholderData() : actors;
 
   function handleClose(): void {
+    console.log("closing")
     setVisible(false);
     setModalId("");
   }

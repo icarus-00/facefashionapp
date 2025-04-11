@@ -9,7 +9,7 @@ import {
 } from "react";
 import { account } from "@/services/config/appwrite";
 import { ToastGlue } from "@/context/toastContext";
-
+import useStore from "@/store/lumaGeneration/useStore";
 // Define types for the user and context
 type User = {
   $id: string;
@@ -46,11 +46,12 @@ export default function UserProvider({
 }: UserProviderProps): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
+  const {initializeUserId} = useStore();
   async function login(email: string, password: string): Promise<void> {
     try {
       await account.createEmailPasswordSession(email, password);
       const userDetails = await account.get();
+      initializeUserId(userDetails.$id)
 
       setUser(userDetails as User);
       ToastGlue("Welcome back. You are logged in");
@@ -64,6 +65,7 @@ export default function UserProvider({
   async function logout(): Promise<void> {
     try {
       await account.deleteSession("current");
+      initializeUserId("")
       setUser(null);
       ToastGlue("Logged out");
     } catch (error) {
@@ -89,8 +91,10 @@ export default function UserProvider({
     try {
       setIsLoading(true);
       const loggedIn = await account.get();
+      initializeUserId(loggedIn.$id)
       setUser(loggedIn as User);
     } catch (err) {
+      initializeUserId("")
       setUser(null);
     } finally {
       setIsLoading(false);

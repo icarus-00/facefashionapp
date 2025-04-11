@@ -40,14 +40,14 @@ export default function GetOutfit({ paramid }: { paramid?: string }) {
   const id = paramid;
   const [outfit, setOutfit] = useState<OutfitWithImage>();
   const [loading, setLoading] = useState(true);
-  console.log(id);
+  //console.log(id);
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
       setLoading(true);
       try {
         const data = await databaseService.getOutfit(id as string);
 
-        console.log(data);
+        // console.log(data);
         setOutfit(data);
       } catch (error) {
         console.error("Error fetching actors: ", error);

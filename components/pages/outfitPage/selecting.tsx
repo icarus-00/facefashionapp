@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ThemedView } from "@/components/ThemedView";
 import {
   View,
@@ -19,13 +19,13 @@ import { AddIcon, CloseIcon, Icon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
 import { ModalHeader, ModalCloseButton } from "@/components/ui/modal";
 import GetOutfit from "@/components/pages/outfitPage/actions/get";
-
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
 const spacing = 12;
 const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
-const itemHeight = itemWidth;
+const itemHeight = itemWidth * 1.5;
 
 // Define default image
 const DEFAULT_IMAGE = "https://placehold.co/900x1600";
@@ -38,6 +38,7 @@ interface OutfitCardProps {
   item: OutfitItem;
   loading: boolean;
   index: number;
+  selected: boolean;
 }
 
 const ModalComponent = ({
@@ -124,6 +125,7 @@ export default function SelectingOutfitPage(): React.JSX.Element {
     item,
     loading,
     index,
+    selected,
   }: OutfitCardProps): React.JSX.Element {
     const [fallbackImage, setFallbackImage] = useState<boolean>(false);
     const router = useRouter();
@@ -166,31 +168,38 @@ export default function SelectingOutfitPage(): React.JSX.Element {
         );
       }
     };
+    const LongPressGesture = Gesture.LongPress()
+      .runOnJS(true)
+      .onStart(() => {
+        console.log("Long press started");
+      })
+      .onEnd((_e, success) => {
+        if (!("isPlaceholder" in item)) {
+          setModalProps({ id: item.$id, visible: true });
+        }
+      });
 
     return (
-      <Pressable
-        className="overflow-hidden rounded-lg shadow-md shadow-black"
-        style={{ width: itemWidth, margin: spacing / 2 }}
-        onPress={() => {
-          if (!("isPlaceholder" in item)) {
-            setModalProps({ id: item.$id, visible: true });
-          }
-        }}
-      >
-        <Box
-          className="bg-background-100 rounded-lg overflow-hidden"
-          style={{ width: itemWidth, height: itemHeight }}
+      <GestureDetector gesture={LongPressGesture}>
+        <View
+          className={`"overflow-hidden rounded-lg shadow-md shadow-black  " ${""}`}
+          style={{ width: itemWidth, height: itemHeight, margin: spacing / 2 }}
         >
-          <View style={{ width: "100%", height: "100%" }}>
-            {renderOutfitImage()}
-            <View className="absolute bottom-0 w-full bg-black/50 p-2">
-              <Text className="text-white font-medium text-center">
-                {getOutfitName()}
-              </Text>
+          <Box
+            className="bg-background-100 rounded-lg overflow-hidden"
+            style={{ width: itemWidth, height: itemHeight }}
+          >
+            <View style={{ width: "100%", height: "100%" }}>
+              {renderOutfitImage()}
+              <View className="absolute bottom-0 w-full bg-black/50 p-2">
+                <Text className="text-white font-medium text-center">
+                  {getOutfitName()}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Box>
-      </Pressable>
+          </Box>
+        </View>
+      </GestureDetector>
     );
   }
 
@@ -247,6 +256,7 @@ export default function SelectingOutfitPage(): React.JSX.Element {
   };
 
   const displayData: OutfitItem[] = loading ? getPlaceholderData() : outfits;
+  const [selectedItem, setSelectedItem] = useState<string>("");
 
   return (
     <ThemedView className="flex-1">
@@ -260,7 +270,12 @@ export default function SelectingOutfitPage(): React.JSX.Element {
         data={displayData}
         estimatedItemSize={itemHeight}
         renderItem={({ item, index }) => (
-          <OutfitCard item={item} loading={loading} index={index} />
+          <OutfitCard
+            selected={!("isPlaceholder" in item) && selectedItem === item.$id}
+            item={item}
+            loading={loading}
+            index={index}
+          />
         )}
         keyExtractor={(item, index) => {
           if ("isPlaceholder" in item) {

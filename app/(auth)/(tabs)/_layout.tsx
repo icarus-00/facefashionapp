@@ -48,6 +48,9 @@ export default function TabLayout() {
           borderWidth: 1,
           borderColor: "#0f0d23",
         },
+        headerStyle: {
+          backgroundColor: Colors["light"].primary[500],
+        },
       }}
     >
       <Tabs.Screen
