@@ -111,18 +111,20 @@ class DatabaseService {
   }
 
   async addActor<T>(
-    collectionId: string,
-    data: Actor,
-    file: File
+    actorname: string,
+    file: { name: string; type: string; size: number; uri: string }
   ): Promise<Models.Document> {
     try {
+      console.log("adding");
+      console.log(file);
       const createdFile = await storageService.createFile(file);
-      data.fileID = createdFile;
+      console.log(createdFile);
+      const fileID = createdFile;
       const response = await this.database.createDocument(
         this.databaseId,
-        collectionId,
+        this.collectionId,
         "unique()",
-        data
+        { actorName: actorname, fileID: fileID }
       );
       return response;
     } catch (error) {
@@ -130,14 +132,45 @@ class DatabaseService {
       throw error;
     }
   }
+  async editActor(
+    documentId: string,
+    actorname: string,
+    fileid?: string,
+    file?: { name: string; type: string; size: number; uri: string }
+  ): Promise<void> {
+    try {
+      if (file) {
+        const updatedFile = await storageService.updateFile(fileid!, file);
+        const response = await this.database.updateDocument(
+          this.databaseId,
+          this.collectionId,
+          documentId,
+          { actorName: actorname, fileID: updatedFile }
+        );
+      } else {
+        const response = await this.database.updateDocument(
+          this.databaseId,
+          this.collectionId,
+          documentId,
+          { actorName: actorname }
+        );
+      }
+    } catch (error) {
+      console.error("Error editing actor:", error);
+      throw error;
+    }
+  }
 
-  async deleteActor(documentId: string): Promise<void> {
+  async deleteActor(documentId: string, imageID: string): Promise<void> {
     try {
       await this.database.deleteDocument(
         this.databaseId,
         this.collectionId,
         documentId
       );
+      try {
+        await storageService.deleteFile(imageID);
+      } catch (error) {}
     } catch (error) {
       console.error("Error deleting actor:", error);
       throw error;
@@ -192,6 +225,69 @@ class DatabaseService {
       return result;
     } catch (error) {
       console.error("Error getting outfit:", error);
+      throw error;
+    }
+  }
+
+  async addOutfit<T>(
+    outfitname: string,
+    file: { name: string; type: string; size: number; uri: string }
+  ): Promise<Models.Document> {
+    try {
+      const createdFile = await storageService.createFile(file);
+      const fileID = createdFile;
+      const response = await this.database.createDocument(
+        this.databaseId,
+        this.outfitCollectionId,
+        "unique()",
+        { outfitName: outfitname, fileID: fileID }
+      );
+      return response;
+    } catch (error) {
+      console.error("Error adding outfit:", error);
+      throw error;
+    }
+  }
+  async editOutfit(
+    documentId: string,
+    outfitname: string,
+    fileid?: string,
+    file?: { name: string; type: string; size: number; uri: string }
+  ): Promise<void> {
+    try {
+      if (file) {
+        const updatedFile = await storageService.updateFile(fileid!, file);
+        const response = await this.database.updateDocument(
+          this.databaseId,
+          this.outfitCollectionId,
+          documentId,
+          { outfitName: outfitname, fileID: updatedFile }
+        );
+      } else {
+        const response = await this.database.updateDocument(
+          this.databaseId,
+          this.outfitCollectionId,
+          documentId,
+          { outfitName: outfitname }
+        );
+      }
+    } catch (error) {
+      console.error("Error editing outfit:", error);
+      throw error;
+    }
+  }
+  async deleteOutfit(documentId: string, imageID: string): Promise<void> {
+    try {
+      await this.database.deleteDocument(
+        this.databaseId,
+        this.outfitCollectionId,
+        documentId
+      );
+      try {
+        await storageService.deleteFile(imageID);
+      } catch (error) {}
+    } catch (error) {
+      console.error("Error deleting outfit:", error);
       throw error;
     }
   }

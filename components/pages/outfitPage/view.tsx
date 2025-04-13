@@ -6,7 +6,7 @@ import {
   Dimensions,
   Pressable,
   FlatList,
-  Modal,
+  Modal as RNModal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "react-native";
@@ -16,10 +16,13 @@ import { Box } from "@/components/ui/box";
 import databaseService, { OutfitWithImage } from "@/services/database/db";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { AddIcon, CloseIcon, Icon } from "@/components/ui/icon";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { ModalHeader, ModalCloseButton } from "@/components/ui/modal";
 import GetOutfit from "@/components/pages/outfitPage/actions/get";
-
+import Modal from "react-native-modal";
+import { SpeedDial } from "@rneui/themed";
+import { Feather } from "@expo/vector-icons";
+import { Colors } from "@/constants/Colors";
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
@@ -55,29 +58,24 @@ const ModalComponent = ({
     return (
       <Modal
         accessible
-        transparent
-        animationType="slide"
-        visible={visible}
-        onRequestClose={onPress}
-        className="relative flex-1 justify-center items-center"
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        swipeThreshold={50}
+        isVisible={visible}
+        onBackButtonPress={onPress}
+        swipeDirection={"down"}
+        onSwipeComplete={onPress}
       >
-        <View className="flex-1 justify-center items-center bg-black/25">
+        <View className="flex-1 justify-center items-center ">
           <Pressable
             onPress={onPress}
             className="flex-1 absolute h-full w-full"
           />
           <View className="bg-white w-11/12 h-5/6 rounded-lg overflow-hidden">
-            <ModalHeader className="flex-row px-2 py-2 justify-end bg-black ">
-              <ModalCloseButton onPress={onPress}>
-                <Icon
-                  as={CloseIcon}
-                  size="lg"
-                  color="white"
-                  className="stroke-white group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-white group-[:focus-visible]/modal-close-button:stroke-white"
-                />
-              </ModalCloseButton>
+            <ModalHeader className="flex-row px-2 py-1 bg-white justify-center">
+              <View className="h-1 w-20 rounded-full bg-primary-400" />
             </ModalHeader>
-            <GetOutfit paramid={id} />
+            <GetOutfit paramid={id} onClose={onPress} />
           </View>
         </View>
       </Modal>
@@ -148,14 +146,16 @@ export default function OutFitPageComp(): React.JSX.Element {
         // Use the imageUrl from OutfitWithImage
         const outfitItem = item as OutfitWithImage;
         return (
-          <Image
-            source={{
-              uri: fallbackImage ? DEFAULT_IMAGE : outfitItem.imageUrl,
-            }}
-            style={{ width: "100%", height: "100%" }}
-            resizeMode="cover"
-            onError={() => setFallbackImage(true)}
-          />
+          <View>
+            <Image
+              source={{
+                uri: fallbackImage ? DEFAULT_IMAGE : outfitItem.imageUrl,
+              }}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="cover"
+              onError={() => setFallbackImage(true)}
+            />
+          </View>
         );
       } catch (error) {
         console.error("Image rendering error:", error);
@@ -230,6 +230,7 @@ export default function OutFitPageComp(): React.JSX.Element {
             size="md"
             variant="outline"
             className="rounded-full h-[3.5] w-[3.5] border-black p-3.5"
+            onPress={() => router.push("/outfit/create")}
           >
             <ButtonIcon className="text-black" size="md" as={AddIcon} />
           </Button>

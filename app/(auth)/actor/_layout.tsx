@@ -5,6 +5,7 @@ export default function ActorLayout() {
     <Stack>
       <Stack.Screen name="create" options={{ headerShown: false }} />
       <Stack.Screen name="[get]" options={{ headerShown: false }} />
+      <Stack.Screen name="edit" options={{ headerShown: false }} />
     </Stack>
   );
 }

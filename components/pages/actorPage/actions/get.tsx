@@ -7,9 +7,14 @@ import { useEffect, useState, useRef } from "react";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { AntDesign, MaterialIcons, Feather } from "@expo/vector-icons";
+import {
+  AntDesign,
+  MaterialIcons,
+  Feather,
+  EvilIcons,
+} from "@expo/vector-icons";
 import Animated, { FadeIn, SlideInRight } from "react-native-reanimated";
-import { SpeedDial } from "@rneui/themed";
+import { Icon, SpeedDial } from "@rneui/themed";
 import useStore from "@/store/lumaGeneration/useStore";
 // Import the correct Fab components based on your structure
 import { Fab } from "@/components/ui/fab";
@@ -21,6 +26,7 @@ import {
   GestureDetector,
 } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
+import { Colors } from "@/constants/Colors";
 
 // Custom Fab components based on your structure
 const CustomFab = ({
@@ -28,34 +34,41 @@ const CustomFab = ({
   onDelete,
 }: {
   onEdit: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
 }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <View style={{ position: "relative", height: 56, width: "100%" }}>
-      <SpeedDial
-        isOpen={open}
-        icon={{ name: "edit", color: "#fff" }}
-        openIcon={{ name: "close", color: "#fff" }}
-        onOpen={() => setOpen(!open)}
-        onClose={() => setOpen(!open)}
-        overlayColor="transparent"
-        buttonStyle={{ backgroundColor: "#bd1e59" }}
-        style={{ position: "absolute", bottom: 0, right: 0 }}
-      >
-        <SpeedDial.Action
-          icon={{ name: "add", color: "#fff" }}
-          title="Add"
-          onPress={() => console.log("Add Something")}
-        />
-        <SpeedDial.Action
-          icon={{ name: "delete", color: "#fff" }}
-          title="Delete"
-          onPress={() => console.log("Delete Something")}
-        />
-      </SpeedDial>
-    </View>
+    <SpeedDial
+      isOpen={open}
+      icon={<Feather name="menu" size={24} color="white" />}
+      openIcon={<Feather name="x" size={24} color="white" />}
+      onOpen={() => setOpen(!open)}
+      onClose={() => setOpen(!open)}
+      overlayColor="transparent"
+      buttonStyle={{
+        backgroundColor: Colors.light.tint,
+        shadowColor: "black",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5,
+      }}
+      style={{ position: "absolute", bottom: 0, right: 0 }}
+      containerStyle={{ gap: 0 }}
+      title="Actions"
+    >
+      <SpeedDial.Action
+        icon={<Feather name="trash" size={20} color="white" />}
+        buttonStyle={{ backgroundColor: Colors.light.tint }}
+        onPress={() => onDelete!()}
+      />
+      <SpeedDial.Action
+        icon={<Feather name="edit-2" size={20} color="white" />}
+        buttonStyle={{ backgroundColor: Colors.light.tint }}
+        onPress={() => onEdit()}
+      />
+    </SpeedDial>
   );
 };
 const LoadingSpinner = () => (
@@ -73,11 +86,11 @@ export default function GetActor({
 }) {
   const [actor, setActor] = useState<ActorWithImage>();
   const [loading, setLoading] = useState(true);
-  const {userId ,updateActorImageID} = useStore()
+  const { userId, updateActorImageID } = useStore();
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
       setLoading(true);
-      
+
       try {
         if (paramid) {
           const data = await databaseService.getActor(paramid);
@@ -98,7 +111,7 @@ export default function GetActor({
       if (actor?.$id) {
         // Show confirmation dialog (implementation depends on your UI library)
         // For this example, we'll just log the action
-        console.log("Deleting actor:", actor.$id);
+        await databaseService.deleteActor(actor.$id, actor.fileID);
         // await databaseService.deleteActor(actor.$id);
         // Close modal after deletion
         if (onClose) onClose();
@@ -142,11 +155,11 @@ export default function GetActor({
     return <LoadingSpinner />;
   }
   return (
-    <GestureDetector gesture={swipeGesture} >
-      <View className="flex-1 bg-white rounded-xl">
+    <GestureDetector gesture={swipeGesture}>
+      <View className="flex-1 bg-white rounded-xl ">
         {/* Gradient overlay at the top for better visibility of back button */}
-        <View className="rounded-t-lg overflow-hidden">
-          <View className="h-3 bg-white rounded-t-lg overflow-hidden" />
+        <View className="rounded-t-3xl overflow-hidden">
+          <View className="h-3 bg-white rounded-t-3xl overflow-hidden" />
 
           {/* Back button positioned at top-left */}
 
@@ -157,16 +170,25 @@ export default function GetActor({
         </View>
         <VStack className="flex-1">
           {/* Image Section with Overlay and Back Button */}
-          <View className="relative flex-1">
+          <View className="items-center justify-center aspect-square w-full p-1">
             <Image
               source={{ uri: actor?.imageUrl }}
-              className="w-full aspect-square"
-              resizeMode="cover"
+              className="w-full aspect-square  rounded-b-3xl rounded-t-3xl"
+            />
+            <CustomFab
+              onEdit={() => {
+                router.push({
+                  pathname: "/(auth)/actor/edit",
+                  params: { id: actor?.$id },
+                });
+                handleBack();
+              }}
+              onDelete={() => handleDelete()}
             />
           </View>
 
           {/* Actor Information Section */}
-          <View className="flex-1 w-full p-5 bg-white rounded-t-3xl -mt-6">
+          <View className="flex-1 w-full p-5 bg-white mt-6">
             <Text className="font-extrabold text-3xl mb-4">
               {actor?.actorName}
             </Text>
@@ -194,19 +216,27 @@ export default function GetActor({
           </View>
 
           {/* Action Buttons Section */}
-          <View className="p-5 flex-row items-center gap-1 justify-between">
+          <View className="px-2 w-full flex-row items-center gap-1 justify-between h-24  ">
             {/* Empty space placeholder */}
             <View className="flex-1">{/* Intentionally empty */}</View>
 
             {/* Dress Up button - takes 4x the space of other elements */}
-            <View className="flex-4 mx-3">
-              <Button size="full" className="bg-primary-500"  onPress={()=>{updateActorImageID(actor?.$id || ""); router.push("/(auth)/(tabs)/outfit"); if (onClose) onClose();}} >
+            <View className="flex-3  h-20">
+              <Button
+                size="full"
+                className="bg-primary-500"
+                onPress={() => {
+                  updateActorImageID(actor?.$id || "");
+                  router.push("/(auth)/(tabs)/outfit");
+                  if (onClose) onClose();
+                }}
+              >
                 <ButtonText>Dress Up</ButtonText>
               </Button>
             </View>
 
             {/* Back button - maintains square aspect ratio */}
-            <View className="flex-1">
+            <View className="flex-1 ">
               <Pressable
                 onPress={handleBack}
                 className="bg-secondary-500/25 rounded-full aspect-square w-full justify-center items-center"

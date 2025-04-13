@@ -1,4 +1,11 @@
-import { Client, Storage, Models, ID } from "react-native-appwrite";
+import {
+  Client,
+  Storage,
+  Models,
+  ID,
+  Permission,
+  Role,
+} from "react-native-appwrite";
 import { account } from "@/services/config/appwrite";
 
 class StorageService {
@@ -36,19 +43,69 @@ class StorageService {
   listFiles(): Promise<Models.FileList> {
     return this.storage.listFiles(this.bucketId);
   }
-  async createFile(file: File): Promise<string> {
+  async createFile(file: {
+    name: string;
+    type: string;
+    size: number;
+    uri: string;
+  }): Promise<string> {
     const fileWithUri = {
       name: file.name,
       type: file.type,
       size: file.size,
-      uri: (file as any).uri || "", // Ensure `uri` is provided
+      uri: file.uri || "", // Ensure `uri` is provided
     };
     const result = await this.storage.createFile(
       this.bucketId,
       ID.unique(),
-      fileWithUri
+      fileWithUri,
+      [
+        Permission.read(Role.user((await account.get()).$id)),
+        Permission.update(Role.user((await account.get()).$id)),
+        Permission.delete(Role.user((await account.get()).$id)),
+        Permission.read(Role.any()),
+      ]
     );
     return result.$id;
+  }
+  async updateFile(
+    fileId: string,
+    file: {
+      name: string;
+      type: string;
+      size: number;
+      uri: string;
+    }
+  ): Promise<string> {
+    const fileWithUri = {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      uri: file.uri || "", // Ensure `uri` is provided
+    };
+
+    try {
+      try {
+        await this.storage.deleteFile(this.bucketId, fileId);
+      } catch (error) {}
+      const result = await this.storage.createFile(
+        this.bucketId,
+        ID.unique(),
+        fileWithUri,
+        [
+          Permission.read(Role.user((await account.get()).$id)),
+          Permission.update(Role.user((await account.get()).$id)),
+          Permission.delete(Role.user((await account.get()).$id)),
+          Permission.read(Role.any()),
+        ]
+      );
+      return result.$id;
+    } catch (error) {
+      return Promise.reject();
+    }
+  }
+  async deleteFile(fileId: string): Promise<void> {
+    const result = await this.storage.deleteFile(this.bucketId, fileId);
   }
 
   /* createFile(file: File): Promise<Models.File> {

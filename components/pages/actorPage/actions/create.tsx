@@ -18,9 +18,12 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { err } from "react-native-svg";
 
-const OutfitScreen = () => {
+const ActorScreen = () => {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [age, setAge] = useState("");
+  const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
@@ -73,7 +76,7 @@ const OutfitScreen = () => {
     console.log(file);
     if (file) {
       console.log("uploading");
-      await databaseService.addOutfit(name, file);
+      await databaseService.addActor(name, file);
     }
   };
 
@@ -116,17 +119,17 @@ const OutfitScreen = () => {
             )}
           </Pressable>
           <Text style={styles.imageHelperText}>
-            Please fill in the details below to create and connect your outfit's
+            Please fill in the details below to create and connect your actor's
             profile.
           </Text>
         </View>
 
         {/* Form Inputs */}
         <View style={styles.formField}>
-          <Text style={styles.fieldLabel}>Outfit Name</Text>
+          <Text style={styles.fieldLabel}>Full Name</Text>
           <TextInput
             style={styles.input}
-            placeholder="Name"
+            placeholder=""
             value={name}
             onChangeText={(text) => setName(text)}
             autoCapitalize="words"
@@ -135,15 +138,48 @@ const OutfitScreen = () => {
         </View>
 
         <View style={styles.formField}>
-          <Text style={styles.fieldLabel}>Description</Text>
+          <Text style={styles.fieldLabel}>Age</Text>
+          <TextInput
+            style={styles.input}
+            placeholder=""
+            value={age}
+            onChangeText={(text) => setAge(text)}
+            keyboardType="numeric"
+            testID="age-input"
+          />
+        </View>
+        <View style={styles.formField}>
+          <Text style={styles.fieldLabel}>Weight & Height</Text>
+          <View style={styles.rowContainer}>
+            <TextInput
+              style={styles.halfInput}
+              placeholder="W"
+              value={weight}
+              onChangeText={(text) => setWeight(text)}
+              keyboardType="numeric"
+              testID="weight-input"
+            />
+            <TextInput
+              style={styles.halfInput}
+              placeholder="H"
+              value={height}
+              onChangeText={(text) => setHeight(text)}
+              keyboardType="numeric"
+              testID="height-input"
+            />
+          </View>
+        </View>
+
+        <View style={styles.formField}>
+          <Text style={styles.fieldLabel}>Additional Information</Text>
           <TextInput
             style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={(text) => setDescription(text)}
+            placeholder="Optional"
+            value={additionalInfo}
+            onChangeText={(text) => setAdditionalInfo(text)}
             multiline
             textAlignVertical="top"
-            testID="description-input"
+            testID="additional-info-input"
           />
         </View>
 
@@ -260,4 +296,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OutfitScreen;
+export default ActorScreen;

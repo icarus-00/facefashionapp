@@ -9,7 +9,7 @@ import { Box } from "@/components/ui/box";
 import databaseService, { ActorWithImage } from "@/services/database/db";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { AddIcon, ArrowLeftIcon, CloseIcon, Icon } from "@/components/ui/icon";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import GetActor from "./actions/get";
 import { SpeedDial } from "@rneui/themed";
 import Modal from "react-native-modal";
@@ -178,7 +178,7 @@ export default function ActorPageComp(): React.JSX.Element {
     };
 
     return (
-      <View className="flex-row justify-between items-center bg-white shadow-md px-4 py-2">
+      <View className="flex-row justify-between items-center bg-white shadow-md px-4">
         <FlatList
           data={["All", "Popular", "Top Rated", "Upcoming", "Now Playing"]}
           horizontal
@@ -205,6 +205,9 @@ export default function ActorPageComp(): React.JSX.Element {
           size="md"
           variant="outline"
           className="rounded-full h-[3.5] w-[3.5] border-black p-3.5"
+          onPress={() => {
+            router.push({ pathname: "/(auth)/actor/create" });
+          }}
         >
           <ButtonIcon className="text-black" size="md" as={AddIcon} />
         </Button>
@@ -223,7 +226,7 @@ export default function ActorPageComp(): React.JSX.Element {
   const displayData: ActorItem[] = loading ? getPlaceholderData() : actors;
 
   function handleClose(): void {
-    console.log("closing")
+    console.log("closing");
     setVisible(false);
     setModalId("");
   }
