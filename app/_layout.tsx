@@ -65,8 +65,8 @@ export default function RootLayout() {
   }
 
   return (
-    <ToastProvider>
-      <UserProvider>
+    <UserProvider>
+      <ToastProvider>
         <GestureHandlerRootView>
           <ThemeProvider
             value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
@@ -79,7 +79,7 @@ export default function RootLayout() {
             </GluestackUIProvider>
           </ThemeProvider>
         </GestureHandlerRootView>
-      </UserProvider>
-    </ToastProvider>
+      </ToastProvider>
+    </UserProvider>
   );
 }

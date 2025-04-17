@@ -1,5 +1,5 @@
 import { ClothingCategory } from '@/interfaces/clothing';
-import { icons } from './icons';
+import { icons } from './Icons';
 
 export const clothingData: ClothingCategory[] = [
   {

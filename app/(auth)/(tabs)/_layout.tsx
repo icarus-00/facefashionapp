@@ -1,14 +1,21 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform } from "react-native";
+import { Dimensions, Platform, Easing } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import { AntDesign } from "@expo/vector-icons";
+import {
+  AntDesign,
+  FontAwesome6,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import BlurTabBarBackground from "../../../components/ui/TabBarBackground.ios";
 
+const { width } = Dimensions.get("window");
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
@@ -36,7 +43,7 @@ export default function TabLayout() {
           borderRadius: 50,
           marginHorizontal: 20,
           marginBottom: 40,
-          height: 60,
+          height: width / 7,
           position: "absolute",
           overflow: "hidden",
           justifyContent: "center",
@@ -58,8 +65,8 @@ export default function TabLayout() {
         options={{
           title: "Home",
 
-          tabBarIcon: ({ color }) => (
-            <AntDesign name="home" size={28} color={color} />
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Ionicons name="home" size={width / 15} color={color} />
           ),
         }}
       />
@@ -68,7 +75,7 @@ export default function TabLayout() {
         options={{
           title: "Actor",
           tabBarIcon: ({ color }) => (
-            <AntDesign name="user" size={28} color={color} />
+            <Ionicons name="people" size={width / 15} color={color} />
           ),
         }}
       />
@@ -77,7 +84,7 @@ export default function TabLayout() {
         options={{
           title: "outfit",
           tabBarIcon: ({ color }) => (
-            <AntDesign name="skin" size={28} color={color} />
+            <Ionicons name="shirt" size={width / 15} color={color} />
           ),
         }}
       />
@@ -86,25 +93,29 @@ export default function TabLayout() {
         options={{
           title: "generator",
           tabBarIcon: ({ color }) => (
-            <AntDesign name="copy1" size={28} color={color} />
+            <Ionicons name="color-wand" size={width / 15} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "prifle",
+          title: "profile",
           tabBarIcon: ({ color }) => (
-            <AntDesign name="copy1" size={28} color={color} />
+            <Ionicons
+              name="person-circle-outline"
+              size={width / 15}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="test"
         options={{
-          title: "prifle",
+          title: "testingpage",
           tabBarIcon: ({ color }) => (
-            <AntDesign name="copy1" size={28} color={color} />
+            <AntDesign name="copy1" size={width / 15} color={color} />
           ),
         }}
       />

@@ -1,6 +1,7 @@
 import { Databases, Client, Models, Functions } from "react-native-appwrite";
 import storageService from "@/services/config/files";
-
+import outfit from "../../app/(auth)/(tabs)/outfit";
+import { getPresignedUrls } from "../generation/gen";
 // Define types for actor data
 interface Actor extends Models.Document {
   fileID: string;
@@ -19,7 +20,23 @@ interface OutfitWithImage extends Outfit {
 interface ActorWithImage extends Actor {
   imageUrl: string;
 }
-
+interface generations extends Models.Document {
+  outfitRefs: string[];
+  generatedFileId: string;
+  actorRef: string;
+  state: string | "generating" | "completed" | "failed";
+  has_Motion: boolean;
+  videoId: string;
+  cachedActorRef: string;
+  cachedOutfitRef: string[];
+  videoGeneration: string | "no-video" | "generating" | "completed" | "failed";
+}
+interface generationsWithImage extends generations {
+  generationImageUrl: string;
+  cachedActorImageUrl: string;
+  cachedOutfitImageUrls: string[];
+  videoUrl?: string;
+}
 class DatabaseService {
   client: Client;
   database: Databases;
@@ -28,6 +45,7 @@ class DatabaseService {
   collectionId: string; //actor collection id backlog: change name
   loading: boolean;
   outfitCollectionId: string;
+  generationsCollectionId: string;
 
   constructor() {
     this.client = new Client();
@@ -45,6 +63,9 @@ class DatabaseService {
       .setProject(this.projectId);
 
     this.loading = false;
+    this.generationsCollectionId =
+      process.env.EXPO_PUBLIC_APPWRITE_GENERATION_COLLECTION_ID ||
+      "your-collection-id";
   }
 
   init(): void {
@@ -291,9 +312,96 @@ class DatabaseService {
       throw error;
     }
   }
+
+  async listGenerations(): Promise<generationsWithImage[]> {
+    try {
+      const response = await this.database.listDocuments<generations>(
+        this.databaseId,
+        this.generationsCollectionId
+      );
+      console.log("fetching");
+      console.log(response);
+      const generationsWithImages = await Promise.all(
+        response.documents.map(async (generation) => ({
+          $id: generation.$id,
+          $createdAt: generation.$createdAt,
+          $updatedAt: generation.$updatedAt,
+          $permissions: generation.$permissions,
+          $collectionId: generation.$collectionId,
+          $databaseId: generation.$databaseId,
+          outfitRefs: generation.outfitRefs,
+          generatedFileId: generation.generatedFileID,
+          actorRef: generation.actorRef,
+          state: generation.state,
+          has_Motion: generation.has_Motion,
+          videoId: generation.videoId,
+          cachedActorRef: generation.cachedActorRef,
+          cachedOutfitRef: generation.cachedOutfitRefs,
+          videoGeneration: generation.videoGeneration,
+          generationImageUrl:
+            generation.state === "completed"
+              ? await storageService.getfileview(generation.generatedFileID)
+              : "",
+          cachedActorImageUrl: "",
+          cachedOutfitImageUrls: [],
+        }))
+      );
+      console.log(generationsWithImages);
+      return generationsWithImages;
+    } catch (error) {
+      console.error("Error getting generations:", error);
+      throw error;
+    }
+  }
+
+  async getGeneration(documentId: string): Promise<generationsWithImage> {
+    try {
+      const generation = await this.database.getDocument<generations>(
+        this.databaseId,
+        this.generationsCollectionId,
+        documentId!
+      );
+      console.log(generation);
+      if (generation.has_Motion) {
+        const videoUrl = await storageService.getfileview(generation.videoId);
+        console.log(videoUrl);
+        return {
+          ...generation,
+          generationImageUrl: await storageService.getfileview(
+            generation.generatedFileID
+          ),
+          cachedActorImageUrl: "",
+          cachedOutfitImageUrls: [],
+          videoUrl: videoUrl,
+        };
+      } else {
+        const reuslt: generationsWithImage = {
+          ...generation,
+          generationImageUrl:
+            generation.state === "completed"
+              ? await storageService.getfileview(generation.generatedFileID)
+              : "",
+          cachedActorImageUrl: "",
+          cachedOutfitImageUrls: [],
+        };
+
+        return reuslt;
+      }
+    } catch (error) {
+      console.error("Error getting generation:", error);
+      throw error;
+    }
+  }
 }
 
 const databaseService = new DatabaseService();
 
 export default databaseService;
-export type { Actor, ActorWithImage, Outfit, OutfitWithImage };
+export type {
+  Actor,
+  ActorWithImage,
+  Outfit,
+  OutfitWithImage,
+  generations,
+  generationsWithImage,
+};
