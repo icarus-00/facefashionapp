@@ -22,17 +22,34 @@ import GetOutfit from "../outfit/[get]";
 import OutFitPageComp from "@/components/pages/outfitPage/view";
 import Index from "@/components/pages/outfitPage";
 import useStore from "@/store/lumaGeneration/useStore";
+import RootNav from "@/components/atoms/rootNavBar";
+import SelectedItemsModal from "@/components/atoms/selectedItemsModal";
+import SubCategoriesExbandableFilter from "@/components/atoms/subCategories";
 // Define types for our data
 export default function outfit() {
-  const { getLength, actorImageID, outfitImageID } = useStore();
-  const selecting = getLength() > 0 ? true : false;
-  console.log(selecting);
+  const { getLength, outfitItems, actorItems } = useStore();
+  const [modalvisible, setModalVisible] = useState(false);
+  const selecting = getLength() > 0;
+  console.log(actorItems);
   console.log(getLength());
-  console.log(actorImageID);
 
+  console.log("modal visible", modalvisible);
   return (
     <SafeAreaView className="flex-1 ">
-      <Index selecting={selecting as boolean} />
+      <RootNav
+        name="RenderWear"
+        onPress={() => {
+          setModalVisible(true);
+        }}
+      />
+
+      <OutFitPageComp selecting={selecting} />
+      <SelectedItemsModal
+        onClose={() => {
+          setModalVisible(false);
+        }}
+        visible={modalvisible}
+      />
     </SafeAreaView>
   );
 }

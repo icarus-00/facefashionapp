@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ThemedView } from "@/components/ThemedView";
 import {
   View,
@@ -6,20 +6,27 @@ import {
   Dimensions,
   Pressable,
   FlatList,
-  Modal,
+  Modal as RNModal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Box } from "@/components/ui/box";
-import databaseService, { OutfitWithImage } from "@/services/database/db";
+import databaseService from "@/services/database/db";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { AddIcon, CloseIcon, Icon } from "@/components/ui/icon";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { ModalHeader, ModalCloseButton } from "@/components/ui/modal";
 import GetOutfit from "@/components/pages/outfitPage/actions/get";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Modal from "react-native-modal";
+import { SpeedDial } from "@rneui/themed";
+import { Feather } from "@expo/vector-icons";
+import { Colors } from "@/constants/Colors";
+import SubCategoriesExbandableFilter from "@/components/atoms/subCategories";
+import useAttireStore from "@/store/cayegoryStore";
+import { OutfitWithImage } from "@/services/database/db";
+import ModalComponent from "./atoms/outfitModal";
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
@@ -38,57 +45,13 @@ interface OutfitCardProps {
   item: OutfitItem;
   loading: boolean;
   index: number;
-  selected: boolean;
 }
 
-const ModalComponent = ({
-  id,
-  visible,
-  onPress,
-}: {
-  id: string;
-  visible: boolean;
-  onPress: () => void;
-}) => {
-  if (!visible) {
-    return null;
-  } else if (visible) {
-    return (
-      <Modal
-        accessible
-        transparent
-        animationType="slide"
-        visible={visible}
-        onRequestClose={onPress}
-        className="relative flex-1 justify-center items-center"
-      >
-        <View className="flex-1 justify-center items-center bg-black/25">
-          <Pressable
-            onPress={onPress}
-            className="flex-1 absolute h-full w-full"
-          />
-          <View className="bg-white w-11/12 h-5/6 rounded-lg overflow-hidden">
-            <ModalHeader className="flex-row px-2 py-2 justify-end bg-black ">
-              <ModalCloseButton onPress={onPress}>
-                <Icon
-                  as={CloseIcon}
-                  size="lg"
-                  color="white"
-                  className="stroke-white group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-white group-[:focus-visible]/modal-close-button:stroke-white"
-                />
-              </ModalCloseButton>
-            </ModalHeader>
-            <GetOutfit paramid={id} />
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-};
-
-export default function SelectingOutfitPage(): React.JSX.Element {
+ function OutFitPageComp(): React.JSX.Element {
   const [outfits, setOutfits] = useState<OutfitWithImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedSubFilter, setSelectedSubFilter] = useState<string>();
+  const [attireTheme, setAttireTheme] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [selectingOutfit, setSelectingOutfit] = useState<boolean>(false);
   const [modalProps, setModalProps] = useState<{
@@ -100,6 +63,9 @@ export default function SelectingOutfitPage(): React.JSX.Element {
   const fetchData = useCallback(async (): Promise<void> => {
     try {
       const data = await databaseService.ListOutfits();
+      const themes = useAttireStore.getState().themes;
+      setAttireTheme(themes);
+      console.log(themes);
       setOutfits(data);
     } catch (error) {
       console.error("Error fetching outfits: ", error);
@@ -125,7 +91,6 @@ export default function SelectingOutfitPage(): React.JSX.Element {
     item,
     loading,
     index,
-    selected,
   }: OutfitCardProps): React.JSX.Element {
     const [fallbackImage, setFallbackImage] = useState<boolean>(false);
     const router = useRouter();
@@ -150,14 +115,16 @@ export default function SelectingOutfitPage(): React.JSX.Element {
         // Use the imageUrl from OutfitWithImage
         const outfitItem = item as OutfitWithImage;
         return (
-          <Image
-            source={{
-              uri: fallbackImage ? DEFAULT_IMAGE : outfitItem.imageUrl,
-            }}
-            style={{ width: "100%", height: "100%" }}
-            resizeMode="cover"
-            onError={() => setFallbackImage(true)}
-          />
+          <View>
+            <Image
+              source={{
+                uri: fallbackImage ? DEFAULT_IMAGE : outfitItem.imageUrl,
+              }}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="cover"
+              onError={() => setFallbackImage(true)}
+            />
+          </View>
         );
       } catch (error) {
         console.error("Image rendering error:", error);
@@ -168,38 +135,31 @@ export default function SelectingOutfitPage(): React.JSX.Element {
         );
       }
     };
-    const LongPressGesture = Gesture.LongPress()
-      .runOnJS(true)
-      .onStart(() => {
-        console.log("Long press started");
-      })
-      .onEnd((_e, success) => {
-        if (!("isPlaceholder" in item)) {
-          setModalProps({ id: item.$id, visible: true });
-        }
-      });
 
     return (
-      <GestureDetector gesture={LongPressGesture}>
-        <View
-          className={`"overflow-hidden rounded-lg shadow-md shadow-black  " ${""}`}
-          style={{ width: itemWidth, height: itemHeight, margin: spacing / 2 }}
+      <Pressable
+        className="overflow-hidden rounded-lg shadow-md shadow-black"
+        style={{ width: itemWidth, margin: spacing / 2 }}
+        onPress={() => {
+          if (!("isPlaceholder" in item)) {
+            setModalProps({ id: item.$id, visible: true });
+          }
+        }}
+      >
+        <Box
+          className="bg-background-100 rounded-lg overflow-hidden"
+          style={{ width: itemWidth, height: itemHeight }}
         >
-          <Box
-            className="bg-background-100 rounded-lg overflow-hidden"
-            style={{ width: itemWidth, height: itemHeight }}
-          >
-            <View style={{ width: "100%", height: "100%" }}>
-              {renderOutfitImage()}
-              <View className="absolute bottom-0 w-full bg-black/50 p-2">
-                <Text className="text-white font-medium text-center">
-                  {getOutfitName()}
-                </Text>
-              </View>
+          <View style={{ width: "100%", height: "100%" }}>
+            {renderOutfitImage()}
+            <View className="absolute bottom-0 w-full bg-black/50 p-2">
+              <Text className="text-white font-medium text-center">
+                {getOutfitName()}
+              </Text>
             </View>
-          </Box>
-        </View>
-      </GestureDetector>
+          </View>
+        </Box>
+      </Pressable>
     );
   }
 
@@ -239,6 +199,7 @@ export default function SelectingOutfitPage(): React.JSX.Element {
             size="md"
             variant="outline"
             className="rounded-full h-[3.5] w-[3.5] border-black p-3.5"
+            onPress={() => router.push("/outfit/create")}
           >
             <ButtonIcon className="text-black" size="md" as={AddIcon} />
           </Button>
@@ -256,11 +217,18 @@ export default function SelectingOutfitPage(): React.JSX.Element {
   };
 
   const displayData: OutfitItem[] = loading ? getPlaceholderData() : outfits;
-  const [selectedItem, setSelectedItem] = useState<string>("");
 
   return (
     <ThemedView className="flex-1">
       <TabBar />
+      <SubCategoriesExbandableFilter
+        loading={loading}
+        themes={attireTheme}
+        multiSelect={false}
+        onChange={(themes) =>
+          setSelectedSubFilter(Array.isArray(themes) ? themes[0] : themes)
+        }
+      />
       <ModalComponent
         id={modalProps.id}
         visible={modalProps.visible}
@@ -270,12 +238,7 @@ export default function SelectingOutfitPage(): React.JSX.Element {
         data={displayData}
         estimatedItemSize={itemHeight}
         renderItem={({ item, index }) => (
-          <OutfitCard
-            selected={!("isPlaceholder" in item) && selectedItem === item.$id}
-            item={item}
-            loading={loading}
-            index={index}
-          />
+          <OutfitCard item={item} loading={loading} index={index} />
         )}
         keyExtractor={(item, index) => {
           if ("isPlaceholder" in item) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ThemedView } from "@/components/ThemedView";
 import {
   View,
@@ -6,23 +6,26 @@ import {
   Dimensions,
   Pressable,
   FlatList,
-  Modal as RNModal,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Box } from "@/components/ui/box";
-import databaseService, { OutfitWithImage } from "@/services/database/db";
+import databaseService from "@/services/database/db";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { AddIcon, CloseIcon, Icon } from "@/components/ui/icon";
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { ModalHeader, ModalCloseButton } from "@/components/ui/modal";
 import GetOutfit from "@/components/pages/outfitPage/actions/get";
-import Modal from "react-native-modal";
-import { SpeedDial } from "@rneui/themed";
-import { Feather } from "@expo/vector-icons";
-import { Colors } from "@/constants/Colors";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import SubCategoriesExbandableFilter from "@/components/atoms/subCategories";
+import useAttireStore from "@/store/cayegoryStore";
+import { OutfitWithImage } from "@/interfaces/outfitDB";
+import ModalComponent from "./atoms/outfitModal";
+import OutfitCard from "./atoms/outfitCard";
+import { Ionicons } from "@expo/vector-icons";
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
@@ -30,64 +33,20 @@ const spacing = 12;
 const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
 const itemHeight = itemWidth * 1.5;
 
-// Define default image
-const DEFAULT_IMAGE = "https://placehold.co/900x1600";
-
-// Create a union type for outfit data items
 type OutfitItem = OutfitWithImage | { id: number; isPlaceholder: true };
 
-// Props for OutfitCard component
-interface OutfitCardProps {
-  item: OutfitItem;
-  loading: boolean;
-  index: number;
-}
-
-const ModalComponent = ({
-  id,
-  visible,
-  onPress,
+export default function OutFitPageComp({
+  selecting,
 }: {
-  id: string;
-  visible: boolean;
-  onPress: () => void;
-}) => {
-  if (!visible) {
-    return null;
-  } else if (visible) {
-    return (
-      <Modal
-        accessible
-        animationIn="slideInUp"
-        animationOut="slideOutDown"
-        swipeThreshold={50}
-        isVisible={visible}
-        onBackButtonPress={onPress}
-        swipeDirection={"down"}
-        onSwipeComplete={onPress}
-      >
-        <View className="flex-1 justify-center items-center ">
-          <Pressable
-            onPress={onPress}
-            className="flex-1 absolute h-full w-full"
-          />
-          <View className="bg-white w-11/12 h-5/6 rounded-lg overflow-hidden">
-            <ModalHeader className="flex-row px-2 py-1 bg-white justify-center">
-              <View className="h-1 w-20 rounded-full bg-primary-400" />
-            </ModalHeader>
-            <GetOutfit paramid={id} onClose={onPress} />
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-};
-
-export default function OutFitPageComp(): React.JSX.Element {
+  selecting: boolean | false;
+}): React.JSX.Element {
   const [outfits, setOutfits] = useState<OutfitWithImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [selectingOutfit, setSelectingOutfit] = useState<boolean>(false);
+  const [attireTheme, setAttireTheme] = useState<string[]>([]);
+  const [selectedSubFilter, setSelectedSubFilter] = useState<string>();
+  const [isSelecting, setSelecting] = useState<boolean>(selecting);
   const [modalProps, setModalProps] = useState<{
     id: string;
     visible: boolean;
@@ -95,8 +54,13 @@ export default function OutFitPageComp(): React.JSX.Element {
 
   // Use useCallback to prevent recreation of this function on every render
   const fetchData = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    setAttireTheme([]);
     try {
       const data = await databaseService.ListOutfits();
+      const themes = useAttireStore.getState().themes;
+      setAttireTheme(themes);
+      console.log(attireTheme);
       setOutfits(data);
     } catch (error) {
       console.error("Error fetching outfits: ", error);
@@ -118,81 +82,6 @@ export default function OutFitPageComp(): React.JSX.Element {
   }, [fetchData]);
 
   // Outfit card component with placeholder
-  function OutfitCard({
-    item,
-    loading,
-    index,
-  }: OutfitCardProps): React.JSX.Element {
-    const [fallbackImage, setFallbackImage] = useState<boolean>(false);
-    const router = useRouter();
-    // Check if item is a placeholder
-    const isPlaceholder = "isPlaceholder" in item;
-
-    // Safe way to get outfit name
-    const getOutfitName = (): string => {
-      if (isPlaceholder) return "Loading...";
-      return item.outfitName || "Unknown outfit";
-    };
-
-    // Safe way to render image
-    const renderOutfitImage = (): React.JSX.Element => {
-      if (loading || isPlaceholder) {
-        return (
-          <Skeleton variant="sharp" style={{ width: "100%", height: "100%" }} />
-        );
-      }
-
-      try {
-        // Use the imageUrl from OutfitWithImage
-        const outfitItem = item as OutfitWithImage;
-        return (
-          <View>
-            <Image
-              source={{
-                uri: fallbackImage ? DEFAULT_IMAGE : outfitItem.imageUrl,
-              }}
-              style={{ width: "100%", height: "100%" }}
-              resizeMode="cover"
-              onError={() => setFallbackImage(true)}
-            />
-          </View>
-        );
-      } catch (error) {
-        console.error("Image rendering error:", error);
-        return (
-          <View className="flex-1 w-full h-full bg-gray-200 justify-center items-center">
-            <Text className="text-gray-500">Image not available</Text>
-          </View>
-        );
-      }
-    };
-
-    return (
-      <Pressable
-        className="overflow-hidden rounded-lg shadow-md shadow-black"
-        style={{ width: itemWidth, margin: spacing / 2 }}
-        onPress={() => {
-          if (!("isPlaceholder" in item)) {
-            setModalProps({ id: item.$id, visible: true });
-          }
-        }}
-      >
-        <Box
-          className="bg-background-100 rounded-lg overflow-hidden"
-          style={{ width: itemWidth, height: itemHeight }}
-        >
-          <View style={{ width: "100%", height: "100%" }}>
-            {renderOutfitImage()}
-            <View className="absolute bottom-0 w-full bg-black/50 p-2">
-              <Text className="text-white font-medium text-center">
-                {getOutfitName()}
-              </Text>
-            </View>
-          </View>
-        </Box>
-      </Pressable>
-    );
-  }
 
   const TabBar = (): React.JSX.Element => {
     const [selectedTab, setSelectedTab] = useState<string>("All");
@@ -230,7 +119,6 @@ export default function OutFitPageComp(): React.JSX.Element {
             size="md"
             variant="outline"
             className="rounded-full h-[3.5] w-[3.5] border-black p-3.5"
-            onPress={() => router.push("/outfit/create")}
           >
             <ButtonIcon className="text-black" size="md" as={AddIcon} />
           </Button>
@@ -248,20 +136,70 @@ export default function OutFitPageComp(): React.JSX.Element {
   };
 
   const displayData: OutfitItem[] = loading ? getPlaceholderData() : outfits;
-
+  const [selectedItem, setSelectedItem] = useState<string>("");
+  useEffect(() => {
+    console.log("Selected Item Changed:", selectedItem);
+  }, [selectedItem]);
   return (
     <ThemedView className="flex-1">
       <TabBar />
+      <SubCategoriesExbandableFilter
+        loading={loading}
+        themes={attireTheme}
+        selected={selectedSubFilter}
+        multiSelect={false}
+        onChange={(themes) =>
+          setSelectedSubFilter(Array.isArray(themes) ? themes[0] : themes)
+        }
+      />
       <ModalComponent
         id={modalProps.id}
         visible={modalProps.visible}
         onPress={() => setModalProps({ id: "", visible: false })}
       />
       <FlashList
+        extraData={selectedItem}
         data={displayData}
         estimatedItemSize={itemHeight}
         renderItem={({ item, index }) => (
-          <OutfitCard item={item} loading={loading} index={index} />
+          <View>
+            <OutfitCard
+              selected={!("isPlaceholder" in item) && selectedItem === item.$id}
+              item={item}
+              loading={loading}
+              index={index}
+              onLongPress={() => {
+                if (!("isPlaceholder" in item)) {
+                  setSelectedItem((prev) => item.$id || ""); // Functional update
+                  console.log(selectedItem === item.$id);
+                }
+              }}
+              onPress={() => {
+                if (!("isPlaceholder" in item)) {
+                  setSelectingOutfit(true);
+                  setModalProps({
+                    id: item.$id || "",
+                    visible: true,
+                  });
+                }
+              }}
+              selecting={isSelecting}
+            />
+            <View className=" w-full absolute bottom-0 bg-white p-2 justify-end flex-row">
+              {"isPlaceholder" in item ? (
+                <Ionicons name="checkbox-outline" size={24} color="black" />
+              ) : selectedItem === item.$id ? (
+                <Ionicons
+                  name="checkbox"
+                  className="justify-end justify-self-end"
+                  size={24}
+                  color="black"
+                />
+              ) : (
+                <Ionicons name="checkbox-outline" size={24} color="black" />
+              )}
+            </View>
+          </View>
         )}
         keyExtractor={(item, index) => {
           if ("isPlaceholder" in item) {

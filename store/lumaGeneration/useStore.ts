@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { account } from "@/services/config/appwrite";
+import { images } from "../../constants/images";
 
 // Define outfit category types
 type OutfitCategory = "full" | "top" | "bottom" | "accessory";
@@ -12,18 +13,22 @@ type OutfitItem = {
   category: OutfitCategory;
   imageUrl: string;
 };
-
+type ActorItem = {
+  imageID: string;
+  imageUrl: string;
+};
 type Data = {
   actorImageID: string;
   actorImageUrl: string;
   outfitItems: OutfitItem[];
+  actorItems: ActorItem;
   userId: string;
   length: number;
   outfitImageUrls: string[];
 };
 
 type Actions = {
-  updateActorImageID: (imageID: string) => void;
+  updateActorImageID: (imageID: string, imagesUrl: string) => void;
   addOutfitItem: (
     imageID: string,
     category: OutfitCategory,
@@ -36,6 +41,8 @@ type Actions = {
   hasFullOutfit: () => boolean;
   updateActorImageUrl: (imageUrl: string) => void;
   setOutfitImageUrls: (urls: string[]) => void;
+  updateActorItems: (imageID: string, imageUrl: string) => void;
+  removeActorItems: () => void;
 };
 
 const useStore = create<Data & Actions>()(
@@ -47,12 +54,18 @@ const useStore = create<Data & Actions>()(
       userId: "",
       length: 0,
       outfitImageUrls: [],
+      actorItems: { imageID: "", imageUrl: "" },
 
       initializeUserId: (id) => {
         set({ userId: id });
       },
 
-      updateActorImageID: (imageID) => set({ actorImageID: imageID }),
+      updateActorImageID: (imageID, imageUrl) =>
+        set({ actorImageID: imageID, actorImageUrl: imageUrl }),
+      updateActorItems: (imageID, imageUrl) =>
+        set({ actorItems: { imageID: imageID, imageUrl: imageUrl } }),
+      removeActorItems: () =>
+        set({ actorItems: { imageID: "", imageUrl: "" } }),
 
       addOutfitItem: (imageID, category, imageUrl) => {
         const { outfitItems } = get();
@@ -93,9 +106,10 @@ const useStore = create<Data & Actions>()(
       },
 
       getLength: () => {
-        const { actorImageID, outfitItems } = get();
+        const { actorItems, outfitItems } = get();
         return (
-          (actorImageID === "" ? 0 : 1) + (outfitItems.length === 0 ? 0 : 1)
+          (actorItems.imageID === "" && actorItems.imageUrl === "" ? 0 : 1) +
+          (outfitItems.length === 0 ? 0 : 1)
         );
       },
 

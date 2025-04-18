@@ -24,7 +24,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: Colors["light"].tabIconSelected[500],
+        tabBarActiveTintColor: Colors["light"].offwhite[500],
         animation: "shift",
         tabBarItemStyle: {
           width: "100%",
@@ -38,23 +38,19 @@ export default function TabLayout() {
           justifyContent: "center",
           alignItems: "center",
         },
+
         tabBarStyle: {
           backgroundColor: Colors["light"].primary[500],
-          borderRadius: 50,
-          marginHorizontal: 20,
-          marginBottom: 40,
-          height: width / 7,
-          position: "absolute",
-          overflow: "hidden",
-          justifyContent: "center",
-          alignItems: "center",
-          flex: 1,
+          borderTopRightRadius: 10,
+          borderTopLeftRadius: 10,
+          width: width,
+          height: width / 6,
           alignContent: "center",
           paddingHorizontal: 20,
-
           borderWidth: 1,
           borderColor: "#0f0d23",
         },
+
         headerStyle: {
           backgroundColor: Colors["light"].primary[500],
         },
@@ -122,3 +118,22 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+/*
+tabBarStyle: {
+          backgroundColor: Colors["light"].primary[500],
+          borderRadius: 50,
+          marginHorizontal: 20,
+          marginBottom: 40,
+          height: width / 7,
+          position: "absolute",
+          overflow: "hidden",
+          justifyContent: "center",
+          alignItems: "center",
+          flex: 1,
+          alignContent: "center",
+          paddingHorizontal: 20,
+
+          borderWidth: 1,
+          borderColor: "#0f0d23",
+        },*/

@@ -4,7 +4,7 @@
     "slug": "facefashionapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -16,7 +16,10 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.facefashionapp"
+      "package": "com.anonymous.facefashionapp",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -40,7 +43,6 @@
           "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
       ],
-      
       [
         "expo-video",
         {
@@ -48,10 +50,17 @@
           "supportsPictureInPicture": false
         }
       ]
-    
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "59d7b239-b123-4bb7-a15f-63b5bb471583"
+      }
     }
   }
 }

@@ -86,7 +86,7 @@ export default function GetActor({
 }) {
   const [actor, setActor] = useState<ActorWithImage>();
   const [loading, setLoading] = useState(true);
-  const { userId, updateActorImageID } = useStore();
+  const { userId, updateActorItems } = useStore();
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
       setLoading(true);
@@ -226,7 +226,7 @@ export default function GetActor({
                 size="full"
                 className="bg-primary-500"
                 onPress={() => {
-                  updateActorImageID(actor?.$id || "");
+                  updateActorItems(actor?.$id || "", actor?.imageUrl || "");
                   router.push("/(auth)/(tabs)/outfit");
                   if (onClose) onClose();
                 }}

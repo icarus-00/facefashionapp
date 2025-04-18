@@ -12,11 +12,13 @@ import { AddIcon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
 import { Modal } from "@/components/ui/modal";
 import ActorPageComp from "@/components/pages/actorPage/view";
+import RootNav from "@/components/atoms/rootNavBar";
 // Define types for our data
 
 export default function Actor(): React.JSX.Element {
   return (
     <SafeAreaView className="flex-1 bg-background-100">
+      <RootNav name="RenderWear" onPress={() => {}} />
       <ActorPageComp />
     </SafeAreaView>
   );

@@ -2,20 +2,15 @@ import { Databases, Client, Models, Functions } from "react-native-appwrite";
 import storageService from "@/services/config/files";
 import outfit from "../../app/(auth)/(tabs)/outfit";
 import { getPresignedUrls } from "../generation/gen";
+import { Outfit, OutfitWithImage, OutfitAdd } from "@/interfaces/outfitDB";
+import useAttireStore from "@/store/cayegoryStore";
 // Define types for actor data
 interface Actor extends Models.Document {
   fileID: string;
   actorName: string;
   // Add other actor properties as needed
 }
-interface Outfit extends Models.Document {
-  fileID: string;
-  outfitName: string;
-  // Add other outfit properties as needed
-}
-interface OutfitWithImage extends Outfit {
-  imageUrl: string;
-}
+
 // Interface for the actor with image URL
 interface ActorWithImage extends Actor {
   imageUrl: string;
@@ -215,8 +210,18 @@ class DatabaseService {
           outfitName: outfit.outfitName,
           imageUrl: await storageService.getfileview(outfit.fileID),
           fileID: outfit.fileID,
+          brand: outfit.brand,
+          size: outfit.size,
+          attireTheme: outfit.attireTheme,
+          material: outfit.material,
+          garmentType: outfit.garmentType,
         }))
       );
+      const rawThemes = outfitsWithImages.map((o: OutfitWithImage) => ({
+        attireTheme: o.attireTheme,
+      }));
+
+      useAttireStore.getState().updateFromOutfits(rawThemes);
       return outfitsWithImages;
     } catch (error) {
       console.error("Error getting outfits:", error);
@@ -242,7 +247,13 @@ class DatabaseService {
         $databaseId: response.$databaseId,
         $permissions: response.$permissions,
         $updatedAt: response.$updatedAt,
+        brand: response.brand,
+        size: response.size,
+        attireTheme: response.attireTheme,
+        material: response.material,
+        garmentType: response.garmentType,
       };
+
       return result;
     } catch (error) {
       console.error("Error getting outfit:", error);
@@ -250,18 +261,23 @@ class DatabaseService {
     }
   }
 
-  async addOutfit<T>(
-    outfitname: string,
-    file: { name: string; type: string; size: number; uri: string }
-  ): Promise<Models.Document> {
+  async addOutfit<T>(data: OutfitAdd): Promise<Models.Document> {
     try {
-      const createdFile = await storageService.createFile(file);
-      const fileID = createdFile;
+      const createdFile = await storageService.createFile(data.file);
+      data.fileID = createdFile;
       const response = await this.database.createDocument(
         this.databaseId,
         this.outfitCollectionId,
         "unique()",
-        { outfitName: outfitname, fileID: fileID }
+        {
+          outfitName: data.outfitName,
+          fileID: data.fileID,
+          brand: data.brand,
+          size: data.size,
+          attireTheme: data.attireTheme,
+          material: data.material,
+          garmentType: data.garmentType,
+        }
       );
       return response;
     } catch (error) {
@@ -269,27 +285,40 @@ class DatabaseService {
       throw error;
     }
   }
-  async editOutfit(
-    documentId: string,
-    outfitname: string,
-    fileid?: string,
-    file?: { name: string; type: string; size: number; uri: string }
-  ): Promise<void> {
+  async editOutfit(documentId: string, data: OutfitAdd): Promise<void> {
     try {
-      if (file) {
-        const updatedFile = await storageService.updateFile(fileid!, file);
+      if (data.file) {
+        const updatedFile = await storageService.updateFile(
+          data.fileID!,
+          data.file
+        );
         const response = await this.database.updateDocument(
           this.databaseId,
           this.outfitCollectionId,
           documentId,
-          { outfitName: outfitname, fileID: updatedFile }
+          {
+            outfitName: data.outfitName,
+            fileID: updatedFile,
+            brand: data.brand,
+            size: data.size,
+            attireTheme: data.attireTheme,
+            material: data.material,
+            garmentType: data.garmentType,
+          }
         );
       } else {
         const response = await this.database.updateDocument(
           this.databaseId,
           this.outfitCollectionId,
           documentId,
-          { outfitName: outfitname }
+          {
+            outfitName: data.outfitName,
+            brand: data.brand,
+            size: data.size,
+            attireTheme: data.attireTheme,
+            material: data.material,
+            garmentType: data.garmentType,
+          }
         );
       }
     } catch (error) {

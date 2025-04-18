@@ -13,9 +13,11 @@ import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "@/components/ui/card";
 import { LinearGradient } from "expo-linear-gradient";
+import RootNav from "@/components/atoms/rootNavBar";
 const RenderWearApp = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
+      <RootNav name="RenderWear" onPress={() => {}} />
       <ScrollView>
         {/*<ImageBackground
         source={require("./assets/gradient-bg.png")}
