@@ -7,6 +7,7 @@ import { View, Image, Text, Dimensions, TouchableOpacity } from "react-native";
 import {
   Gesture,
   GestureDetector,
+  GestureHandlerRootView,
   Pressable,
 } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
@@ -106,11 +107,8 @@ export default function OutfitCard({
     const LongPressGesture = Gesture.LongPress()
       .runOnJS(true)
       .onStart(() => {
+        console.log("Long press started");
         onLongPress();
-      })
-      .onEnd((_e, success) => {
-        if (!("isPlaceholder" in item)) {
-        }
       });
 
     return (

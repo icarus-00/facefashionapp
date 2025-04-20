@@ -26,6 +26,8 @@ import { OutfitWithImage } from "@/interfaces/outfitDB";
 import ModalComponent from "./atoms/outfitModal";
 import OutfitCard from "./atoms/outfitCard";
 import { Ionicons } from "@expo/vector-icons";
+
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
@@ -175,8 +177,10 @@ export default function OutFitPageComp({
                 }
               }}
               onPress={() => {
+                console.log(isSelecting);
                 if (!("isPlaceholder" in item)) {
                   setSelectingOutfit(true);
+                  console.log(selectedItem === item.$id);
                   setModalProps({
                     id: item.$id || "",
                     visible: true,
@@ -219,6 +223,11 @@ export default function OutFitPageComp({
         }
         ListFooterComponent={<View style={{ height: 20 }} />}
       />
+      <BottomSheet enableDynamicSizing={false} snapPoints={["10%", "100%"]}>
+        <BottomSheetView className="flex-1 items-center justify-center p-10">
+          <Text>test 2 🎉</Text>
+        </BottomSheetView>
+      </BottomSheet>
     </ThemedView>
   );
 }

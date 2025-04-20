@@ -10,6 +10,7 @@ import {
 import { account } from "@/services/config/appwrite";
 import { ToastGlue } from "@/context/toastContext";
 import useStore from "@/store/lumaGeneration/useStore";
+import { router } from "expo-router";
 // Define types for the user and context
 type User = {
   $id: string;
@@ -46,14 +47,20 @@ export default function UserProvider({
 }: UserProviderProps): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const {initializeUserId} = useStore();
+  const { initializeUserId } = useStore();
   async function login(email: string, password: string): Promise<void> {
     try {
-      await account.createEmailPasswordSession(email, password);
+      console.log("logging");
+      const result = await account.createEmailPasswordSession(email, password);
+      console.log(result);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       const userDetails = await account.get();
-      initializeUserId(userDetails.$id)
+      initializeUserId(userDetails.$id);
 
       setUser(userDetails as User);
+      console.log(user);
+
       ToastGlue("Welcome back. You are logged in");
     } catch (error) {
       //console.error("Login error:", error);
@@ -65,8 +72,10 @@ export default function UserProvider({
   async function logout(): Promise<void> {
     try {
       await account.deleteSession("current");
-      initializeUserId("")
+
+      initializeUserId("");
       setUser(null);
+      router.replace("/(app)");
       ToastGlue("Logged out");
     } catch (error) {
       console.error("Logout error:", error);
@@ -78,7 +87,8 @@ export default function UserProvider({
   async function register(email: string, password: string): Promise<void> {
     try {
       await account.create(ID.unique(), email, password);
-      await login(email, password);
+      const result = await login(email, password);
+      console.log(result);
       ToastGlue("Account created successfully");
     } catch (error) {
       console.error("Registration error:", error);
@@ -91,10 +101,10 @@ export default function UserProvider({
     try {
       setIsLoading(true);
       const loggedIn = await account.get();
-      initializeUserId(loggedIn.$id)
+      initializeUserId(loggedIn.$id);
       setUser(loggedIn as User);
     } catch (err) {
-      initializeUserId("")
+      initializeUserId("");
       setUser(null);
     } finally {
       setIsLoading(false);

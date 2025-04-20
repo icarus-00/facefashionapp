@@ -22,27 +22,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 SplashScreen.preventAutoHideAsync();
 
 const AppLayout = () => {
-  const router = useRouter();
-  const segments = useSegments();
-  const { current, isLoading } = useUser();
-  useEffect(() => {
-    const authgroup = segments[0] == "(auth)";
-    const appgroup = segments[0] == "(app)";
-    const isLoggedIn = current !== null;
-
-    if (isLoading) {
-      return;
-    }
-    if (!authgroup && isLoggedIn) {
-      router.replace("/(auth)/(tabs)");
-    } else if (authgroup && !isLoggedIn) {
-      router.replace("/(app)");
-    }
-  }, [current]);
-
   return (
     <Stack>
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(app)" options={{ headerShown: false }} />
     </Stack>
   );

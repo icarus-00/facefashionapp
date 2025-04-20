@@ -13,7 +13,7 @@ import {
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import BlurTabBarBackground from "../../../components/ui/TabBarBackground.ios";
+import BlurTabBarBackground from "../../../../components/ui/TabBarBackground.ios";
 
 const { width } = Dimensions.get("window");
 export default function TabLayout() {

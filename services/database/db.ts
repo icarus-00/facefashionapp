@@ -1,6 +1,6 @@
 import { Databases, Client, Models, Functions } from "react-native-appwrite";
 import storageService from "@/services/config/files";
-import outfit from "../../app/(auth)/(tabs)/outfit";
+import outfit from "../../app/(app)/(auth)/(tabs)/outfit";
 import { getPresignedUrls } from "../generation/gen";
 import { Outfit, OutfitWithImage, OutfitAdd } from "@/interfaces/outfitDB";
 import useAttireStore from "@/store/cayegoryStore";

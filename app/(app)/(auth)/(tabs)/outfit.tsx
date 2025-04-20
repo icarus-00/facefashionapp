@@ -25,6 +25,7 @@ import useStore from "@/store/lumaGeneration/useStore";
 import RootNav from "@/components/atoms/rootNavBar";
 import SelectedItemsModal from "@/components/atoms/selectedItemsModal";
 import SubCategoriesExbandableFilter from "@/components/atoms/subCategories";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 // Define types for our data
 export default function outfit() {
   const { getLength, outfitItems, actorItems } = useStore();
@@ -32,6 +33,7 @@ export default function outfit() {
   const selecting = getLength() > 0;
   console.log(actorItems);
   console.log(getLength());
+  console.log(selecting);
 
   console.log("modal visible", modalvisible);
   return (
