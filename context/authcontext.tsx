@@ -17,9 +17,13 @@ type User = {
   email: string;
   // Add other user properties as needed
 };
+type UserBool = {
+  current: boolean;
+  
+}
 
 type UserContextType = {
-  current: User | null; //check if there's a user
+  current: UserBool; //check if there's a user
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -45,20 +49,24 @@ interface UserProviderProps {
 export default function UserProvider({
   children,
 }: UserProviderProps): JSX.Element {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserBool>({current:false});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { initializeUserId } = useStore();
   async function login(email: string, password: string): Promise<void> {
     try {
-      console.log("logging");
+      /*console.log("logging");
       const result = await account.createEmailPasswordSession(email, password);
       console.log(result);
       await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log("getting session")
+      const session = await account.getSession("current")
+      console.log("getting user details");
 
       const userDetails = await account.get();
-      initializeUserId(userDetails.$id);
+      console.log("user details acquired");
+      initializeUserId(userDetails.$id);*/
 
-      setUser(userDetails as User);
+      setUser({current: true});
       console.log(user);
 
       ToastGlue("Welcome back. You are logged in");
@@ -74,7 +82,7 @@ export default function UserProvider({
       await account.deleteSession("current");
 
       initializeUserId("");
-      setUser(null);
+      setUser({current: false});
       router.replace("/(app)");
       ToastGlue("Logged out");
     } catch (error) {
@@ -100,12 +108,12 @@ export default function UserProvider({
   async function checkSession(): Promise<void> {
     try {
       setIsLoading(true);
-      const loggedIn = await account.get();
-      initializeUserId(loggedIn.$id);
-      setUser(loggedIn as User);
+//      const loggedIn = await account.get();
+  //    initializeUserId(loggedIn.$id);
+      setUser({current: true});
     } catch (err) {
       initializeUserId("");
-      setUser(null);
+      //setUser(null);
     } finally {
       setIsLoading(false);
     }
