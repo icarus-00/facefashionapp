@@ -1,4 +1,4 @@
-package com.anonymous.facefashionapp
+package com.icarus.renderwear
 
 import android.app.Application
 import android.content.res.Configuration

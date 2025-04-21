@@ -1,4 +1,4 @@
-package com.anonymous.facefashionapp
+package com.icarus.renderwear
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
