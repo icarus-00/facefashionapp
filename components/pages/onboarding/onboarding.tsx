@@ -154,9 +154,8 @@ export default function OnboardingScreen({ path }: { path: Href }) {
       >
         {/* Login button */}
         <Button
-          className="bg-blue-500 w-full h-20 mb-3"
           variant="solid"
-          size="xl"
+          size="full"
           onPress={handleLogin}
         >
           <ButtonText>Login</ButtonText>

@@ -19,7 +19,7 @@ type User = {
 };
 type UserBool = {
   current: boolean;
-  
+
 }
 
 type UserContextType = {
@@ -49,7 +49,7 @@ interface UserProviderProps {
 export default function UserProvider({
   children,
 }: UserProviderProps): JSX.Element {
-  const [user, setUser] = useState<UserBool>({current:false});
+  const [user, setUser] = useState<UserBool>({ current: false });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { initializeUserId } = useStore();
   async function login(email: string, password: string): Promise<void> {
@@ -66,7 +66,7 @@ export default function UserProvider({
       console.log("user details acquired");
       initializeUserId(userDetails.$id);*/
 
-      setUser({current: true});
+      setUser({ current: true });
       console.log(user);
 
       ToastGlue("Welcome back. You are logged in");
@@ -82,7 +82,7 @@ export default function UserProvider({
       await account.deleteSession("current");
 
       initializeUserId("");
-      setUser({current: false});
+      setUser({ current: false });
       router.replace("/(app)");
       ToastGlue("Logged out");
     } catch (error) {
@@ -108,9 +108,9 @@ export default function UserProvider({
   async function checkSession(): Promise<void> {
     try {
       setIsLoading(true);
-//      const loggedIn = await account.get();
-  //    initializeUserId(loggedIn.$id);
-      setUser({current: true});
+      //      const loggedIn = await account.get();
+      //    initializeUserId(loggedIn.$id);
+      setUser({ current: false });
     } catch (err) {
       initializeUserId("");
       //setUser(null);

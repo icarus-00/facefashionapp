@@ -326,7 +326,7 @@ const ButtonText = React.forwardRef<
           action: parentAction,
         },
         variant,
-        size,
+        size: typeof size === "string" ? size : undefined,
         action,
         class: className,
       })}
@@ -384,13 +384,71 @@ const ButtonIcon = React.forwardRef<
           variant: parentVariant,
           action: parentAction,
         },
-        size,
+        size: typeof size === "string" ? size : undefined,
         class: className,
       })}
       ref={ref}
     />
   );
 });
+
+
+
+type ThirdPartyButtonIconProps = {
+  icon: React.ComponentType<any>;
+  color?: string;
+  className?: string;
+  height?: number;
+  width?: number;
+  [key: string]: any;
+} & VariantProps<typeof buttonIconStyle>;
+
+const ThirdPartyButtonIcon = React.forwardRef<any, ThirdPartyButtonIconProps>(
+  (
+    {
+      icon: IconComponent,
+      color = 'currentColor',
+      className,
+      height,
+      width,
+      variant,
+      size,
+      action,
+      ...props
+    },
+    ref
+  ) => {
+    const context = useStyleContext?.(SCOPE) ?? {};
+    const {
+      variant: parentVariant,
+      size: parentSize,
+      action: parentAction,
+    } = context;
+
+    const computedClassName = buttonIconStyle({
+      parentVariants: {
+        size: parentSize,
+        variant: parentVariant,
+        action: parentAction,
+      },
+      size: size,
+      class: className,
+    });
+
+    return (
+      <IconComponent
+        ref={ref}
+        color={color}
+        height={height}
+        width={width}
+        className={computedClassName}
+        {...props}
+      />
+    );
+  }
+);
+
+
 
 type IButtonGroupProps = React.ComponentPropsWithoutRef<typeof UIButton.Group> &
   VariantProps<typeof buttonGroupStyle>;
@@ -427,5 +485,6 @@ ButtonText.displayName = "ButtonText";
 ButtonSpinner.displayName = "ButtonSpinner";
 ButtonIcon.displayName = "ButtonIcon";
 ButtonGroup.displayName = "ButtonGroup";
+ThirdPartyButtonIcon.displayName = "ThirdPartyButtonIcon";
 
-export { Button, ButtonText, ButtonSpinner, ButtonIcon, ButtonGroup };
+export { Button, ButtonText, ButtonSpinner, ButtonIcon, ButtonGroup, ThirdPartyButtonIcon };

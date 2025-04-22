@@ -14,13 +14,17 @@ export default function AppLayout() {
     console.log(segments);
     const authgroup = segments[1] == "(auth)";
     const appgroup = segments[0] == "(app)";
-    const isLoggedIn = current !== null;
+    const isLoggedIn = current.current;
+
+    console.log("authgroup", authgroup);
+    console.log("appgroup", appgroup);
+    console.log("isLoggedIn", isLoggedIn);
 
     if (isLoading) {
       return;
     }
     if (!authgroup && isLoggedIn) {
-      router.replace("/(app)/(auth)/(tabs)");
+      router.replace("/(app)/(auth)/(tabs)/home");
     } else if (authgroup && !isLoggedIn) {
       router.replace("/(app)");
     }
