@@ -1,12 +1,12 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, ImageBackground } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
+import React, { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Image, ImageBackground, Platform, Dimensions } from "react-native";
+import { AntDesign, Ionicons, createIconSet } from "@expo/vector-icons";
+import { Component } from "react";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Box } from "@/components/ui/box";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import { Center } from "@/components/ui/center";
-import { Text as GText } from "@/components/ui/text";
 import { Pressable } from "@/components/ui/pressable";
 import { Heading } from "@/components/ui/heading";
 import { ScrollView } from "react-native-gesture-handler";
@@ -14,279 +14,296 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "@/components/ui/card";
 import { LinearGradient } from "expo-linear-gradient";
 import RootNav from "@/components/atoms/rootNavBar";
+import Animated, {
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  withSequence,
+  withDelay,
+  Easing,
+  withSpring,
+  interpolate,
+  Extrapolate,
+  FadeIn,
+  FadeOut,
+  SlideInRight,
+  SlideInDown,
+  ZoomIn
+} from "react-native-reanimated";
+const headerImage = require("@/assets/images/home/image copy(1).png");
+const { width, height } = Dimensions.get("window");
+
+const AnimatedCard = Animated.createAnimatedComponent(Card);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const AnimatedHeading = Animated.createAnimatedComponent(Heading);
+const AnimatedBox = Animated.createAnimatedComponent(Box);
+const AnimatedButton = Animated.createAnimatedComponent(Button);
+type categoryType= 
+{
+  id:number ,
+  name:string,
+  icon: React.ComponentProps<typeof AntDesign>["name"]
+}
+// Fashion categories with icons
+const categories  : categoryType[] = [
+  { id: 1, name: "Fashion Enthusiasts", icon: "camerao" },
+  { id: 2, name: "Production Teams", icon: "rocket1" },
+  { id: 3, name: "Everyone Else", icon: "clockcircleo" },
+  
+];
+
+// Trending styles
+const trendingStyles = [
+  { id: 1, name: "Urban Minimalist", image: "/api/placeholder/300/400" },
+  { id: 2, name: "Boho Chic", image: "/api/placeholder/300/400" },
+  { id: 3, name: "Tech Wear", image: "/api/placeholder/300/400" }
+];
+
 const RenderWearApp = () => {
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const heroScale = useSharedValue(0.95);
+  const featuresTranslateY = useSharedValue(50);
+  const buttonScale = useSharedValue(0.95);
+  const generateButtonTranslateY = useSharedValue(100);
+  const cardsStaggerDelay = 100; // milliseconds between each card animation
+  
+  // Refs for scrolling
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    // Entrance animations
+    headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
+    heroScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }));
+    featuresTranslateY.value = withDelay(600, withSpring(0, { damping: 12 }));
+    generateButtonTranslateY.value = withDelay(1200, withSpring(0, { damping: 15 }));
+    buttonScale.value = 1;
+  }, []);
+ 
+
+  // Header animation
+  const headerAnimStyle = useAnimatedStyle(() => {
+    return {
+      opacity: headerOpacity.value,
+      transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }]
+    };
+  });
+
+  // Hero section animation
+  const heroAnimStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: heroScale.value }
+      ]
+    };
+  });
+
+  // Features section animation
+  const featuresAnimStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateY: featuresTranslateY.value }
+      ],
+      opacity: interpolate(featuresTranslateY.value, [50, 0], [0, 1])
+    };
+  });
+
+  // Generate button animation
+  const generateButtonAnimStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateY: generateButtonTranslateY.value },
+        { scale: withSpring(buttonScale.value) }
+      ],
+    };
+  });
+  
+  // Animation for button press
+  const handleButtonPress = () => {
+    buttonScale.value = withSequence(
+      withTiming(0.92, { duration: 100 }),
+      withSpring(1, { damping: 4, stiffness: 300 })
+    );
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <RootNav name="RenderWear" onPress={() => {}} />
-      <ScrollView>
-        {/*<ImageBackground
-        source={require("./assets/gradient-bg.png")}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >*/}
-        <View className="flex-1 items-center justify-between w-full p-0">
-          <ImageBackground
-            source={{
-              uri: "https://cloud.appwrite.io/v1/storage/buckets/67e850540015dbf17f6e/files/67f19fae00140eeaabb9/view?project=67e8502e001a780507c5",
-            }} // Replace with your logo URL
-            className="w-full aspect-[9/13] object-cover"
-            style={{
-              flex: 1,
-            }}
-          >
-            <LinearGradient
-              colors={["rgba(0, 0, 0, 0)", "rgba(255, 255, 255, 1)"]}
-              style={{
-                ...StyleSheet.absoluteFillObject,
-              }}
-            />
-          </ImageBackground>
-        </View>
-        <VStack style={styles.contentContainer} space="md">
-          {/* Header */}
-
-          <View className=" h-[120px] my-10 justify-center items-center">
-            <Center>
-              <Heading className="text-primary-500 font-extrabold" size="4xl">
-                RenderWear
-              </Heading>
-              <Heading className="text-primary-200 font-extrabold" size="5xl">
-                Fusion Style
-              </Heading>
-            </Center>
+    <View className="flex-1 bg-white">
+      
+      <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
+        {/* Hero Section with Animated Image */}
+        <Animated.View style={heroAnimStyle} className="w-full flex-1">
+          <View className="flex-1 flex items-center justify-center w-full">
+            <ImageBackground
+              source={headerImage}
+              className="w-full aspect-[9/16] max-h-full"
+            >
+              <LinearGradient
+                colors={["rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)", "rgba(255, 255, 255, 1)"]}
+                style={{
+                  ...StyleSheet.absoluteFillObject,
+                }}
+              />
+              {/* Floating text overlay on hero image */}
+              <Animated.View 
+                entering={FadeIn.delay(500).duration(1000)} 
+                className="absolute bottom-1/4 left-6 right-6"
+              >
+                <Text className="text-white text-4xl font-bold shadow-lg">
+                  Revolutionizing Try-On Experiences
+                </Text>
+                <Text className="text-white text-lg mt-2 shadow-md">
+                  Create your style instantly with AI
+                </Text>
+              </Animated.View>
+            </ImageBackground>
           </View>
+        </Animated.View>
 
-          {/* Silhouette Image */}
-          {/*  <Center style={styles.silhouetteContainer}>
-            <Image
-              source={require("./assets/male-silhouette.png")}
-              style={styles.silhouetteImage}
-              resizeMode="contain"
-            />
-          </Center> */}
-
-          {/* Main Marketing Text */}
-          <Center className="w-full">
-            <Text className="text-primary-500 font-extrabold text-4xl mb-2  text-center">
-              Revolutionizing Try- On Experiences
-            </Text>
-            <Text className="text-primary-200 text-lg text-center mb-4">
-              Create, customize, and try on styles in seconds using our
-              cutting-edge AI technologies.
-            </Text>
-          </Center>
-
-          {/* Get Started Button */}
-
-          <Button
-            size="full"
-            style={{
-              shadowColor: "#000",
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 10,
-            }}
-            variant="solid"
-          >
-            <ButtonText>Get Started</ButtonText>
-          </Button>
-
-          {/* AI Feature Section */}
+        {/* Brand Header */}
+        <Animated.View style={headerAnimStyle} className="py-6">
           <Center>
-            <Text className="text-primary-500 text-3xl font-extrabold mb-2 text-center">
-              AI-Powered Outfit Generation
-            </Text>
-            <Text style={styles.featureDescription}>
-              Generate Your Unique Fashion Style Anytime, Anywhere! Fashion
-              Studio In Your Pocket.
-            </Text>
+            <AnimatedHeading 
+              entering={ZoomIn.delay(400).duration(800)} 
+              className="text-primary-500 font-extrabold"
+              size="4xl"
+            >
+              RenderWear
+            </AnimatedHeading>
+            <AnimatedHeading 
+              entering={ZoomIn.delay(600).duration(800)} 
+              className="text-primary-200 font-extrabold"
+              size="5xl"
+            >
+              Fusion Style
+            </AnimatedHeading>
           </Center>
+        </Animated.View>
 
-          <HStack className="w-full justify-center gap-5 mt-4">
-            <Card className="bg-white shadow-black shadow-{20} rounded-xl">
-              <AntDesign
-                name="camera"
-                size={40}
-                color="#4a2b82"
-                style={styles.iconSpacing}
-              />
-            </Card>
-            <Card className="bg-white shadow-black shadow-{20} rounded-xl">
-              <AntDesign
-                name="camera"
-                size={40}
-                color="#4a2b82"
-                style={styles.iconSpacing}
-              />
-            </Card>
-            <Card className="bg-white shadow-black shadow-{20} rounded-xl">
-              <AntDesign
-                name="camera"
-                size={40}
-                color="#4a2b82"
-                style={styles.iconSpacing}
-              />
-            </Card>
-          </HStack>
-          <HStack space="md">
-            <Card className="bg-primary-500 shadow-black shadow-{20} rounded-xl">
-              <Text className="text-typography-white">Streat Wear</Text>
-            </Card>
+        {/* Features Section */}
+        <Animated.View style={featuresAnimStyle} className="px-5">
+          <VStack space="lg">
+            {/* AI Feature Section */}
+            <AnimatedBox entering={FadeIn.delay(700).duration(800)}>
+              <Center>
+                <Text className="text-primary-500 text-2xl font-extrabold mb-2 text-center">
+                  AI-Powered Outfit Generation
+                </Text>
+                <Text className="text-gray-600 text-center mb-6">
+                  Generate unique fashion styles anytime, anywhere!
+                  Your personal fashion studio in your pocket.
+                </Text>
+              </Center>
+            </AnimatedBox>
 
-            <Card className="bg-primary-500 rounded-xl">
-              <Text className="text-typography-white">Exotic</Text>
-            </Card>
-            <Card className="bg-primary-500 rounded-xl">
-              <Text className="text-typography-white">Retro</Text>
-            </Card>
-          </HStack>
+            
+            <View className="flex-row flex-wrap justify-between">
+              {categories.map((category, index) => (
+                <AnimatedPressable
+                  key={category.id}
+                  entering={SlideInRight.delay(800 + index * cardsStaggerDelay).duration(500)}
+                  className="w-[30%] mb-4"
+                  onPress={() => handleButtonPress()}
+                >
+                  <Card className="bg-white shadow-sm rounded-xl p-4 items-center justify-center h-20">
+                    <AntDesign
+                      name={category.icon}
+                      size={24}
+                      color="#4a2b82"
+                      style={{ marginBottom: 8 }}
+                    />
+                    <Text className="text-primary-500 text-center font-medium text-sm">{category.name}</Text>
+                  </Card>
+                </AnimatedPressable>
+              ))}
+            </View>
 
-          {/* Secondary Category Tabs */}
-          <HStack space="md">
-            <Card className="bg-primary-500 rounded-xl">
-              <Text className="text-typography-white">Historical</Text>
-            </Card>
+            {/* Trending Styles - Horizontal Scrolling */}
+            <AnimatedBox entering={FadeIn.delay(1200).duration(800)}>
+              <Text className="text-primary-500 font-bold text-lg mb-3">Trending Styles</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 20 }}
+              >
+                {trendingStyles.map((style, index) => (
+                  <AnimatedPressable
+                    key={style.id}
+                    entering={SlideInRight.delay(1300 + index * 150).duration(500)}
+                    className="mr-4 w-40"
+                    onPress={() => handleButtonPress()}
+                  >
+                    <Card className="rounded-xl overflow-hidden">
+                      <Image
+                        source={{ uri: style.image }}
+                        style={{ width: '100%', height: 180 }}
+                      />
+                      <View className="p-2">
+                        <Text className="text-primary-500 font-medium">{style.name}</Text>
+                      </View>
+                    </Card>
+                  </AnimatedPressable>
+                ))}
+              </ScrollView>
+            </AnimatedBox>
 
-            <Card className="bg-primary-500 rounded-xl">
-              <Text className="text-typography-white">Historical</Text>
-            </Card>
-          </HStack>
-
-          {/* Bottom Silhouette */}
-          <Box style={styles.bottomSilhouetteContainer}>
-            {/* <Image
-              source={require("./assets/female-silhouette.png")}
-              style={styles.bottomSilhouetteImage}
-              resizeMode="contain"
-            /> */}
-          </Box>
-        </VStack>
-        {/*</ImageBackground>*/}
+            {/* Recent Creations */}
+            <AnimatedBox entering={SlideInDown.delay(1500).duration(800)} className="mb-24">
+              <Text className="text-primary-500 font-bold text-lg mb-3">Your Recent Creations</Text>
+              <Center className="py-8 bg-gray-100 rounded-xl">
+                <Ionicons name="images-outline" size={48} color="#4a2b82" />
+                <Text className="text-gray-500 mt-2">No creations yet</Text>
+                <Text className="text-primary-500 font-medium mt-1">Start creating now!</Text>
+              </Center>
+            </AnimatedBox>
+          </VStack>
+        </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Floating Generate Button */}
+      <Animated.View 
+        style={[
+          styles.floatingButtonContainer,
+          generateButtonAnimStyle
+        ]}
+      >
+        <AnimatedButton
+          size="lg"
+          variant="solid"
+          className="rounded-full shadow-xl"
+          onPress={() => {
+            handleButtonPress();
+            // Add your generate functionality here
+          }}
+        >
+          <Ionicons name="sparkles" size={24} color="white" style={{ marginRight: 8 }} />
+          <ButtonText>Generate Now</ButtonText>
+        </AnimatedButton>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    zIndex: 999
   },
-  backgroundImage: {
-    flex: 1,
-    width: "100%",
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 30,
-    alignItems: "center",
-  },
-  headerContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-
-  headerSubText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#000",
-    marginTop: -5,
-  },
-  silhouetteContainer: {
-    height: 140,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  silhouetteImage: {
-    height: "100%",
-  },
-  marketingContainer: {
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  marketingTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#4a2b82",
-    marginBottom: 5,
-  },
-  marketingDescription: {
-    fontSize: 14,
-    textAlign: "center",
-    color: "#555",
-    paddingHorizontal: 10,
-  },
-  startButton: {
-    backgroundColor: "#4a2b82",
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
-    marginVertical: 20,
-  },
-  aiFeatureContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  featureTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#000",
-    marginBottom: 5,
-  },
-  featureDescription: {
-    fontSize: 14,
-    textAlign: "center",
-    color: "#555",
-    paddingHorizontal: 10,
-  },
-  categoryTabsContainer: {
-    width: "100%",
-    marginBottom: 10,
-  },
-  categoryTab: {
-    backgroundColor: "#6c3cbe",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    width: "30%",
-    alignItems: "center",
-  },
-  secondaryTabsContainer: {
-    width: "70%",
-    marginBottom: 10,
-  },
-  secondaryTab: {
-    backgroundColor: "#6c3cbe",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    width: "45%",
-    alignItems: "center",
-  },
-  iconSpacing: {
-    marginBottom: 3,
-  },
-  tabText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  bottomSilhouetteContainer: {
-    flex: 1,
-    width: "100%",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  bottomSilhouetteImage: {
-    height: 150,
-  },
+  featureIcon: {
+    backgroundColor: "#f0ebf8",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8
+  }
 });
 
 export default RenderWearApp;

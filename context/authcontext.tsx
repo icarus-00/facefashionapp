@@ -11,7 +11,10 @@ import { account } from "@/services/config/appwrite";
 import { ToastGlue } from "@/context/toastContext";
 import useStore from "@/store/lumaGeneration/useStore";
 import { router } from "expo-router";
-// Define types for the user and context
+import { client } from "@/utils/config/supabase";
+import { EmailOtpType, Session,User as UserInterface } from '@supabase/supabase-js'// Define types for the user and context
+import { makeRedirectUri } from 'expo-auth-session'
+
 type User = {
   $id: string;
   email: string;
@@ -21,13 +24,22 @@ type UserBool = {
   current: boolean;
 
 }
+interface emailpasswordCreds {
+  email: string;
+  password: string;
+}
+interface OtpCreds{
+  email:string;
+  redirectUrl:string;
+}
 
 type UserContextType = {
-  current: UserBool; //check if there's a user
+  current: UserInterface | null; //check if there's a user
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (creds: emailpasswordCreds | OtpCreds, otp?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
+  verifyOtp:(email:string ,token:string , type:EmailOtpType)=>Promise<void>;
   Toast: (message: string) => void;
 };
 
@@ -46,44 +58,73 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
+
 export default function UserProvider({
   children,
 }: UserProviderProps): JSX.Element {
-  const [user, setUser] = useState<UserBool>({ current: false });
+  const [user, setUser] = useState<UserInterface | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { initializeUserId } = useStore();
-  async function login(email: string, password: string): Promise<void> {
+  async function login(
+    creds: emailpasswordCreds | OtpCreds,
+    otp:boolean = false
+  ): Promise<void> {
     try {
-      /*console.log("logging");
-      const result = await account.createEmailPasswordSession(email, password);
-      console.log(result);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("getting session")
-      const session = await account.getSession("current")
-      console.log("getting user details");
+      if (otp)
+      {
+        const {email, redirectUrl} = creds as OtpCreds;
+        await client.auth.signInWithOtp({email:email })
+      }
+      else
+      {
+        const {email, password} = creds as emailpasswordCreds;
+        const result = await client.auth.signInWithPassword({email, password});
+        console.log(result);
+        console.log("getting session")
+        console.log("getting user details");
+        const userDetails = await client.auth.getSession()
+        console.log("user details acquired");
+        initializeUserId(userDetails.data.session?.user.id!);
 
-      const userDetails = await account.get();
-      console.log("user details acquired");
-      initializeUserId(userDetails.$id);*/
+        setUser(userDetails.data.session?.user!);
+        console.log(user);
 
-      setUser({ current: true });
-      console.log(user);
-
-      ToastGlue("Welcome back. You are logged in");
+        ToastGlue("Welcome back. You are logged in");
+      }
     } catch (error) {
       //console.error("Login error:", error);
       ToastGlue("Login failed. Please check your credentials.");
       throw error;
     }
   }
+  async function verifyOtp (email:string ,token:string , type:EmailOtpType) :Promise<void>
+  {
+    try {
+      const result = await client.auth.verifyOtp({email, token , type:"email"});
+      const userDetails = await client.auth.getSession()
+      console.log("user details acquired");
+      initializeUserId(userDetails.data.session?.user.id!);
+
+      setUser(userDetails.data.session?.user!);
+      console.log(user);
+
+      ToastGlue("Welcome back. You are logged in");
+    }
+    catch (e) {
+
+    }
+    finally {
+
+    }
+  }
 
   async function logout(): Promise<void> {
     try {
-      await account.deleteSession("current");
+      await client.auth.signOut();
 
       initializeUserId("");
-      setUser({ current: false });
-      router.replace("/(app)");
+      setUser(null);
+      //router.replace("/(app)");
       ToastGlue("Logged out");
     } catch (error) {
       console.error("Logout error:", error);
@@ -95,7 +136,7 @@ export default function UserProvider({
   async function register(email: string, password: string): Promise<void> {
     try {
       await account.create(ID.unique(), email, password);
-      const result = await login(email, password);
+      const result = await login({email , password});
       console.log(result);
       ToastGlue("Account created successfully");
     } catch (error) {
@@ -108,12 +149,12 @@ export default function UserProvider({
   async function checkSession(): Promise<void> {
     try {
       setIsLoading(true);
-      //      const loggedIn = await account.get();
-      //    initializeUserId(loggedIn.$id);
-      setUser({ current: false });
+      const loggedIn = (await client.auth.getSession()).data.session?.user;
+      initializeUserId(loggedIn?.id!);
+      setUser(loggedIn!);
     } catch (err) {
       initializeUserId("");
-      //setUser(null);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +171,7 @@ export default function UserProvider({
 
   return (
     <UserContext.Provider
-      value={{ current: user, isLoading, login, logout, register, Toast }}
+      value={{ current: user, isLoading, login, logout, register, Toast , verifyOtp }}
     >
       {children}
     </UserContext.Provider>

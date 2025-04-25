@@ -2,6 +2,7 @@ import { Text, View, StyleSheet, Dimensions, FlatList } from "react-native";
 import { Image } from "expo-image";
 import { SliderProps } from "./interface";
 import React, { useRef, useImperativeHandle, forwardRef } from "react";
+import {useState} from 'react'
 import Animated, {
   useSharedValue,
   useDerivedValue,
@@ -9,6 +10,7 @@ import Animated, {
   Extrapolation,
   SharedValue,
 } from "react-native-reanimated";
+import { Button ,ButtonText } from "@/components/ui/button";
 
 const { width } = Dimensions.get("screen");
 
@@ -57,7 +59,7 @@ const DotItem = ({
       style={{
         width: dotWidth,
         height: 8,
-        backgroundColor: "#553ea0",
+        backgroundColor: "black",
         borderRadius: 5,
         marginHorizontal: 5,
         opacity: dotOpacity,
@@ -97,6 +99,7 @@ const Slider = forwardRef(
     // Create shared value to track scroll position
     const scrollX = useSharedValue(0);
     const flatListRef = useRef<FlatList>(null);
+        const [currentIndex, setCurrentIndex] = useState(0);
 
     // Expose methods to parent component via ref
     useImperativeHandle(ref, () => ({
@@ -113,9 +116,20 @@ const Slider = forwardRef(
 
       // Calculate current index and notify parent component
       const slideIndex = Math.round(scrollX.value / width);
+            setCurrentIndex(slideIndex);
+
       if (onSlideChange) {
         onSlideChange(slideIndex);
       }
+    };
+
+        const handleContinue = () => {
+        const nextIndex = currentIndex + 1;
+        if (nextIndex < data.length) {
+          flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+        } else {
+            flatListRef.current?.scrollToIndex({ index: 0, animated: true });
+        }
     };
 
     return (
@@ -132,12 +146,13 @@ const Slider = forwardRef(
                   source={item.image}
                   style={styles.image}
                   contentFit="contain"
+                  
                 />
               </View>
 
               {/* Text section - bottom 40% */}
               <View style={styles.textContainer}>
-                <Text style={styles.title}>{item.title}</Text>
+                <Text className="font-semibold italic" style={styles.title}>{item.title}</Text>
                 <Text style={styles.description}>{item.description}</Text>
               </View>
             </View>
@@ -157,6 +172,14 @@ const Slider = forwardRef(
 
         {/* Fixed pagination overlay */}
         <Pagination data={data} scrollX={scrollX} />
+        <View className="w-full p-5">
+        <Button size="full" onPress={handleContinue} >
+          <ButtonText>
+            continue
+            </ButtonText>
+          </Button>
+          </View>
+        
       </View>
     );
   }
@@ -175,12 +198,12 @@ const styles = StyleSheet.create({
   imageContainer: {
     height: "60%", // Top 60% for image
     width: "100%",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     alignItems: "center",
   },
   image: {
-    width: "100%",
-    height: "100%",
+    width: 250,
+    aspectRatio:1/1
   },
   textContainer: {
     height: "40%", // Bottom 40% for text
@@ -191,11 +214,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily:"poppins",
+    
     textAlign: "center",
   },
   description: {
-    fontSize: 16,
+    color:"gray",
+    fontSize: 12,
     textAlign: "center",
     marginVertical: 10,
   },
@@ -206,7 +231,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     // Position at the boundary between image and text
-    top: "65%",
+    top: "55%",
     paddingVertical: 5,
     backgroundColor: "rgba(255, 255, 255, 0.7)", // Optional: semi-transparent background for better visibility
     zIndex: 10,

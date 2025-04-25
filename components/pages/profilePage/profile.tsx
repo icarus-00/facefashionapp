@@ -14,11 +14,12 @@ import {
   Text,
   Image,
 } from "react-native";
-import { Client, Avatars } from "react-native-appwrite";
+import {  Avatars } from "react-native-appwrite";
 import { Dialog } from "@rneui/themed";
 import { Menu, MenuItem, MenuItemLabel } from "@/components/ui/menu";
 import { ScrollView } from "react-native-gesture-handler";
 import { useUser } from "@/context/authcontext";
+import { client as sClient } from "@/utils/config/supabase";
 const { width } = Dimensions.get("window");
 const ProfilePage = () => {
   const router = useRouter();
@@ -49,8 +50,8 @@ const ProfilePage = () => {
 
     loadUserData();
   }, []);
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
   };
   // Render a model/actor card
   const renderActorItem = ({ item }: { item: any }) => (

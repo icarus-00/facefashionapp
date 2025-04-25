@@ -1,11 +1,22 @@
 import { Box } from "@/components/ui/box";
-import { ButtonIcon, ButtonText, ThirdPartyButtonIcon } from "@/components/ui/button";
+import {
+  ButtonIcon,
+  ButtonText,
+  ThirdPartyButtonIcon,
+} from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
+import { Button ,ButtonSpinner } from "@/components/ui/button";
 import { Ionicons } from "@expo/vector-icons";
 import { Input } from "@rneui/themed";
-import { View, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Modal } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Modal,
+} from "react-native";
 import Animated, {
   useSharedValue,
   withTiming,
@@ -16,11 +27,16 @@ import Animated, {
   interpolate,
   Extrapolate,
   runOnJS,
-  withSpring
+  withSpring,
 } from "react-native-reanimated";
 import { useState, useEffect, useRef } from "react";
-import BottomSheet, { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from "@gorhom/bottom-sheet";
-import OTPInputView from "@twotalltotems/react-native-otp-input";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetModalProvider,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { OtpInput } from "react-native-otp-entry";
 
 export default function LoginPage({
   setEmail,
@@ -34,8 +50,11 @@ export default function LoginPage({
   emailError,
   passwordError,
   handleSubmit,
+  handleOtpRequest,
+  setToken,
   handleOTPSubmit = (otp) => console.log("OTP submitted:", otp), // Optional OTP handler
 }: {
+  setToken: (value: string) => void;
   setEmail: (value: string) => void;
   setPassword: (value: string) => void;
   email: string;
@@ -47,6 +66,7 @@ export default function LoginPage({
   emailError: string;
   passwordError: string;
   handleSubmit: () => void;
+  handleOtpRequest: () => void;
   handleOTPSubmit?: (otp: string) => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -62,7 +82,7 @@ export default function LoginPage({
   // Animation config
   const animConfig = {
     duration: 400,
-    easing: Easing.bezier(0.25, 0.1, 0.25, 1)
+    easing: Easing.bezier(0.25, 0.1, 0.25, 1),
   };
 
   // Animation values
@@ -75,8 +95,7 @@ export default function LoginPage({
   const logoTextSize = useSharedValue(32);
   const forgotPasswordOpacity = useSharedValue(0);
 
-
-  //refs 
+  //refs
   const BottomSheetModalRef = useRef<BottomSheetModal>(null);
   // Form validation
   const validateEmail = (email: string) => {
@@ -198,10 +217,9 @@ export default function LoginPage({
     }
   };
 
-  const handleOtpPress = () => {
-
+  const handleOtpPress = async () => {
+    //await handleOtpRequest();
     animateSecondButtonPress();
-
 
     if (validateEmail(email)) {
       BottomSheetModalRef.current?.present();
@@ -262,7 +280,7 @@ export default function LoginPage({
     return {
       height: passwordHeight.value,
       opacity: passwordOpacity.value,
-      overflow: 'hidden',
+      overflow: "hidden",
     };
   });
 
@@ -275,7 +293,7 @@ export default function LoginPage({
   const headerBoxStyle = useAnimatedStyle(() => {
     return {
       height: headerBoxHeight.value,
-      justifyContent: 'center',
+      justifyContent: "center",
     };
   });
 
@@ -300,12 +318,12 @@ export default function LoginPage({
               <Animated.Text
                 style={[
                   {
-                    color: 'white',
-                    fontWeight: 'bold',
-                    width: '100%',
-                    textAlign: 'center',
+                    color: "white",
+                    fontWeight: "bold",
+                    width: "100%",
+                    textAlign: "center",
                   },
-                  logoTextStyle
+                  logoTextStyle,
                 ]}
               >
                 RenderWear
@@ -322,14 +340,18 @@ export default function LoginPage({
                     if (emailError) validateEmail(text);
                   }}
                   errorMessage={emailError}
-                  errorStyle={{ color: '#FF3B30', fontSize: 12, marginTop: 5 }}
-                  inputStyle={{ color: '#333', paddingVertical: 10 }}
+                  errorStyle={{ color: "#FF3B30", fontSize: 12, marginTop: 5 }}
+                  inputStyle={{ color: "#333", paddingVertical: 10 }}
                   inputContainerStyle={{
-                    borderBottomColor: emailError ? '#FF3B30' : '#E0E0E0',
+                    borderBottomColor: emailError ? "#FF3B30" : "#E0E0E0",
                     borderBottomWidth: 1.5,
                   }}
                   label="Email"
-                  labelStyle={{ color: '#333', fontWeight: '600', marginBottom: 8 }}
+                  labelStyle={{
+                    color: "#333",
+                    fontWeight: "600",
+                    marginBottom: 8,
+                  }}
                   leftIcon={<Ionicons name="mail" size={20} color="#555" />}
                   leftIconContainerStyle={{ marginLeft: 0, marginRight: 10 }}
                   rightIcon={
@@ -338,9 +360,11 @@ export default function LoginPage({
                         name="close-circle"
                         size={20}
                         color="#777"
-                        onPress={() => setEmail('')}
+                        onPress={() => setEmail("")}
                       />
-                    ) : <></>
+                    ) : (
+                      <></>
+                    )
                   }
                   rightIconContainerStyle={{ marginRight: 0 }}
                   placeholder="Enter your email"
@@ -357,16 +381,26 @@ export default function LoginPage({
                       if (passwordError) validatePassword(text);
                     }}
                     errorMessage={passwordError}
-                    errorStyle={{ color: '#FF3B30', fontSize: 12, marginTop: 5 }}
-                    inputStyle={{ color: '#333', paddingVertical: 10 }}
+                    errorStyle={{
+                      color: "#FF3B30",
+                      fontSize: 12,
+                      marginTop: 5,
+                    }}
+                    inputStyle={{ color: "#333", paddingVertical: 10 }}
                     inputContainerStyle={{
-                      borderBottomColor: passwordError ? '#FF3B30' : '#E0E0E0',
+                      borderBottomColor: passwordError ? "#FF3B30" : "#E0E0E0",
                       borderBottomWidth: 1.5,
                     }}
                     label="Password"
-                    labelStyle={{ color: '#333', fontWeight: '600', marginBottom: 8 }}
+                    labelStyle={{
+                      color: "#333",
+                      fontWeight: "600",
+                      marginBottom: 8,
+                    }}
                     secureTextEntry={!showPassword}
-                    leftIcon={<Ionicons name="lock-closed" size={20} color="#555" />}
+                    leftIcon={
+                      <Ionicons name="lock-closed" size={20} color="#555" />
+                    }
                     leftIconContainerStyle={{ marginLeft: 0, marginRight: 10 }}
                     rightIcon={
                       <Ionicons
@@ -383,7 +417,9 @@ export default function LoginPage({
                   {/* Forgot Password */}
                   <Animated.View style={forgotPasswordStyle}>
                     <TouchableOpacity className="mt-2 mb-4">
-                      <Text className="text-gray-600 text-right text-sm">Forgot Password?</Text>
+                      <Text className="text-gray-600 text-right text-sm">
+                        Forgot Password?
+                      </Text>
                     </TouchableOpacity>
                   </Animated.View>
                 </Animated.View>
@@ -402,7 +438,14 @@ export default function LoginPage({
                     <ButtonText>
                       {step === 1 ? "Continue" : "Log In"}
                     </ButtonText>
-                    {loading && <Ionicons name="reload" size={20} color="white" className="ml-2" />}
+                    {loading && (
+                      <Ionicons
+                        name="reload"
+                        size={20}
+                        color="white"
+                        className="ml-2"
+                      />
+                    )}
                     <Ionicons
                       name={step === 1 ? "arrow-forward" : "log-in"}
                       size={20}
@@ -421,11 +464,14 @@ export default function LoginPage({
                       onPress={handleOtpPress}
                       disabled={otpLoading}
                     >
-                      <ButtonText>
-                        Login with OTP
-                      </ButtonText>
+                      <ButtonText>Login with OTP</ButtonText>
 
-                      <ThirdPartyButtonIcon icon={Ionicons} name="key" size={24} color="white" />
+                      <ThirdPartyButtonIcon
+                        icon={Ionicons}
+                        name="key"
+                        size={24}
+                        color="white"
+                      />
                     </Button>
                   ) : (
                     <Button
@@ -434,7 +480,12 @@ export default function LoginPage({
                       onPress={handleBackPress}
                     >
                       <ButtonText className="text-white">
-                        <Ionicons name="arrow-back" size={20} className="mr-2" /> Back
+                        <Ionicons
+                          name="arrow-back"
+                          size={20}
+                          className="mr-2"
+                        />{" "}
+                        Back
                       </ButtonText>
                     </Button>
                   )}
@@ -444,67 +495,72 @@ export default function LoginPage({
           </View>
         </ScrollView>
 
-
         {/* OTP Bottom Sheet */}
-
       </KeyboardAvoidingView>
       <BottomSheetModalProvider>
-        <BottomSheetModal
-          snapPoints={['70%']}
-          ref={BottomSheetModalRef}
-
-
-        >
-          <BottomSheetView style={{ flex: 1, alignItems: "center", overflow: "visible", justifyContent: "flex-start", backgroundColor: "white" }}>
+        <BottomSheetModal snapPoints={["70%"]} ref={BottomSheetModalRef}>
+          <BottomSheetView
+            style={{
+              flex: 1,
+              alignItems: "center",
+              overflow: "visible",
+              justifyContent: "flex-start",
+              backgroundColor: "white",
+            }}
+          >
             <View className="bg-white rounded-t-3xl pt-8 pb-8 px-4 relative">
-
               <View className="w-full items-center justify-center flex-row  ">
                 <View className="bg-white h-16 w-16 rounded-full flex items-center justify-center shadow-md">
                   <Ionicons name="shield-checkmark" size={28} color="#000" />
                 </View>
               </View>
 
-
               <View className="mt-8 px-4">
-                <Text className="text-center text-xl font-bold mb-2">Verification Code</Text>
+                <Text className="text-center text-xl font-bold mb-2">
+                  Verification Code
+                </Text>
                 <Text className="text-center text-gray-500 mb-6">
                   We have sent OTP verification code to your email address
                 </Text>
 
-
                 <View className="my-4">
-                  <Input
-                    value={otp}
-                    onChangeText={setOtp}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    placeholder="Enter 6-digit code"
-                    inputContainerStyle={{
-                      borderBottomWidth: 0,
-                      backgroundColor: '#f7f7f7',
-                      borderRadius: 10,
-                      paddingHorizontal: 16,
-                      height: 60,
+                  <OtpInput
+                    numberOfDigits={6}
+                    focusColor="green"
+                    autoFocus={false}
+                    hideStick={true}
+                    placeholder="******"
+                    blurOnFilled={true}
+                    disabled={false}
+                    type="numeric"
+                    secureTextEntry={false}
+                    focusStickBlinkingDuration={500}
+                    onFocus={() => console.log("Focused")}
+                    onBlur={() => console.log("Blurred")}
+                    onTextChange={(text) => {setToken(text); setOtp(text); }}
+                    onFilled={(text) => console.log(`OTP is ${text}`)}
+                    textInputProps={{
+                      accessibilityLabel: "One-Time Password",
                     }}
-                    inputStyle={{
-                      textAlign: 'center',
-                      fontWeight: 'bold',
-                      fontSize: 18,
-                      letterSpacing: 10,
-                    }}
-                    containerStyle={{
-                      marginBottom: 16,
+                    textProps={{
+                      accessibilityRole: "text",
+                      accessibilityLabel: "OTP digit",
+                      allowFontScaling: false,
                     }}
                   />
                 </View>
 
-
                 <View className="flex-row justify-center items-center mb-6">
                   <Text className="text-gray-500">
-                    {canResend ? "Didn't receive code? " : `Resend code in ${otpTimer}s`}
+                    {canResend
+                      ? "Didn't receive code? "
+                      : `Resend code in ${otpTimer}s`}
                   </Text>
                   {canResend && (
-                    <TouchableOpacity onPress={handleResendOtp} disabled={otpLoading}>
+                    <TouchableOpacity
+                      onPress={handleResendOtp}
+                      disabled={otpLoading}
+                    >
                       <Text className="text-blue-600 font-semibold ml-1">
                         Resend
                       </Text>
@@ -512,19 +568,28 @@ export default function LoginPage({
                   )}
                 </View>
 
-
                 <Button
                   size="full"
                   action="primary"
                   onPress={handleOtpSubmitPress}
                   disabled={otp.length !== 6 || otpLoading}
                 >
-                  <ButtonText>
-                    Verify OTP
-
-                  </ButtonText>
-                  {otpLoading && <Ionicons name="reload" size={20} color="white" className="ml-2" />}
-                  <Ionicons name="checkmark-circle" size={20} color="white" className="ml-2" />
+                  <ButtonText>Verify OTP</ButtonText>
+                  {otpLoading && (
+                    <Ionicons
+                      name="reload"
+                      size={20}
+                      color="white"
+                      className="ml-2"
+                    />
+                  )}
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color="white"
+                    className="ml-2"
+                  />
+                  <ButtonSpinner animating={true} size={20} color="white" />
                 </Button>
               </View>
             </View>
@@ -532,84 +597,5 @@ export default function LoginPage({
         </BottomSheetModal>
       </BottomSheetModalProvider>
     </>
-
   );
 }
-
-{/* <BottomSheetModal
-  snapPoints={['70%']}
-  ref={BottomSheetModalRef}
-  containerStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
->
-  <View className="bg-white rounded-t-3xl pt-8 pb-8 px-4 relative">
-    {/* Pill Handle 
-    <View className="absolute -top-8 left-0 right-0 flex items-center">
-      <View className="bg-white h-16 w-16 rounded-full flex items-center justify-center shadow-md">
-        <Ionicons name="shield-checkmark" size={28} color="#000" />
-      </View>
-    </View>
-
-    
-    <View className="mt-8 px-4">
-      <Text className="text-center text-xl font-bold mb-2">Verification Code</Text>
-      <Text className="text-center text-gray-500 mb-6">
-        We have sent OTP verification code to your email address
-      </Text>
-
-      
-      <View className="my-4">
-        <Input
-          value={otp}
-          onChangeText={setOtp}
-          keyboardType="number-pad"
-          maxLength={6}
-          placeholder="Enter 6-digit code"
-          inputContainerStyle={{
-            borderBottomWidth: 0,
-            backgroundColor: '#f7f7f7',
-            borderRadius: 10,
-            paddingHorizontal: 16,
-            height: 60,
-          }}
-          inputStyle={{
-            textAlign: 'center',
-            fontWeight: 'bold',
-            fontSize: 18,
-            letterSpacing: 10,
-          }}
-          containerStyle={{
-            marginBottom: 16,
-          }}
-        />
-      </View>
-
-      
-      <View className="flex-row justify-center items-center mb-6">
-        <Text className="text-gray-500">
-          {canResend ? "Didn't receive code? " : `Resend code in ${otpTimer}s`}
-        </Text>
-        {canResend && (
-          <TouchableOpacity onPress={handleResendOtp} disabled={otpLoading}>
-            <Text className="text-blue-600 font-semibold ml-1">
-              Resend
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      
-      <Button
-        size="full"
-        action="primary"
-        onPress={handleOtpSubmitPress}
-        disabled={otp.length !== 6 || otpLoading}
-      >
-        <ButtonText>
-          Verify OTP
-          {otpLoading && <Ionicons name="reload" size={20} color="white" className="ml-2" />}
-          <Ionicons name="checkmark-circle" size={20} color="white" className="ml-2" />
-        </ButtonText>
-      </Button>
-    </View>
-  </View>
-</BottomSheetModal> */}

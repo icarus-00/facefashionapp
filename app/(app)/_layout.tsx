@@ -2,6 +2,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useUser } from "@/context/authcontext";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 
 export default function AppLayout() {
   const { isLoading, current } = useUser();
@@ -14,12 +15,15 @@ export default function AppLayout() {
     console.log(segments);
     const authgroup = segments[1] == "(auth)";
     const appgroup = segments[0] == "(app)";
-    const isLoggedIn = current.current;
+    console.log(current)
+    const isLoggedIn = (current!== undefined);
 
     console.log("authgroup", authgroup);
     console.log("appgroup", appgroup);
     console.log("isLoggedIn", isLoggedIn);
-
+    
+    
+    
     if (isLoading) {
       return;
     }
