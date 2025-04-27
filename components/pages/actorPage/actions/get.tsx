@@ -178,7 +178,7 @@ export default function GetActor({
             <CustomFab
               onEdit={() => {
                 router.push({
-                  pathname: "/(auth)/actor/edit",
+                  pathname: "/(app)/(auth)/actor/edit",
                   params: { id: actor?.$id },
                 });
                 handleBack();
@@ -226,8 +226,8 @@ export default function GetActor({
                 size="full"
                 className="bg-primary-500"
                 onPress={() => {
-                  updateActorItems(actor?.$id || "", actor?.imageUrl || "");
-                  router.push("/(auth)/(tabs)/outfit");
+                  updateActorItems(actor?.$id!, actor?.imageUrl!);
+                  router.push("/(app)/(auth)/(tabs)/outfit");
                   if (onClose) onClose();
                 }}
               >

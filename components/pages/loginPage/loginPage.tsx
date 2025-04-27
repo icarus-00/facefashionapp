@@ -218,7 +218,7 @@ export default function LoginPage({
   };
 
   const handleOtpPress = async () => {
-    //await handleOtpRequest();
+    await handleOtpRequest();
     animateSecondButtonPress();
 
     if (validateEmail(email)) {

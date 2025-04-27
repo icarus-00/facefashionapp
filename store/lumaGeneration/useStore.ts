@@ -62,8 +62,9 @@ const useStore = create<Data & Actions>()(
 
       updateActorImageID: (imageID, imageUrl) =>
         set({ actorImageID: imageID, actorImageUrl: imageUrl }),
-      updateActorItems: (imageID, imageUrl) =>
-        set({ actorItems: { imageID: imageID, imageUrl: imageUrl } }),
+      updateActorItems: (imageID, imageUrl) =>{
+        console.log(imageUrl);
+        set({ actorItems: { imageID: imageID, imageUrl: imageUrl } })},
       removeActorItems: () =>
         set({ actorItems: { imageID: "", imageUrl: "" } }),
 

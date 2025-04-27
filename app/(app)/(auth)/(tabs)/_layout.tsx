@@ -106,15 +106,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="test"
-        options={{
-          title: "testingpage",
-          tabBarIcon: ({ color }) => (
-            <AntDesign name="copy1" size={width / 15} color={color} />
-          ),
-        }}
-      />
+      
     </Tabs>
   );
 }

@@ -206,7 +206,7 @@ export default function ActorPageComp(): React.JSX.Element {
           variant="outline"
           className="rounded-full h-[3.5] w-[3.5] border-black p-3.5"
           onPress={() => {
-            router.push({ pathname: "/(auth)/actor/create" });
+            router.push({ pathname: "/(app)/(auth)/actor/create" });
           }}
         >
           <ButtonIcon className="text-black" size="md" as={AddIcon} />

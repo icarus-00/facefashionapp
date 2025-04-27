@@ -29,8 +29,9 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 // Define types for our data
 export default function outfit() {
   const { getLength, outfitItems, actorItems } = useStore();
-  const [modalvisible, setModalVisible] = useState(false);
+  
   const selecting = getLength() > 0;
+  const [modalvisible, setModalVisible] = useState(selecting);
   console.log(actorItems);
   console.log(getLength());
   console.log(selecting);
@@ -47,9 +48,7 @@ export default function outfit() {
 
       <OutFitPageComp selecting={selecting} />
       <SelectedItemsModal
-        onClose={() => {
-          setModalVisible(false);
-        }}
+        
         visible={modalvisible}
       />
     </SafeAreaView>

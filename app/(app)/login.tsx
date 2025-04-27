@@ -46,7 +46,10 @@ export default function LoginScreen() {
     setIsLoading(true);
     setError("");
     try {
-      await login({ email ,redirectUrl:redirectTo  } , true);
+      console.log("sending otp")
+      const loginT = await login({ email ,redirectUrl:redirectTo  } , true);
+      console.log("otp sent")
+      console.log(loginT)
     } catch (error: any) {
       setError(error.message);
       console.error("Login error:", error);

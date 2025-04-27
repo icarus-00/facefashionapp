@@ -1,7 +1,6 @@
-import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Image, ImageBackground, Platform, Dimensions } from "react-native";
-import { AntDesign, Ionicons, createIconSet } from "@expo/vector-icons";
-import { Component } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { View, Text, StyleSheet, Image, ImageBackground, Dimensions, Platform } from "react-native";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Box } from "@/components/ui/box";
 import { VStack } from "@/components/ui/vstack";
@@ -10,76 +9,89 @@ import { Center } from "@/components/ui/center";
 import { Pressable } from "@/components/ui/pressable";
 import { Heading } from "@/components/ui/heading";
 import { ScrollView } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Card } from "@/components/ui/card";
 import { LinearGradient } from "expo-linear-gradient";
-import RootNav from "@/components/atoms/rootNavBar";
 import Animated, {
   useSharedValue,
   withTiming,
   useAnimatedStyle,
   withSequence,
   withDelay,
-  Easing,
   withSpring,
   interpolate,
-  Extrapolate,
   FadeIn,
-  FadeOut,
-  SlideInRight,
-  SlideInDown,
-  ZoomIn
+  ZoomIn,
+  SlideInDown
 } from "react-native-reanimated";
-const headerImage = require("@/assets/images/home/image copy(1).png");
-const { width, height } = Dimensions.get("window");
 
-const AnimatedCard = Animated.createAnimatedComponent(Card);
+const headerImage = require("@/assets/images/home/image copy(1).png");
+const secondModelImage = require("@/assets/images/home/second-model.jpg");
+const { width } = Dimensions.get("window");
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const AnimatedHeading = Animated.createAnimatedComponent(Heading);
 const AnimatedBox = Animated.createAnimatedComponent(Box);
-const AnimatedButton = Animated.createAnimatedComponent(Button);
-type categoryType= 
+
+
+type categoriesType = 
 {
-  id:number ,
+  id:number,
   name:string,
   icon: React.ComponentProps<typeof AntDesign>["name"]
 }
 // Fashion categories with icons
-const categories  : categoryType[] = [
-  { id: 1, name: "Fashion Enthusiasts", icon: "camerao" },
-  { id: 2, name: "Production Teams", icon: "rocket1" },
-  { id: 3, name: "Everyone Else", icon: "clockcircleo" },
-  
+const categories : categoriesType[] = [
+  { id: 1, name: "Fashion Enthusiasts", icon: "user" },
+  { id: 2, name: "Production Teams", icon: "calendar" },
+  { id: 3, name: "Everyone Else", icon: "user" },
 ];
 
-// Trending styles
-const trendingStyles = [
-  { id: 1, name: "Urban Minimalist", image: "/api/placeholder/300/400" },
-  { id: 2, name: "Boho Chic", image: "/api/placeholder/300/400" },
-  { id: 3, name: "Tech Wear", image: "/api/placeholder/300/400" }
+// How it works steps
+const howItWorksSteps = [
+  { id: 1, title: "Choose Your Actor" },
+  { id: 2, title: "Choose Your Actor" },
+  { id: 3, title: "Choose Your Actor" },
 ];
 
-const RenderWearApp = () => {
+const Home = () => {
   // Animation values
   const headerOpacity = useSharedValue(0);
   const heroScale = useSharedValue(0.95);
+  const brandTextScale = useSharedValue(0.9);
   const featuresTranslateY = useSharedValue(50);
+  const secondImageOpacity = useSharedValue(0);
+  const secondImageScale = useSharedValue(0.9);
+  const howItWorksTranslateY = useSharedValue(50);
   const buttonScale = useSharedValue(0.95);
-  const generateButtonTranslateY = useSharedValue(100);
-  const cardsStaggerDelay = 100; // milliseconds between each card animation
   
+  // State to track if animations have played
+  const [animationState, setAnimationState] = useState({
+    hasPlayed: false,
+    isFirstRender: true
+  });
+
   // Refs for scrolling
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    // Entrance animations
-    headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
-    heroScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }));
-    featuresTranslateY.value = withDelay(600, withSpring(0, { damping: 12 }));
-    generateButtonTranslateY.value = withDelay(1200, withSpring(0, { damping: 15 }));
-    buttonScale.value = 1;
-  }, []);
- 
+    // Only play animations if they haven't played before or it's the first render
+    if (!animationState.hasPlayed || animationState.isFirstRender) {
+      // Entrance animations with proper timing
+      headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
+      heroScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }));
+      brandTextScale.value = withDelay(500, withSpring(1, { damping: 12 }));
+      featuresTranslateY.value = withDelay(700, withSpring(0, { damping: 12 }));
+      secondImageOpacity.value = withDelay(900, withTiming(1, { duration: 800 }));
+      secondImageScale.value = withDelay(1000, withSpring(1, { damping: 12 }));
+      howItWorksTranslateY.value = withDelay(1200, withSpring(0, { damping: 12 }));
+      buttonScale.value = withDelay(400, withSpring(1, { damping: 12 }));
+
+      // Update state to indicate animations have played
+      setAnimationState({
+        hasPlayed: true,
+        isFirstRender: false
+      });
+    }
+  }, [animationState]);
 
   // Header animation
   const headerAnimStyle = useAnimatedStyle(() => {
@@ -98,6 +110,16 @@ const RenderWearApp = () => {
     };
   });
 
+  // Brand text animation
+  const brandTextAnimStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: brandTextScale.value }
+      ],
+      opacity: interpolate(brandTextScale.value, [0.9, 1], [0, 1])
+    };
+  });
+
   // Features section animation
   const featuresAnimStyle = useAnimatedStyle(() => {
     return {
@@ -108,13 +130,32 @@ const RenderWearApp = () => {
     };
   });
 
-  // Generate button animation
-  const generateButtonAnimStyle = useAnimatedStyle(() => {
+  // Second image animation
+  const secondImageAnimStyle = useAnimatedStyle(() => {
+    return {
+      opacity: secondImageOpacity.value,
+      transform: [
+        { scale: secondImageScale.value }
+      ]
+    };
+  });
+
+  // How it works section animation
+  const howItWorksAnimStyle = useAnimatedStyle(() => {
     return {
       transform: [
-        { translateY: generateButtonTranslateY.value },
-        { scale: withSpring(buttonScale.value) }
+        { translateY: howItWorksTranslateY.value }
       ],
+      opacity: interpolate(howItWorksTranslateY.value, [50, 0], [0, 1])
+    };
+  });
+
+  // Button animation
+  const buttonAnimStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: buttonScale.value }
+      ]
     };
   });
   
@@ -128,53 +169,49 @@ const RenderWearApp = () => {
 
   return (
     <View className="flex-1 bg-white">
-      
-      <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        ref={scrollRef} 
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+      >
         {/* Hero Section with Animated Image */}
-        <Animated.View style={heroAnimStyle} className="w-full flex-1">
-          <View className="flex-1 flex items-center justify-center w-full">
-            <ImageBackground
-              source={headerImage}
-              className="w-full aspect-[9/16] max-h-full"
-            >
-              <LinearGradient
-                colors={["rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)", "rgba(255, 255, 255, 1)"]}
-                style={{
-                  ...StyleSheet.absoluteFillObject,
-                }}
-              />
-              {/* Floating text overlay on hero image */}
-              <Animated.View 
-                entering={FadeIn.delay(500).duration(1000)} 
-                className="absolute bottom-1/4 left-6 right-6"
-              >
-                <Text className="text-white text-4xl font-bold shadow-lg">
-                  Revolutionizing Try-On Experiences
-                </Text>
-                <Text className="text-white text-lg mt-2 shadow-md">
-                  Create your style instantly with AI
-                </Text>
-              </Animated.View>
-            </ImageBackground>
-          </View>
+        <Animated.View style={heroAnimStyle} className="w-full">
+          <ImageBackground
+            source={headerImage}
+            className="w-full aspect-[3/4]"
+            resizeMode="cover"
+          >
+            <LinearGradient
+              colors={["rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)", "rgba(255, 255, 255, 1)"]}
+              style={{
+                ...StyleSheet.absoluteFillObject,
+              }}
+            />
+          </ImageBackground>
         </Animated.View>
 
-        {/* Brand Header */}
-        <Animated.View style={headerAnimStyle} className="py-6">
+        {/* Get Started Button */}
+        <Center className="my-6">
+          <Animated.View style={buttonAnimStyle}>
+            <Button
+              size="lg"
+              variant="solid"
+              className="rounded-full bg-black shadow-md px-8"
+              onPress={() => handleButtonPress()}
+            >
+              <ButtonText>Get Started</ButtonText>
+            </Button>
+          </Animated.View>
+        </Center>
+
+        {/* RenderFusion Text - Added as requested */}
+        <Animated.View style={brandTextAnimStyle} className="mb-8">
           <Center>
             <AnimatedHeading 
-              entering={ZoomIn.delay(400).duration(800)} 
-              className="text-primary-500 font-extrabold"
-              size="4xl"
+              className="text-black font-extrabold"
+              size="3xl"
             >
-              RenderWear
-            </AnimatedHeading>
-            <AnimatedHeading 
-              entering={ZoomIn.delay(600).duration(800)} 
-              className="text-primary-200 font-extrabold"
-              size="5xl"
-            >
-              Fusion Style
+              RenderFusion
             </AnimatedHeading>
           </Center>
         </Animated.View>
@@ -183,127 +220,92 @@ const RenderWearApp = () => {
         <Animated.View style={featuresAnimStyle} className="px-5">
           <VStack space="lg">
             {/* AI Feature Section */}
-            <AnimatedBox entering={FadeIn.delay(700).duration(800)}>
+            <Box>
               <Center>
-                <Text className="text-primary-500 text-2xl font-extrabold mb-2 text-center">
+                <Text className="text-black text-2xl font-bold mb-2 text-center">
                   AI-Powered Outfit Generation
                 </Text>
                 <Text className="text-gray-600 text-center mb-6">
-                  Generate unique fashion styles anytime, anywhere!
-                  Your personal fashion studio in your pocket.
+                  Instantly create unique outfit designs{"\n"}
+                  Style Anytime, Anywhere!
                 </Text>
               </Center>
-            </AnimatedBox>
+            </Box>
 
-            
-            <View className="flex-row flex-wrap justify-between">
+            {/* Categories */}
+            <HStack space="md"  className=" justify-between mb-8">
               {categories.map((category, index) => (
                 <AnimatedPressable
                   key={category.id}
-                  entering={SlideInRight.delay(800 + index * cardsStaggerDelay).duration(500)}
-                  className="w-[30%] mb-4"
+                  entering={FadeIn.delay(800 + index * 100).duration(500)}
+                  className="items-center"
                   onPress={() => handleButtonPress()}
                 >
-                  <Card className="bg-white shadow-sm rounded-xl p-4 items-center justify-center h-20">
+                  <View className="items-center">
                     <AntDesign
                       name={category.icon}
                       size={24}
-                      color="#4a2b82"
+                      color="#000"
                       style={{ marginBottom: 8 }}
                     />
-                    <Text className="text-primary-500 text-center font-medium text-sm">{category.name}</Text>
-                  </Card>
+                    <Text className="text-black text-center font-medium text-xs">{category.name}</Text>
+                  </View>
                 </AnimatedPressable>
               ))}
-            </View>
+            </HStack>
 
-            {/* Trending Styles - Horizontal Scrolling */}
-            <AnimatedBox entering={FadeIn.delay(1200).duration(800)}>
-              <Text className="text-primary-500 font-bold text-lg mb-3">Trending Styles</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 20 }}
-              >
-                {trendingStyles.map((style, index) => (
+            {/* Second Model Image Section - with w-full as requested */}
+            <Animated.View style={secondImageAnimStyle} className="mb-8">
+              <View className="w-full items-center">
+                <Image
+                  source={secondModelImage}
+                  style={{
+                    width: '100%', // w-full
+                    height: undefined,
+                    aspectRatio: 9/16, // Maintain aspect ratio
+                    borderRadius: 4
+                  }}
+                  resizeMode="cover"
+                />
+                {/* Text below the second image */}
+                <Text className="text-black text-center font-medium mt-4">
+                  Instantly create unique outfit designs
+                </Text>
+                <Text className="text-black text-center font-medium">
+                  Style Anytime, Anywhere!
+                </Text>
+              </View>
+            </Animated.View>
+
+            {/* How It Works Section */}
+            <Animated.View style={howItWorksAnimStyle} className="mb-20">
+              <Text className="text-black font-bold text-xl mb-4">
+                How It Works Your virtual styling
+              </Text>
+              
+              <VStack space="md">
+                {howItWorksSteps.map((step, index) => (
                   <AnimatedPressable
-                    key={style.id}
-                    entering={SlideInRight.delay(1300 + index * 150).duration(500)}
-                    className="mr-4 w-40"
+                    key={step.id}
+                    entering={SlideInDown.delay(1300 + index * 150).duration(500)}
+                    className="bg-gray-100 rounded-lg p-4 flex-row justify-between items-center"
                     onPress={() => handleButtonPress()}
                   >
-                    <Card className="rounded-xl overflow-hidden">
-                      <Image
-                        source={{ uri: style.image }}
-                        style={{ width: '100%', height: 180 }}
-                      />
-                      <View className="p-2">
-                        <Text className="text-primary-500 font-medium">{style.name}</Text>
-                      </View>
-                    </Card>
+                    <HStack space="sm" className="align-">
+                      <Ionicons name="person" size={20} color="#000" />
+                      <Text className="text-black font-medium">{step.title}</Text>
+                    </HStack>
+                    <Ionicons name="chevron-down" size={24} color="#000" />
                   </AnimatedPressable>
                 ))}
-              </ScrollView>
-            </AnimatedBox>
-
-            {/* Recent Creations */}
-            <AnimatedBox entering={SlideInDown.delay(1500).duration(800)} className="mb-24">
-              <Text className="text-primary-500 font-bold text-lg mb-3">Your Recent Creations</Text>
-              <Center className="py-8 bg-gray-100 rounded-xl">
-                <Ionicons name="images-outline" size={48} color="#4a2b82" />
-                <Text className="text-gray-500 mt-2">No creations yet</Text>
-                <Text className="text-primary-500 font-medium mt-1">Start creating now!</Text>
-              </Center>
-            </AnimatedBox>
+              </VStack>
+            </Animated.View>
           </VStack>
         </Animated.View>
       </ScrollView>
 
-      {/* Floating Generate Button */}
-      <Animated.View 
-        style={[
-          styles.floatingButtonContainer,
-          generateButtonAnimStyle
-        ]}
-      >
-        <AnimatedButton
-          size="lg"
-          variant="solid"
-          className="rounded-full shadow-xl"
-          onPress={() => {
-            handleButtonPress();
-            // Add your generate functionality here
-          }}
-        >
-          <Ionicons name="sparkles" size={24} color="white" style={{ marginRight: 8 }} />
-          <ButtonText>Generate Now</ButtonText>
-        </AnimatedButton>
-      </Animated.View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  floatingButtonContainer: {
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-    zIndex: 999
-  },
-  featureIcon: {
-    backgroundColor: "#f0ebf8",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8
-  }
-});
-
-export default RenderWearApp;
+export default Home;

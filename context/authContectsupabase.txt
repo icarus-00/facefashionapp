@@ -82,11 +82,16 @@ export default function UserProvider({
         const {email, password} = creds as emailpasswordCreds;
         const appwriteLogin = await account.createEmailPasswordSession(email , password);
         const getaccount = await account.get();
-        const userDetails = await account.get();
+        console.log(getaccount);
+        const result = await client.auth.signInWithPassword({email, password});
+        console.log(result);
+        console.log("getting session")
+        console.log("getting user details");
+        const userDetails = await client.auth.getSession()
         console.log("user details acquired");
-        initializeUserId(userDetails.$id!);
+        initializeUserId(userDetails.data.session?.user.id!);
 
-        setUser(userDetails!);
+        setUser(userDetails.data.session?.user!);
         console.log(user);
 
         ToastGlue("Welcome back. You are logged in");
@@ -100,12 +105,12 @@ export default function UserProvider({
   async function verifyOtp (email:string ,token:string , type:EmailOtpType) :Promise<void>
   {
     try {
-//      const result = await account.createSession;
-      const userDetails = await account.get()
+      const result = await client.auth.verifyOtp({email, token , type:"email"});
+      const userDetails = await client.auth.getSession()
       console.log("user details acquired");
-      initializeUserId(userDetails.$id!);
+      initializeUserId(userDetails.data.session?.user.id!);
 
-      setUser(userDetails!);
+      setUser(userDetails.data.session?.user!);
       console.log(user);
 
       ToastGlue("Welcome back. You are logged in");
@@ -120,7 +125,7 @@ export default function UserProvider({
 
   async function logout(): Promise<void> {
     try {
-      await account.deleteSession("current");
+      await client.auth.signOut();
 
       initializeUserId("");
       setUser(null);
@@ -149,8 +154,8 @@ export default function UserProvider({
   async function checkSession(): Promise<void> {
     try {
       setIsLoading(true);
-      const loggedIn = await account.get();
-      initializeUserId(loggedIn?.$id!);
+      const loggedIn = (await client.auth.getSession()).data.session?.user;
+      initializeUserId(loggedIn?.id!);
       setUser(loggedIn!);
     } catch (err) {
       initializeUserId("");
