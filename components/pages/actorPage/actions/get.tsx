@@ -182,8 +182,9 @@ export default function GetActor({
               onPress={() => {
                 updateActorItems(actor?.$id!, actor?.imageUrl!);
                 if (onClose) onClose();
-                router.push("/(app)/(auth)/(tabs)/outfit");
-                
+                setTimeout(() => {
+                  router.push("/(app)/(auth)/(tabs)/outfit");
+                }, 500);
               }}
             >
               <ButtonText>Dress Up</ButtonText>
