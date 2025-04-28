@@ -13,7 +13,11 @@ export default function outfit() {
   const { getLength, outfitItems, actorItems } = useStore();
 
   const selecting = getLength() > 0;
-  const [modalvisible, setModalVisible] = useState(selecting);
+  const [modalvisible, setModalVisible] = useState(false);
+  
+  useEffect(() => {
+    setModalVisible(selecting);
+  }, [selecting]);
 
   return (
     <SafeAreaView className="flex-1">

@@ -179,12 +179,10 @@ export default function GetActor({
             <Button
               size="full"
               className="bg-primary-500"
-              onPress={() => {
-                updateActorItems(actor?.$id!, actor?.imageUrl!);
+              onPress={async () => {
+                await updateActorItems(actor?.$id!, actor?.imageUrl!);
+                router.push("/(app)/(auth)/(tabs)/outfit");
                 if (onClose) onClose();
-                setTimeout(() => {
-                  router.push("/(app)/(auth)/(tabs)/outfit");
-                }, 500);
               }}
             >
               <ButtonText>Dress Up</ButtonText>
