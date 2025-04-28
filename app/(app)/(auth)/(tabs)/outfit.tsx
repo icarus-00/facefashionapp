@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,7 +12,7 @@ export default function outfit() {
 
   const selecting = getLength() > 0;
   const [modalvisible, setModalVisible] = useState(false);
-  
+
   useEffect(() => {
     setModalVisible(selecting);
   }, [selecting]);
@@ -32,20 +30,22 @@ export default function outfit() {
       <SelectedItemsModal visible={modalvisible} />
 
       {/* Improved button styling and positioning */}
-      {selecting && <View  className="absolute right-0 bottom-0 items-center justify-center p-5">
-        <Pressable
-          className="w-16 h-16 rounded-full bg-black items-center justify-center shadow-md"
-          style={{
-            elevation: 5, // Android shadow
-            shadowColor: "#000", // iOS shadow
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-          }}
-        >
-          <Ionicons name="arrow-forward" size={24} color="white" />
-        </Pressable>
-      </View>}
+      {selecting && (
+        <View className="absolute right-0 bottom-0 items-center justify-center p-5">
+          <Pressable
+            className="w-16 h-16 rounded-full bg-black items-center justify-center shadow-md"
+            style={{
+              elevation: 5, // Android shadow
+              shadowColor: "#000", // iOS shadow
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+            }}
+          >
+            <Ionicons name="arrow-forward" size={24} color="white" />
+          </Pressable>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
