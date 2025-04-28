@@ -96,6 +96,11 @@ export default function OutfitCard({
           >
             <View style={{ width: "100%", height: "100%" }}>
               {renderOutfitImage()}
+              <View className="absolute bottom-0 bg-black/50 w-full p-2">
+                <Text className="text-white font-medium">{item.outfitName}</Text>
+                <Text className="text-white text-sm">{item.brand}</Text>
+                <Text className="text-white text-xs">{item.size}</Text>
+              </View>
             </View>
           </Box>
         </View>
