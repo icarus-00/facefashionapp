@@ -1,0 +1,9 @@
+modules = ["nodejs-20", "ruby-3.2"]
+run = "npm run devc"
+
+[nix]
+channel = "stable-24_05"
+
+[[ports]]
+localPort = 8081
+externalPort = 80

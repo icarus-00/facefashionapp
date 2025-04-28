@@ -1,44 +1,22 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { ThemedView } from "@/components/ThemedView";
-import {
-  View,
-  Image,
-  Dimensions,
-  Pressable,
-  FlatList,
-  Modal,
-} from "react-native";
+"use client";
+
+import { useState } from "react";
+import { View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "react-native";
-import { FlashList } from "@shopify/flash-list";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Box } from "@/components/ui/box";
-import databaseService, { OutfitWithImage } from "@/services/database/db";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { AddIcon, CloseIcon, Icon } from "@/components/ui/icon";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { ModalHeader, ModalCloseButton } from "@/components/ui/modal";
-import GetOutfit from "../outfit/[get]";
-import OutFitPageComp from "@/components/pages/outfitPage/view";
-import Index from "@/components/pages/outfitPage";
-import useStore from "@/store/lumaGeneration/useStore";
+import { Ionicons } from "@expo/vector-icons";
 import RootNav from "@/components/atoms/rootNavBar";
 import SelectedItemsModal from "@/components/atoms/selectedItemsModal";
-import SubCategoriesExbandableFilter from "@/components/atoms/subCategories";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-// Define types for our data
+import OutFitPageComp from "@/components/pages/outfitPage/view";
+import useStore from "@/store/lumaGeneration/useStore";
+
 export default function outfit() {
   const { getLength, outfitItems, actorItems } = useStore();
-  
+
   const selecting = getLength() > 0;
   const [modalvisible, setModalVisible] = useState(selecting);
-  console.log(actorItems);
-  console.log(getLength());
-  console.log(selecting);
 
-  console.log("modal visible", modalvisible);
   return (
-    <SafeAreaView className="flex-1 ">
+    <SafeAreaView className="flex-1">
       <RootNav
         name="RenderWear"
         onPress={() => {
@@ -47,10 +25,23 @@ export default function outfit() {
       />
 
       <OutFitPageComp selecting={selecting} />
-      <SelectedItemsModal
-        
-        visible={modalvisible}
-      />
+      <SelectedItemsModal visible={modalvisible} />
+
+      {/* Improved button styling and positioning */}
+      {selecting && <View  className="absolute right-0 bottom-0 items-center justify-center p-5">
+        <Pressable
+          className="w-16 h-16 rounded-full bg-black items-center justify-center shadow-md"
+          style={{
+            elevation: 5, // Android shadow
+            shadowColor: "#000", // iOS shadow
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+          }}
+        >
+          <Ionicons name="arrow-forward" size={24} color="white" />
+        </Pressable>
+      </View>}
     </SafeAreaView>
   );
 }

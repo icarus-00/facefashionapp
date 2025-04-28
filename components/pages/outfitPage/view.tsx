@@ -53,7 +53,7 @@ export default function OutFitPageComp({
     id: string;
     visible: boolean;
   }>({ id: "", visible: false });
-
+  
   // Use useCallback to prevent recreation of this function on every render
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);

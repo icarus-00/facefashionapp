@@ -105,6 +105,7 @@ export default function GetActor({
     fetchData();
   }, [paramid]);
 
+
   // Function to handle actor deletion
   const handleDelete = async () => {
     try {
