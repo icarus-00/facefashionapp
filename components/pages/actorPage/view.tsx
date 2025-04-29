@@ -24,7 +24,7 @@ import { AntDesign } from "@expo/vector-icons";
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
-const spacing = 12;
+const spacing = 2;
 const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
 const itemHeight = itemWidth * 1.5;
 
@@ -144,8 +144,8 @@ export default function ActorPageComp(): React.JSX.Element {
 
     return (
       <Pressable
-        className="overflow-hidden rounded-lg shadow-md shadow-black"
-        style={{ width: itemWidth, margin: spacing / 2 }}
+        className="overflow-hidden rounded-m shadow-md shadow-black"
+        style={{ width: itemWidth }}
         onPress={() => {
           if (!("isPlaceholder" in item)) {
             setModalId(item.$id);
@@ -154,16 +154,11 @@ export default function ActorPageComp(): React.JSX.Element {
         }}
       >
         <Box
-          className="bg-background-100 rounded-lg overflow-hidden"
+          className="bg-background-100 rounded-sm overflow-hidden"
           style={{ width: itemWidth, height: itemHeight }}
         >
           <View style={{ width: "100%", height: "100%" }}>
             {renderActorImage()}
-            <View className="absolute bottom-0 w-full bg-black/50 p-2">
-              <Text className="text-white font-medium text-center">
-                {getActorName()}
-              </Text>
-            </View>
           </View>
         </Box>
       </Pressable>
@@ -206,7 +201,7 @@ export default function ActorPageComp(): React.JSX.Element {
           variant="outline"
           className="rounded-full h-[3.5] w-[3.5] border-black p-3.5"
           onPress={() => {
-            router.push({ pathname: "/(auth)/actor/create" });
+            router.push({ pathname: "/(app)/(auth)/actor/create" });
           }}
         >
           <ButtonIcon className="text-black" size="md" as={AddIcon} />
@@ -240,7 +235,15 @@ export default function ActorPageComp(): React.JSX.Element {
           data={displayData}
           estimatedItemSize={itemHeight}
           renderItem={({ item, index }) => (
-            <ActorCard item={item} loading={loading} index={index} />
+            <View
+              style={{ margin: spacing }}
+              className="flex justify-center items-center shadow-md shadow-black "
+            >
+              <ActorCard item={item} loading={loading} index={index} />
+              <View className="w-full  h-10 bg-white p-2">
+                <Text className="text-black font-medium">{item.actorName}</Text>
+              </View>
+            </View>
           )}
           keyExtractor={(item, index) => {
             if ("isPlaceholder" in item) {

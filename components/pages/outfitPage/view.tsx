@@ -139,9 +139,7 @@ export default function OutFitPageComp({
 
   const displayData: OutfitItem[] = loading ? getPlaceholderData() : outfits;
   const [selectedItem, setSelectedItem] = useState<string>("");
-  useEffect(() => {
-    console.log("Selected Item Changed:", selectedItem);
-  }, [selectedItem]);
+
   return (
     <ThemedView className="flex-1">
       <TabBar />
@@ -223,11 +221,6 @@ export default function OutFitPageComp({
         }
         ListFooterComponent={<View style={{ height: 20 }} />}
       />
-      <BottomSheet enableDynamicSizing={false} snapPoints={["10%", "100%"]}>
-        <BottomSheetView className="flex-1 items-center justify-center p-10">
-          <Text>test 2 🎉</Text>
-        </BottomSheetView>
-      </BottomSheet>
     </ThemedView>
   );
 }

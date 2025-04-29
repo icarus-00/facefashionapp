@@ -17,7 +17,7 @@ import RootNav from "@/components/atoms/rootNavBar";
 
 export default function Actor(): React.JSX.Element {
   return (
-    <SafeAreaView className="flex-1 bg-background-100">
+    <SafeAreaView className="flex-1 bg-white">
       <RootNav name="RenderWear" onPress={() => {}} />
       <ActorPageComp />
     </SafeAreaView>

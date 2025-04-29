@@ -12,7 +12,7 @@ type AttireStore = {
 const useAttireStore = create<AttireStore>()(
   persist(
     (set, get) => ({
-      themes: [],
+      themes: ["streetwear" , "casual" , "retro" , "classic"],
       setThemes: (themes) => set({ themes }),
       updateFromOutfits: (outfits) => {
         const unique = Array.from(

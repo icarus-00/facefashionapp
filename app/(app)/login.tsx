@@ -12,20 +12,27 @@ import { Center } from "@/components/ui/center";
 import { Text } from "@/components/ui/text";
 import { Input, InputField } from "@/components/ui/input";
 import { router, useRouter } from "expo-router";
+import LoginPage from "@/components/pages/loginPage/loginPage";
+
+
 export default function LoginScreen() {
   const [color, setColor] = useState("red");
   const router = useRouter();
-  const { current: user, login, logout, register } = useUser();
+  const { current: user, login, logout, register , verifyOtp } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [token , setToken] = useState("");
+  const redirectTo ="test"
   const handleSubmit = async () => {
     setIsLoading(true);
     setError("");
     try {
-      await login(email, password);
-      router.replace("/(app)/(auth)/(tabs)");
+      await login({ email, password });
+      router.replace("/(app)/(auth)/(tabs)/home");
       console.log("Login successful");
     } catch (error: any) {
       setError(error.message);
@@ -34,51 +41,53 @@ export default function LoginScreen() {
       setIsLoading(false);
     }
   };
+
+  const handleOtp = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      console.log("sending otp")
+      const loginT = await login({ email ,redirectUrl:redirectTo  } , true);
+      console.log("otp sent")
+      console.log(loginT)
+    } catch (error: any) {
+      setError(error.message);
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleOtpSubmit = async ()=>{
+    setIsLoading(true);
+    try {
+      await verifyOtp(email, token, "email");
+    } catch (error: any) {
+      setError(error.message);
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  console.log(token)
+
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 w-full p-5 justify-center ">
-        <Center className="flex-1">
-          <Box className="flex-1 justify-center align-middle">
-            <Text size="6xl">RenderWear</Text>
-          </Box>
-          <View className="w-full flex-[2] justify-center py-5">
-            <View className="w-full  justify-center  border border-primary-500 rounded-xl p-5 gap-5">
-              <Input
-                variant="rounded"
-                size="2xl"
-                isDisabled={false}
-                isInvalid={false}
-                isReadOnly={false}
-              >
-                <InputField
-                  placeholder="email"
-                  onChangeText={(value) => {
-                    setEmail(value);
-                  }}
-                />
-              </Input>
-              <Input
-                variant="rounded"
-                size="2xl"
-                isDisabled={false}
-                isInvalid={false}
-                isReadOnly={false}
-              >
-                <InputField
-                  placeholder="password"
-                  type="password"
-                  onChangeText={(value) => setPassword(value)}
-                />
-              </Input>
-            </View>
-          </View>
-          <Box className="w-full flex-1">
-            <Button size="full" action="primary" onPress={handleSubmit}>
-              <ButtonText>Login</ButtonText>
-            </Button>
-          </Box>
-        </Center>
-      </View>
+      <LoginPage
+        email={email}
+        password={password}
+        setEmail={setEmail}
+        setPassword={setPassword}
+        emailError={emailError}
+        passwordError={passwordError}
+        setEmailError={setEmailError}
+        setPasswordError={setPasswordError}
+        setError={setError}
+        error={error}
+        handleSubmit={handleSubmit}
+        handleOtpRequest={handleOtp}
+        handleOTPSubmit={handleOtpSubmit}
+        setToken={setToken}
+      />
     </SafeAreaView>
   );
 }

@@ -28,6 +28,7 @@
         <data android:scheme="myapp"/>
         <data android:scheme="com.icarus.renderwear"/>
         <data android:scheme="exp+renderwear"/>
+        <data android:scheme="renderwear"/>
       </intent-filter>
     </activity>
   </application>

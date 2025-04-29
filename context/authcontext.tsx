@@ -1,5 +1,5 @@
 // context/authcontext.tsx
-import { ID } from "react-native-appwrite";
+import { ID , Models } from "react-native-appwrite";
 import {
   createContext,
   useContext,
@@ -11,19 +11,35 @@ import { account } from "@/services/config/appwrite";
 import { ToastGlue } from "@/context/toastContext";
 import useStore from "@/store/lumaGeneration/useStore";
 import { router } from "expo-router";
-// Define types for the user and context
+import { client } from "@/utils/config/supabase";
+import { EmailOtpType, Session,User as UserInterface } from '@supabase/supabase-js'// Define types for the user and context
+import { makeRedirectUri } from 'expo-auth-session'
+
 type User = {
   $id: string;
   email: string;
   // Add other user properties as needed
 };
+type UserBool = {
+  current: boolean;
+
+}
+interface emailpasswordCreds {
+  email: string;
+  password: string;
+}
+interface OtpCreds{
+  email:string;
+  redirectUrl:string;
+}
 
 type UserContextType = {
-  current: User | null; //check if there's a user
+  current: Models.User<Models.Preferences> | null; //check if there's a user
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (creds: emailpasswordCreds | OtpCreds, otp?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
+  verifyOtp:(email:string ,token:string , type:EmailOtpType)=>Promise<void>;
   Toast: (message: string) => void;
 };
 
@@ -42,30 +58,63 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
+
 export default function UserProvider({
   children,
 }: UserProviderProps): JSX.Element {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { initializeUserId } = useStore();
-  async function login(email: string, password: string): Promise<void> {
+  async function login(
+    creds: emailpasswordCreds | OtpCreds,
+    otp:boolean = false
+  ): Promise<void> {
     try {
-      console.log("logging");
-      const result = await account.createEmailPasswordSession(email, password);
-      console.log(result);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (otp)
+      {
+        const {email, redirectUrl} = creds as OtpCreds;
+        await account.createEmailToken(ID.unique(), email);
+        await client.auth.signInWithOtp({email:email })
+      }
+      else
+      {
 
-      const userDetails = await account.get();
-      initializeUserId(userDetails.$id);
+        const {email, password} = creds as emailpasswordCreds;
+        const appwriteLogin = await account.createEmailPasswordSession(email , password);
+        const getaccount = await account.get();
+        const userDetails = await account.get();
+        console.log("user details acquired");
+        initializeUserId(userDetails.$id!);
 
-      setUser(userDetails as User);
-      console.log(user);
+        setUser(userDetails!);
+        console.log(user);
 
-      ToastGlue("Welcome back. You are logged in");
+        ToastGlue("Welcome back. You are logged in");
+      }
     } catch (error) {
       //console.error("Login error:", error);
       ToastGlue("Login failed. Please check your credentials.");
       throw error;
+    }
+  }
+  async function verifyOtp (email:string ,token:string , type:EmailOtpType) :Promise<void>
+  {
+    try {
+//      const result = await account.createSession;
+      const userDetails = await account.get()
+      console.log("user details acquired");
+      initializeUserId(userDetails.$id!);
+
+      setUser(userDetails!);
+      console.log(user);
+
+      ToastGlue("Welcome back. You are logged in");
+    }
+    catch (e) {
+
+    }
+    finally {
+
     }
   }
 
@@ -75,7 +124,7 @@ export default function UserProvider({
 
       initializeUserId("");
       setUser(null);
-      router.replace("/(app)");
+      //router.replace("/(app)");
       ToastGlue("Logged out");
     } catch (error) {
       console.error("Logout error:", error);
@@ -87,7 +136,7 @@ export default function UserProvider({
   async function register(email: string, password: string): Promise<void> {
     try {
       await account.create(ID.unique(), email, password);
-      const result = await login(email, password);
+      const result = await login({email , password});
       console.log(result);
       ToastGlue("Account created successfully");
     } catch (error) {
@@ -101,8 +150,8 @@ export default function UserProvider({
     try {
       setIsLoading(true);
       const loggedIn = await account.get();
-      initializeUserId(loggedIn.$id);
-      setUser(loggedIn as User);
+      initializeUserId(loggedIn?.$id!);
+      setUser(loggedIn!);
     } catch (err) {
       initializeUserId("");
       setUser(null);
@@ -122,7 +171,7 @@ export default function UserProvider({
 
   return (
     <UserContext.Provider
-      value={{ current: user, isLoading, login, logout, register, Toast }}
+      value={{ current: user, isLoading, login, logout, register, Toast , verifyOtp }}
     >
       {children}
     </UserContext.Provider>
