@@ -101,15 +101,13 @@ export default function OutFitPageComp({
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => (
               <Button
-                className={`mx-1 rounded-md ${
-                  selectedTab === item ? "bg-primary-400" : "bg-gray-100"
-                }`}
+                className={`mx-1 rounded-md ${selectedTab === item ? "bg-primary-400" : "bg-gray-100"
+                  }`}
                 onPress={() => handleTabPress(item)}
               >
                 <ButtonText
-                  className={`${
-                    selectedTab === item ? "text-white" : "text-typography-500"
-                  }`}
+                  className={`${selectedTab === item ? "text-white" : "text-typography-500"
+                    }`}
                 >
                   {item}
                 </ButtonText>

@@ -129,10 +129,10 @@ export default function GetActor({
         </View>
       </View>
       <VStack className="flex-1">
-        <View className="items-center justify-center aspect-square w-full p-1">
+        <View style={{ aspectRatio: 9 / 16 }} className="items-center justify-center  p-5">
           <Image
             source={{ uri: actor?.imageUrl }}
-            className="w-full aspect-square rounded-b-3xl rounded-t-3xl"
+            className="h-full rounded-b-3xl rounded-t-3xl"
           />
           <CustomFab
             onEdit={() => {

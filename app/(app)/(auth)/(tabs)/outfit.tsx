@@ -19,13 +19,6 @@ export default function outfit() {
 
   return (
     <SafeAreaView className="flex-1">
-      <RootNav
-        name="RenderWear"
-        onPress={() => {
-          setModalVisible(true);
-        }}
-      />
-
       <OutFitPageComp selecting={selecting} />
       <SelectedItemsModal visible={modalvisible} />
 
