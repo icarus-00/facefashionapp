@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 
 const dividerStyle = tva({
@@ -26,7 +26,7 @@ const Divider = React.forwardRef<
       ref={ref}
       {...props}
       aria-orientation={orientation}
-      role={Platform.OS === 'web' ? 'separator' : undefined}
+      role={typeof window !== 'undefined' ? 'separator' : undefined}
       className={dividerStyle({
         orientation,
         class: className,
