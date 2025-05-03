@@ -180,15 +180,13 @@ export default function ActorPageComp(): React.JSX.Element {
           showsHorizontalScrollIndicator={false}
           renderItem={({ item }) => (
             <Button
-              className={`mx-1 rounded-md ${
-                selectedTab === item ? "bg-primary-400" : "bg-gray-100"
-              }`}
+              className={`mx-1 rounded-md ${selectedTab === item ? "bg-primary-400" : "bg-gray-100"
+                }`}
               onPress={() => handleTabPress(item)}
             >
               <ButtonText
-                className={`${
-                  selectedTab === item ? "text-white" : "text-typography-500"
-                }`}
+                className={`${selectedTab === item ? "text-white" : "text-typography-500"
+                  }`}
               >
                 {item}
               </ButtonText>
@@ -241,7 +239,9 @@ export default function ActorPageComp(): React.JSX.Element {
             >
               <ActorCard item={item} loading={loading} index={index} />
               <View className="w-full  h-10 bg-white p-2">
-                <Text className="text-black font-medium">{item.actorName}</Text>
+                <Text className="text-black font-medium">
+                  {'isPlaceholder' in item ? 'Loading...' : item.actorName}
+                </Text>
               </View>
             </View>
           )}

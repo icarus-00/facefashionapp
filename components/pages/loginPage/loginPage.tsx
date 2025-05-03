@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { Text } from "@/components/ui/text";
-import { Button ,ButtonSpinner } from "@/components/ui/button";
+import { Button, ButtonSpinner } from "@/components/ui/button";
 import { Ionicons } from "@expo/vector-icons";
 import { Input } from "@rneui/themed";
 import {
@@ -537,7 +537,7 @@ export default function LoginPage({
                     focusStickBlinkingDuration={500}
                     onFocus={() => console.log("Focused")}
                     onBlur={() => console.log("Blurred")}
-                    onTextChange={(text) => {setToken(text); setOtp(text); }}
+                    onTextChange={(text) => { setToken(text); setOtp(text); }}
                     onFilled={(text) => console.log(`OTP is ${text}`)}
                     textInputProps={{
                       accessibilityLabel: "One-Time Password",
