@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { createImage } from '@gluestack-ui/image';
-import { Platform, Image as RNImage } from 'react-native';
+import { Image as RNImage } from 'react-native';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 
@@ -37,7 +37,7 @@ const Image = React.forwardRef<
       ref={ref}
       // @ts-expect-error : web only
       style={
-        Platform.OS === 'web'
+        typeof window !== 'undefined'
           ? { height: 'revert-layer', width: 'revert-layer' }
           : undefined
       }

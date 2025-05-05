@@ -461,11 +461,18 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: "center",
+<<<<<<< HEAD
     // marginVertical: 32,
     marginBottom: 20,
   },
   submitButton: {
     backgroundColor: "#121212",
+=======
+    marginVertical: 32,
+  },
+  submitButton: {
+    backgroundColor: "#6D28D9",
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
     borderRadius: 30,
     paddingVertical: 16,
     paddingHorizontal: 32,

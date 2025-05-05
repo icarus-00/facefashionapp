@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { createCheckbox } from '@gluestack-ui/checkbox';
-import { View, Pressable, Text, Platform } from 'react-native';
+import { Pressable, View, Text } from 'react-native';
 import type { TextProps, ViewProps } from 'react-native';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { PrimitiveIcon, IPrimitiveIcon, UIIcon } from '@gluestack-ui/icon';
@@ -37,7 +37,7 @@ const SCOPE = 'CHECKBOX';
 const UICheckbox = createCheckbox({
   // @ts-expect-error : internal implementation for r-19/react-native-web
   Root:
-    Platform.OS === 'web'
+    typeof window !== 'undefined'
       ? withStyleContext(View, SCOPE)
       : withStyleContext(Pressable, SCOPE),
   Group: View,

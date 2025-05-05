@@ -13,7 +13,6 @@ import {
   View,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Modal,
 } from "react-native";
@@ -306,7 +305,7 @@ export default function LoginPage({
   return (
     <>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={"padding"}
         className="flex-1"
       >
         <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
