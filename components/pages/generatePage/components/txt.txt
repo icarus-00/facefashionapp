@@ -484,8 +484,7 @@ export const TabButtons: React.FC<TabButtonsProps> = ({
 // Main Component: GetGeneration.tsx
 import React, { useEffect, useState, useRef } from "react";
 import { View, Dimensions, RefreshControl } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { FlashList } from "@shopify/flash-list";
+import SafeAreaView from "@/components/atoms/safeview/safeview";import { FlashList } from "@shopify/flash-list";
 import databaseService, { generationsWithImage } from "@/services/database/db";
 import { Skeleton } from "@/components/ui/skeleton";
 

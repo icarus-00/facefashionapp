@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { View, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import SafeAreaView from "@/components/atoms/safeview/safeview";import { Ionicons } from "@expo/vector-icons";
 import RootNav from "@/components/atoms/rootNavBar";
 import SelectedItemsModal from "@/components/atoms/selectedItemsModal";
 import OutFitPageComp from "@/components/pages/outfitPage/view";

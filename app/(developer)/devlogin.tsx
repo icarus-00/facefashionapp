@@ -6,8 +6,7 @@ import { View, Button as ReactButton, Text } from "react-native";
 import { account } from "@/services/config/appwrite";
 
 import { ToastGlue } from "@/context/toastContext";
-import { SafeAreaView } from "react-native-safe-area-context";
-export default function LoginScreen() {
+import SafeAreaView from "@/components/atoms/safeview/safeview";export default function LoginScreen() {
   const [color, setColor] = useState("red");
   const { current: user, login, logout, register } = useUser();
   const [email, setEmail] = useState("");

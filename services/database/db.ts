@@ -1,4 +1,4 @@
-import { Databases, Client, Models, Functions } from "react-native-appwrite";
+import { Databases, Client, Models, Functions } from "@icarus00x/react-native-appwrite-expo-newarch";
 import storageService from "@/services/config/files";
 import outfit from "../../app/(app)/(auth)/(tabs)/outfit";
 import { getPresignedUrls } from "../generation/gen";
@@ -186,7 +186,7 @@ class DatabaseService {
       );
       try {
         await storageService.deleteFile(imageID);
-      } catch (error) {}
+      } catch (error) { }
     } catch (error) {
       console.error("Error deleting actor:", error);
       throw error;
@@ -335,7 +335,7 @@ class DatabaseService {
       );
       try {
         await storageService.deleteFile(imageID);
-      } catch (error) {}
+      } catch (error) { }
     } catch (error) {
       console.error("Error deleting outfit:", error);
       throw error;

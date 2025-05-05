@@ -42,16 +42,19 @@ export default function TabLayout() {
 
         tabBarStyle: {
           backgroundColor: Colors["light"].primary[500],
-          width: width,
-          height:  90,
+          width: width - 20,
+          height:  70,
           alignContent: "center",
           paddingHorizontal: 20,
           borderWidth: 1,
           borderColor: "#0f0d23",
           paddingTop: 0,
+          paddingBottom: 0,
           borderRadius: 50,
           position: 'absolute',
           overflow: 'hidden',
+          bottom: 20,
+          marginHorizontal: 10,
         },
       }}
     >

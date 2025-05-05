@@ -316,7 +316,7 @@ export default function Home() {
                       style={{ width: 80, height: 80 }}
                       resizeMode="contain"
                     />
-                    <Text className="text-black text-center font-bold text-xs">{category.name}</Text>
+                    <Text className="text-black text-center font-bold text-sm">{category.name}</Text>
                   </View>
                 </AnimatedPressable>
               ))}
@@ -340,7 +340,7 @@ export default function Home() {
             <AnimatedBox entering={FadeIn.delay(1200).duration(800)}>
               <Text className="text-black text-4xl font-bold mt-8 mb-2 text-center">Explore Various Styles</Text>
               <Text className="text-gray-600 text-center mb-6">
-                Whether you lean toward clean cuts or bold statements, discover inspiring styles for every look.
+                clean cuts or bold statements,{"\n"} discover inspiring styles for every look.
               </Text>
               <ScrollView
                 horizontal

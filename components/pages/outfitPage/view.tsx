@@ -8,8 +8,7 @@ import {
   FlatList,
   Modal,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "react-native";
+import SafeAreaView from "@/components/atoms/safeview/safeview";import { Text } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Box } from "@/components/ui/box";

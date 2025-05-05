@@ -1,6 +1,5 @@
 import React from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import ActorPageComp from "@/components/pages/actorPage/view";
+import SafeAreaView from "@/components/atoms/safeview/safeview";import ActorPageComp from "@/components/pages/actorPage/view";
 
 export default function Actor(): React.JSX.Element {
   return (

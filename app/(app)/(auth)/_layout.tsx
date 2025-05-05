@@ -1,7 +1,6 @@
 import { Stack, useSegments, useRouter } from "expo-router";
 import { View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import SafeAreaView from "@/components/atoms/safeview/safeview";import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function AuthLayout() {
   return (

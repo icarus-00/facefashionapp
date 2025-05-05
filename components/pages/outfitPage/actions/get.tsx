@@ -1,7 +1,6 @@
 import { Image, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ScrollView } from "react-native-gesture-handler";
+import SafeAreaView from "@/components/atoms/safeview/safeview";import { ScrollView } from "react-native-gesture-handler";
 import { VStack } from "@/components/ui/vstack";
 import databaseService, {
   ActorWithImage,

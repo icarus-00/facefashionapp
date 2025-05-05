@@ -1,4 +1,4 @@
-import { Client, Account } from 'react-native-appwrite';
+import { Client, Account } from '@icarus00x/react-native-appwrite-expo-newarch';
 
 const client = new Client()
     .setEndpoint('https://cloud.appwrite.io/v1')
@@ -8,4 +8,6 @@ const client = new Client()
 
 const account = new Account(client);
 account;
+
 export { account, client };
+
