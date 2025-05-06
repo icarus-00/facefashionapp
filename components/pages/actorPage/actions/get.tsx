@@ -21,6 +21,7 @@ import Animated, {
   FadeIn,
 } from "react-native-reanimated";
 import Carousel from 'react-native-reanimated-carousel';
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width, height } = Dimensions.get('window');
 const AnimatedScrollView = Animated.createAnimatedComponent(Animated.ScrollView);
@@ -167,25 +168,29 @@ export default function GetActor({
             </View>
           )}
 
-          {/* Name overlay */}
-          <View style={styles.nameOverlay}>
+          {/* Name overlay with gradient */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)']}
+            style={styles.nameOverlay}
+          >
             <Animated.Text
               entering={FadeIn.delay(300).duration(500)}
               style={styles.actorName}
             >
               {actor?.actorName}
             </Animated.Text>
-          </View>
+          </LinearGradient>
         </View>
 
-        {/* Details section */}
-        <AnimatedScrollView
-          entering={FadeIn.duration(300)}
-          style={styles.detailsContainer}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          <View style={styles.scrollContent}>
+        {/* Details section - Make scrollable */}
+        <View style={styles.detailsWrapper}>
+          <AnimatedScrollView
+            entering={FadeIn.duration(300)}
+            style={styles.detailsContainer}
+            showsVerticalScrollIndicator={true}
+            bounces={true}
+            contentContainerStyle={styles.scrollContent}
+          >
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>About</Text>
               <Text style={styles.aboutText}>
@@ -245,16 +250,14 @@ export default function GetActor({
                 onPress={handleDressUp}
                 activeOpacity={0.7}
               >
-                <HStack space="md" style={{ alignItems: 'center' }}>
+                <HStack space="md" style={{ alignItems: 'center', justifyContent: 'center' }}>
                   <Feather name="shopping-bag" size={20} color="white" />
-                  <Text style={styles.dressUpText}>
-                    Dress Up This Actor
-                  </Text>
+                  <Text style={styles.dressUpText}>Dress Up This Actor</Text>
                 </HStack>
               </TouchableOpacity>
             </Animated.View>
-          </View>
-        </AnimatedScrollView>
+          </AnimatedScrollView>
+        </View>
       </View>
     </View>
   );
@@ -264,7 +267,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
+
   closeButton: {
     position: 'absolute',
     top: 50,
@@ -284,13 +290,18 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    marginTop: 70,
+    marginTop: 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
   },
   imageContainer: {
-    height: '45%',
+    height: '50%',
     width: '100%',
     position: 'relative',
     overflow: 'hidden',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
   actorImage: {
     width: '100%',
@@ -312,24 +323,38 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 80,
-    justifyContent: 'center',
+    paddingVertical: 20,
     paddingHorizontal: 24,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
   },
   actorName: {
     color: 'white',
     fontSize: 28,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    marginBottom: 20,
   },
-  detailsContainer: {
+  detailsWrapper: {
+    flex: 1,
     backgroundColor: 'white',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    marginTop: -20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  detailsContainer: {
+    flex: 1,
+    backgroundColor: 'white',
     paddingHorizontal: 24,
-    paddingTop: 24,
   },
   scrollContent: {
+    paddingTop: 24,
     paddingBottom: 100,
   },
   sectionContainer: {
@@ -369,6 +394,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 24,
+    marginTop: 16,
   },
   buttonWrapper: {
     flex: 1,
@@ -401,15 +427,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
   },
   dressUpText: {
     color: 'white',
-    fontWeight: 'bold',
-    fontSize: 18,
+    fontWeight: '600',
+    fontSize: 17,
   },
 });

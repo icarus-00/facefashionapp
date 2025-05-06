@@ -1,11 +1,11 @@
 import type React from "react"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ThemedView } from "@/components/ThemedView"
-import { View, Dimensions, FlatList, StyleSheet, Text, ActivityIndicator } from "react-native"
+import { View, Dimensions, FlatList, StyleSheet, Text, ActivityIndicator, TouchableOpacity } from "react-native"
 import { FlashList } from "@shopify/flash-list"
 import databaseService from "@/services/database/db"
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button"
-import { AddIcon, CloseIcon } from "@/components/ui/icon"
+import { AddIcon } from "@/components/ui/icon"
 import { useRouter } from "expo-router"
 import SubCategoriesExbandableFilter from "@/components/atoms/subCategories"
 import useAttireStore from "@/store/cayegoryStore"
@@ -13,18 +13,27 @@ import type { OutfitWithImage } from "@/interfaces/outfitDB"
 import ModalComponent from "./atoms/outfitModal"
 import OutfitCard from "./atoms/outfitCard"
 import useStore from "@/store/lumaGeneration/useStore"
+import { HStack } from "@/components/ui/hstack"
+import { VStack } from "@/components/ui/vstack"
+import Animated, {
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  withDelay,
+  withSpring,
+  interpolate,
+  FadeIn,
+  ZoomIn,
+} from "react-native-reanimated"
 
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen")
 const numColumns = 2
-const spacing = 4
-const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns
-const itemHeight = itemWidth * 1.6
+const spacing = 7 // Match with the spacing in outfitCard
+const itemWidth = (screenWidth - spacing * (numColumns + 3)) / numColumns
+const itemHeight = itemWidth * 1.5
 
-// Define constants - removed animation constants
-const TAB_BAR_HEIGHT = 56   // Height of tab bar
-const SUB_CAT_HEIGHT = 60   // Estimated height of subcategories
-const HEADER_HEIGHT = TAB_BAR_HEIGHT + SUB_CAT_HEIGHT
+// Define constants
 
 type OutfitItem = OutfitWithImage | { id: number; isPlaceholder: true }
 
@@ -43,6 +52,7 @@ export default function OutFitPageComp({
     visible: boolean
   }>({ id: "", visible: false })
   const [bottomSheetVisible, setBottomSheetVisible] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<string>("all")
 
   // Selection state
   const [isSelecting, setIsSelecting] = useState<boolean>(selecting)
@@ -51,6 +61,24 @@ export default function OutFitPageComp({
   const { outfitItems, addOutfitItem, removeOutfitItem, clearOutfitItems } = useStore()
 
   const router = useRouter()
+
+  // Animation values
+  const headerOpacity = useSharedValue(0)
+  const cardScale = useSharedValue(0.95)
+
+  useEffect(() => {
+    // Entrance animations
+    headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }))
+    cardScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }))
+  }, [headerOpacity, cardScale])
+
+  // Header animation
+  const headerAnimStyle = useAnimatedStyle(() => {
+    return {
+      opacity: headerOpacity.value,
+      transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }]
+    }
+  })
 
   // Initialize selection mode from props
   useEffect(() => {
@@ -118,62 +146,63 @@ export default function OutFitPageComp({
 
     const handleTabPress = (tab: string): void => {
       setSelectedTab(tab)
+      setActiveFilter(tab.toLowerCase())
     }
 
     return (
-      <View style={styles.tabBar}>
-        <FlatList
-          data={["All", "Popular", "Top Rated", "Upcoming", "Now Playing"]}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <Button
-              style={[styles.tabButton, selectedTab === item ? styles.selectedTab : styles.unselectedTab]}
-              onPress={() => handleTabPress(item)}
+      <Animated.View
+        style={[headerAnimStyle]}
+        className="py-3 px-4 bg-white"
+      >
+        <HStack className="justify-between items-center mb-3">
+          <Text className="text-2xl font-bold text-gray-800">Outfits Gallery</Text>
+
+          {/* Add/Close button */}
+          <Animated.View entering={ZoomIn.delay(600).duration(300)}>
+            <TouchableOpacity
+              className="h-10 w-10 bg-primary-500 rounded-full justify-center items-center"
+              onPress={() => {
+                if (isSelecting) {
+                  setIsSelecting(false)
+                  clearOutfitItems()
+                } else {
+                  router.push("/(app)/(auth)/outfit/add")
+                }
+              }}
             >
-              <ButtonText style={selectedTab === item ? styles.selectedTabText : styles.unselectedTabText}>
-                {item}
-              </ButtonText>
-            </Button>
-          )}
-          keyExtractor={(item) => item}
-          contentContainerStyle={styles.tabBarContent}
-        />
-        <Button
-          size="md"
-          variant="outline"
-          style={styles.actionButton}
-          onPress={() => {
-            if (isSelecting) {
-              setIsSelecting(false)
-              clearOutfitItems()
-            } else {
-              router.push("/(app)/(auth)/outfit/add")
-            }
-          }}
-        >
-          {isSelecting ? (
-            <ButtonIcon style={styles.actionButtonIcon} size="md" as={CloseIcon} />
-          ) : (
-            <ButtonIcon style={styles.actionButtonIcon} size="md" as={AddIcon} />
-          )}
-        </Button>
-      </View>
+              <Text className="text-white mb-1 font-medium text-2xl">
+                {isSelecting ? "×" : "+"}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </HStack>
+
+        <HStack space="md" className="overflow-visible">
+          <FlatList
+            data={["All", "Casual", "Formal", "Sports", "Seasonal"]}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 20 }}
+            renderItem={({ item }: { item: string }) => (
+              <TouchableOpacity
+                onPress={() => handleTabPress(item)}
+                className={`py-2 px-4 mr-2 rounded-full ${selectedTab === item ? "bg-primary-500" : "bg-gray-100"
+                  }`}
+              >
+                <Text
+                  className={`font-medium ${selectedTab === item ? "text-white" : "text-gray-700"
+                    }`}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item}
+          />
+        </HStack>
+      </Animated.View>
     )
   }
-
-  // SubCategories filter - now without animations
-  const SubCategoriesFilter = () => (
-    <View style={styles.subCategoriesContainer}>
-      <SubCategoriesExbandableFilter
-        loading={loading}
-        themes={attireTheme}
-        selected={selectedSubFilter}
-        multiSelect={false}
-        onChange={(themes) => setSelectedSubFilter(Array.isArray(themes) ? themes[0] : themes)}
-      />
-    </View>
-  )
 
   // Generate placeholder data with proper typing
   const getPlaceholderData = (): OutfitItem[] => {
@@ -183,7 +212,14 @@ export default function OutFitPageComp({
     }))
   }
 
-  const displayData: OutfitItem[] = loading ? getPlaceholderData() : outfits
+  const filterOutfits = useCallback((data: OutfitWithImage[]) => {
+    if (activeFilter === "all") return data
+    
+    // In a real app, you would implement actual filtering logic here
+    return data
+  }, [activeFilter])
+
+  const displayData: OutfitItem[] = loading ? getPlaceholderData() : filterOutfits(outfits)
 
   const handleCardPress = useCallback(
     (item: OutfitItem) => {
@@ -197,7 +233,7 @@ export default function OutFitPageComp({
         })
       }
     },
-    [isSelecting, toggleOutfitSelection],
+    [],
   )
 
   const handleCardLongPress = useCallback(
@@ -229,56 +265,76 @@ export default function OutFitPageComp({
 
   return (
     <ThemedView style={styles.container}>
-      {/* Fixed position Tab Bar */}
-      <TabBar />
-
-      {/* Fixed position SubCategories filter */}
-      <SubCategoriesFilter />
-
-      {/* Spacer view with fixed height to push content down */}
-
-
-      {loading && !refreshing ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000" />
+      <VStack className="flex-1">
+        {/* Header with tabs */}
+        <TabBar />
+        
+        {/* SubCategories filter */}
+        <View style={styles.subCategoriesContainer}>
+          <SubCategoriesExbandableFilter
+            loading={loading}
+            themes={attireTheme}
+            selected={selectedSubFilter}
+            multiSelect={false}
+            onChange={(themes) => setSelectedSubFilter(Array.isArray(themes) ? themes[0] : themes)}
+          />
         </View>
-      ) : (
-        <FlashList
-          extraData={[outfitItems, isSelecting]} // Make sure list re-renders when selection changes
-          data={displayData}
-          estimatedItemSize={itemHeight + 60} // Account for info section height
-          renderItem={renderItem}
-          keyExtractor={(item, index) => {
-            if ("isPlaceholder" in item) {
-              return `placeholder-${item.id}`
-            }
-            return item.$id || `item-${index}`
-          }}
-          numColumns={numColumns}
-          contentContainerStyle={
-            bottomSheetVisible
-              ? { ...styles.listContent, paddingBottom: 100 }
-              : styles.listContent
-          }
-          showsVerticalScrollIndicator={false}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          scrollEventThrottle={16}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No outfits found</Text>
-            </View>
-          }
-          ListFooterComponent={<View style={{ height: 80 }} />}
-        />
-      )}
 
-      {/* Modal for outfit details */}
-      <ModalComponent
-        id={modalProps.id}
-        visible={modalProps.visible}
-        onPress={() => setModalProps({ id: "", visible: false })}
-      />
+        {loading && !refreshing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#000" />
+          </View>
+        ) : (
+          <FlashList
+            extraData={[outfitItems, isSelecting]} // Make sure list re-renders when selection changes
+            data={displayData}
+            estimatedItemSize={itemHeight} 
+            numColumns={numColumns}
+            contentContainerStyle={{
+              paddingHorizontal: spacing / 2,
+              paddingBottom: bottomSheetVisible ? 100 : 20
+            }}
+            renderItem={({ item, index }) => (
+              <Animated.View
+                entering={FadeIn.delay(index * 100).duration(300)}
+                style={{ margin: spacing }}
+                className="flex justify-center items-center"
+              >
+                {renderItem({ item, index })}
+              </Animated.View>
+            )}
+            keyExtractor={(item, index) => {
+              if ("isPlaceholder" in item) {
+                return `placeholder-${item.id}`
+              }
+              return item.$id || `item-${index}`
+            }}
+            showsVerticalScrollIndicator={false}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            ListEmptyComponent={
+              <View className="flex-1 justify-center items-center py-20">
+                <Text className="text-gray-500 text-lg">No outfits found</Text>
+                <Button
+                  className="mt-4 bg-primary-500 rounded-full"
+                  onPress={() => router.push("/(app)/(auth)/outfit/add")}
+                >
+                  <ButtonText>Add New Outfit</ButtonText>
+                  <ButtonIcon className="ml-2" as={AddIcon} />
+                </Button>
+              </View>
+            }
+            ListFooterComponent={<View style={{ height: 80 }} />}
+          />
+        )}
+
+        {/* Modal for outfit details */}
+        <ModalComponent
+          id={modalProps.id}
+          visible={modalProps.visible}
+          onPress={() => setModalProps({ id: "", visible: false })}
+        />
+      </VStack>
     </ThemedView>
   )
 }
@@ -288,76 +344,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  tabBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "white",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-
-
-  },
   subCategoriesContainer: {
-
     backgroundColor: "white",
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-
-  },
-  tabBarContent: {
-    paddingRight: 8,
-  },
-  tabButton: {
-    marginHorizontal: 4,
-    borderRadius: 6,
-  },
-  selectedTab: {
-    backgroundColor: "#000",
-  },
-  unselectedTab: {
-    backgroundColor: "#f0f0f0",
-  },
-  selectedTabText: {
-    color: "white",
-  },
-  unselectedTabText: {
-    color: "#333",
-  },
-  actionButton: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    borderColor: "#ddd",
-    padding: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  actionButtonIcon: {
-    color: "#333",
-  },
-  listContent: {
-    paddingHorizontal: 4,
-    paddingBottom: 20,
-
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
-  },
-  emptyText: {
-    color: "#666",
-    fontSize: 16,
   },
   loadingContainer: {
     flex: 1,
