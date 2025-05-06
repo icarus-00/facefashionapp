@@ -1,37 +1,34 @@
-import { Box } from "@/components/ui/box";
-import { OutfitWithImage } from "@/interfaces/outfitDB";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { View, Image, Text, Dimensions, TouchableOpacity } from "react-native";
-import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-  Pressable,
-} from "react-native-gesture-handler";
-import { Ionicons } from "@expo/vector-icons";
+import type React from "react"
+import { useState } from "react"
+import { Box } from "@/components/ui/box"
+import type { OutfitWithImage } from "@/interfaces/outfitDB"
+import { Skeleton } from "@/components/ui/skeleton"
+import { View, Image, Text, Dimensions, StyleSheet } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import { Pressable } from "react-native-gesture-handler"
+const { width: screenWidth } = Dimensions.get("screen")
+const numColumns = 2
+const spacing = 4
+const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns
+// Using 9:16 aspect ratio (portrait)
+const itemHeight = itemWidth * 1.6
 
-const { width: screenWidth } = Dimensions.get("screen");
-const numColumns = 2;
-const spacing = 2;
-const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
-const itemHeight = itemWidth * 1.777;
-const DEFAULT_IMAGE = "https://placehold.co/900x1600";
+const DEFAULT_IMAGE = "https://placehold.co/900x1600"
 
 // Create a union type for outfit data items
-type OutfitItem = OutfitWithImage | { id: number; isPlaceholder: true };
+type OutfitItem = OutfitWithImage | { id: number; isPlaceholder: true }
 
 // Props for OutfitCard component
 interface OutfitCardProps {
-  item: OutfitItem;
-  loading: boolean;
-  index: number;
-  selected?: boolean;
-  onLongPress?: () => void;
-  onPress: () => void;
-  selecting: boolean | false;
+  item: OutfitItem
+  loading: boolean
+  index: number
+  selected?: boolean
+  onLongPress?: () => void
+  onPress: () => void
+  selecting: boolean
 }
+
 export default function OutfitCard({
   item,
   loading,
@@ -41,82 +38,155 @@ export default function OutfitCard({
   onPress,
   selecting,
 }: OutfitCardProps): React.JSX.Element {
-  const [fallbackImage, setFallbackImage] = useState<boolean>(false);
-  const router = useRouter();
+  const [fallbackImage, setFallbackImage] = useState<boolean>(false)
+
   // Check if item is a placeholder
-  const isPlaceholder = "isPlaceholder" in item;
+  const isPlaceholder = "isPlaceholder" in item
 
   // Safe way to get outfit name
   const getOutfitName = (): string => {
-    if (isPlaceholder) return "Loading...";
-    return item.outfitName || "Unknown outfit";
-  };
+    if (isPlaceholder) return "Loading..."
+    return item.outfitName || "Unknown outfit"
+  }
+
+  // Safe way to get brand
+  const getBrand = (): string => {
+    if (isPlaceholder) return ""
+    return (item as OutfitWithImage).brand || ""
+  }
+
+  // Safe way to get theme
+  const getTheme = (): string => {
+    if (isPlaceholder) return ""
+    return (item as OutfitWithImage).attireTheme || ""
+  }
 
   // Safe way to render image
   const renderOutfitImage = (): React.JSX.Element => {
     if (loading || isPlaceholder) {
-      return (
-        <Skeleton variant="sharp" style={{ width: "100%", height: "100%" }} />
-      );
+      return <Skeleton variant="sharp" style={styles.image} />
     }
 
     try {
       // Use the imageUrl from OutfitWithImage
-      const outfitItem = item as OutfitWithImage;
+      const outfitItem = item as OutfitWithImage
       return (
         <Image
           source={{
             uri: fallbackImage ? DEFAULT_IMAGE : outfitItem.imageUrl,
           }}
-          style={{ width: "100%", height: "100%" }}
+          style={styles.image}
           resizeMode="cover"
           onError={() => setFallbackImage(true)}
         />
-      );
+      )
     } catch (error) {
-      console.error("Image rendering error:", error);
+      console.error("Image rendering error:", error)
       return (
-        <View className="flex-1 w-full h-full bg-gray-200 justify-center items-center">
-          <Text className="text-gray-500">Image not available</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Image not available</Text>
         </View>
-      );
+      )
     }
-  };
-
-  const Item = () => {
-    return (
-      <Pressable onPress={onPress}>
-        <View
-          className={`"overflow-hidden rounded-sm shadow-md shadow-black  " ${""}`}
-          style={{ width: itemWidth, height: itemHeight, margin: spacing / 2 }}
-        >
-          <Box
-            className="bg-background-100 rounded-sm overflow-hidden"
-            style={{ width: itemWidth, height: itemHeight }}
-          >
-            <View style={{ width: "100%", height: "100%" }}>
-              {renderOutfitImage()}
-            </View>
-          </Box>
-        </View>
-      </Pressable>
-    );
-  };
-
-  if (selecting && onLongPress) {
-    const LongPressGesture = Gesture.LongPress()
-      .runOnJS(true)
-      .onStart(() => {
-        console.log("Long press started");
-        onLongPress();
-      });
-
-    return (
-      <GestureDetector gesture={LongPressGesture}>
-        <Item />
-      </GestureDetector>
-    );
-  } else {
-    return <Item />;
   }
+
+  return (
+    <Pressable onPress={() => onPress()} onLongPress={onLongPress} delayLongPress={500} style={styles.container}>
+      <View style={styles.cardContainer}>
+        {/* Image container */}
+        <Box style={styles.imageBox}>{renderOutfitImage()}</Box>
+
+        {/* Info section below image */}
+        <View style={styles.infoSection}>
+          <Text style={styles.outfitName} numberOfLines={1} ellipsizeMode="tail">
+            {getOutfitName()}
+          </Text>
+
+          {getBrand() ? (
+            <Text style={styles.brandText} numberOfLines={1} ellipsizeMode="tail">
+              {getBrand()}
+            </Text>
+          ) : null}
+
+          {getTheme() ? (
+            <Text style={styles.themeText} numberOfLines={1} ellipsizeMode="tail">
+              {getTheme()}
+            </Text>
+          ) : null}
+        </View>
+
+        {/* Selection indicator */}
+        {selecting && (
+          <View style={styles.selectionIndicator}>
+            {selected ? (
+              <Ionicons name="checkmark-circle" size={22} color="#000" />
+            ) : (
+              <Ionicons name="ellipse-outline" size={22} color="#666" />
+            )}
+          </View>
+        )}
+      </View>
+    </Pressable>
+  )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: itemWidth,
+    height: itemHeight + 60, // Extra height for info section
+    margin: spacing / 2,
+  },
+  cardContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    position: "relative",
+  },
+  imageBox: {
+    width: "100%",
+    height: itemHeight,
+    backgroundColor: "#f9f9f9",
+    overflow: "hidden",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  errorContainer: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#666",
+  },
+  infoSection: {
+    padding: 8,
+  },
+  outfitName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 2,
+  },
+  brandText: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 2,
+  },
+  themeText: {
+    fontSize: 12,
+    color: "#666",
+    fontStyle: "italic",
+  },
+  selectionIndicator: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 12,
+    padding: 2,
+  },
+})

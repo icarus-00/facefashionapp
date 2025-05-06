@@ -26,7 +26,7 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
     removeActorItems,
     actorItems,
   } = useStore();
-  
+
   const [actorName, setActorName] = useState("");
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -56,97 +56,131 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
   if (!visible) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, position: 'absolute', bottom: 0, left: 0, right: 0, height: '100%' }}>
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        enablePanDownToClose={false}
-        handleIndicatorStyle={{ backgroundColor: '#666666', width: 50 }}
-        backgroundStyle={{ backgroundColor: '#FFFFFF' }}
-        style={{ 
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 10,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-        }}
-      >
-        <BottomSheetScrollView contentContainerStyle={{ padding: 16 }}>
-          {/* Title */}
-          <Text className="text-xl font-bold text-center mb-4 text-black">
-            Selected Items
-          </Text>
-          
-          {/* Actor/Model Section */}
-          <View className="mb-6">
-            <Text className="text-lg font-semibold mb-2 text-gray-700">Model</Text>
-            
-            <View>
-              {actorItems && actorItems.imageUrl ? (
-                <View className="relative">
+
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose={false}
+      handleIndicatorStyle={{ backgroundColor: '#666666', width: 50 }}
+      backgroundStyle={{ backgroundColor: '#FFFFFF' }}
+      style={{
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 10,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
+    >
+      <BottomSheetScrollView contentContainerStyle={{ padding: 16 }}>
+        {/* Title */}
+        <Text className="text-xl font-bold text-center mb-4 text-black">
+          Selected Items
+        </Text>
+
+        {/* Actor/Model Section */}
+        <View className="mb-6">
+          <Text className="text-lg font-semibold mb-2 text-gray-700">Model</Text>
+
+          <View>
+            {actorItems && actorItems.imageUrl ? (
+              <View className="relative">
+                <Image
+                  source={{ uri: actorItems.imageUrl }}
+                  className="w-full aspect-square rounded-2xl"
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
+                  onPress={handleRemoveActor}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={24}
+                    color="black"
+                  />
+                </TouchableOpacity>
+
+
+              </View>
+            ) : (
+              <View
+                className="w-full aspect-square rounded-2xl justify-center items-center bg-transparent"
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#CCCCCC',
+                }}
+              >
+                <Ionicons name="person" size={64} color="#999999" />
+                <Text className="text-gray-500 mt-2">No model selected</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Divider */}
+        <View className="h-px bg-gray-300 my-4" />
+
+        {/* Outfit Items Section */}
+        <Text className="text-lg font-semibold mb-2 text-gray-700">Outfit Items</Text>
+
+        {hasFullOutfit() ? (
+          // Full outfit display
+          <View className="relative mb-6">
+            {fullItem ? (
+              <View className="relative">
+                <View className="rounded-2xl overflow-hidden border border-gray-300">
                   <Image
-                    source={{ uri: actorItems.imageUrl }}
-                    className="w-full aspect-square rounded-2xl"
+                    source={{ uri: fullItem.imageUrl }}
+                    className="w-full aspect-video"
                     resizeMode="cover"
                   />
-                  <TouchableOpacity
-                    className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
-                    onPress={handleRemoveActor}
-                  >
-                    <Ionicons
-                      name="close-circle"
-                      size={24}
-                      color="black"
-                    />
-                  </TouchableOpacity>
-                  
-                  <TextInput
-                    className="bg-gray-100 rounded-lg mt-2 p-2 text-black"
-                    placeholder="Enter model name"
-                    placeholderTextColor="#666"
-                    value={actorName}
-                    onChangeText={setActorName}
-                  />
                 </View>
-              ) : (
-                <View
-                  className="w-full aspect-square rounded-2xl justify-center items-center bg-transparent"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: '#CCCCCC',
-                  }}
+                <TouchableOpacity
+                  className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
+                  onPress={() => handleRemoveItem("full")}
                 >
-                  <Ionicons name="person" size={64} color="#999999" />
-                  <Text className="text-gray-500 mt-2">No model selected</Text>
-                </View>
-              )}
-            </View>
+                  <Ionicons
+                    name="close-circle"
+                    size={24}
+                    color="black"
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View
+                className="w-full aspect-video rounded-2xl justify-center items-center bg-transparent"
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#CCCCCC',
+                }}
+              >
+                <Text className="text-gray-500">
+                  No full outfit selected
+                </Text>
+              </View>
+            )}
           </View>
-
-          {/* Divider */}
-          <View className="h-px bg-gray-300 my-4" />
-
-          {/* Outfit Items Section */}
-          <Text className="text-lg font-semibold mb-2 text-gray-700">Outfit Items</Text>
-          
-          {hasFullOutfit() ? (
-            // Full outfit display
-            <View className="relative mb-6">
-              {fullItem ? (
+        ) : (
+          // Individual items
+          <VStack className="space-y-4 mb-6">
+            {/* Top item */}
+            <View className="relative">
+              <Text className="text-sm font-medium mb-1 text-gray-600">Top</Text>
+              {topItem ? (
                 <View className="relative">
-                  <View className="rounded-2xl overflow-hidden border border-gray-300">
+                  <View className="rounded-xl overflow-hidden border border-gray-300">
                     <Image
-                      source={{ uri: fullItem.imageUrl }}
-                      className="w-full aspect-video"
+                      source={{ uri: topItem.imageUrl }}
+                      className="w-full h-32"
                       resizeMode="cover"
                     />
                   </View>
                   <TouchableOpacity
                     className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
-                    onPress={() => handleRemoveItem("full")}
+                    onPress={() => handleRemoveItem("top")}
                   >
                     <Ionicons
                       name="close-circle"
@@ -157,169 +191,121 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                 </View>
               ) : (
                 <View
-                  className="w-full aspect-video rounded-2xl justify-center items-center bg-transparent"
+                  className="w-full h-20 rounded-xl justify-center items-center bg-transparent"
                   style={{
                     borderWidth: 1,
                     borderColor: '#CCCCCC',
                   }}
                 >
-                  <Text className="text-gray-500">
-                    No full outfit selected
-                  </Text>
+                  <HStack className="items-center space-x-2">
+                    <Ionicons
+                      name="shirt-outline"
+                      size={24}
+                      color="#999999"
+                    />
+                    <Text className="text-gray-500">No top selected</Text>
+                  </HStack>
                 </View>
               )}
             </View>
-          ) : (
-            // Individual items
-            <VStack className="space-y-4 mb-6">
-              {/* Top item */}
-              <View className="relative">
-                <Text className="text-sm font-medium mb-1 text-gray-600">Top</Text>
-                {topItem ? (
-                  <View className="relative">
-                    <View className="rounded-xl overflow-hidden border border-gray-300">
-                      <Image
-                        source={{ uri: topItem.imageUrl }}
-                        className="w-full h-32"
-                        resizeMode="cover"
-                      />
-                    </View>
-                    <TouchableOpacity
-                      className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
-                      onPress={() => handleRemoveItem("top")}
-                    >
-                      <Ionicons
-                        name="close-circle"
-                        size={24}
-                        color="black"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View
-                    className="w-full h-20 rounded-xl justify-center items-center bg-transparent"
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#CCCCCC',
-                    }}
-                  >
-                    <HStack className="items-center space-x-2">
-                      <Ionicons
-                        name="shirt-outline"
-                        size={24}
-                        color="#999999"
-                      />
-                      <Text className="text-gray-500">No top selected</Text>
-                    </HStack>
-                  </View>
-                )}
-              </View>
 
-              {/* Bottom item */}
-              <View className="relative">
-                <Text className="text-sm font-medium mb-1 text-gray-600">Bottom</Text>
-                {bottomItem ? (
-                  <View className="relative">
-                    <View className="rounded-xl overflow-hidden border border-gray-300">
-                      <Image
-                        source={{ uri: bottomItem.imageUrl }}
-                        className="w-full h-32"
-                        resizeMode="cover"
-                      />
-                    </View>
-                    <TouchableOpacity
-                      className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
-                      onPress={() => handleRemoveItem("bottom")}
-                    >
-                      <Ionicons
-                        name="close-circle"
-                        size={24}
-                        color="black"
-                      />
-                    </TouchableOpacity>
+            {/* Bottom item */}
+            <View className="relative">
+              <Text className="text-sm font-medium mb-1 text-gray-600">Bottom</Text>
+              {bottomItem ? (
+                <View className="relative">
+                  <View className="rounded-xl overflow-hidden border border-gray-300">
+                    <Image
+                      source={{ uri: bottomItem.imageUrl }}
+                      className="w-full h-32"
+                      resizeMode="cover"
+                    />
                   </View>
-                ) : (
-                  <View
-                    className="w-full h-20 rounded-xl justify-center items-center bg-transparent"
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#CCCCCC',
-                    }}
+                  <TouchableOpacity
+                    className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
+                    onPress={() => handleRemoveItem("bottom")}
                   >
-                    <HStack className="items-center space-x-2">
-                      <Ionicons
-                        name="hardware-chip-outline"
-                        size={24}
-                        color="#999999"
-                      />
-                      <Text className="text-gray-500">
-                        No bottom selected
-                      </Text>
-                    </HStack>
-                  </View>
-                )}
-              </View>
+                    <Ionicons
+                      name="close-circle"
+                      size={24}
+                      color="black"
+                    />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View
+                  className="w-full h-20 rounded-xl justify-center items-center bg-transparent"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#CCCCCC',
+                  }}
+                >
+                  <HStack className="items-center space-x-2">
+                    <Ionicons
+                      name="hardware-chip-outline"
+                      size={24}
+                      color="#999999"
+                    />
+                    <Text className="text-gray-500">
+                      No bottom selected
+                    </Text>
+                  </HStack>
+                </View>
+              )}
+            </View>
 
-              {/* Accessory item */}
-              <View className="relative">
-                <Text className="text-sm font-medium mb-1 text-gray-600">Accessory</Text>
-                {accessoryItem ? (
-                  <View className="relative">
-                    <View className="rounded-xl overflow-hidden border border-gray-300">
-                      <Image
-                        source={{ uri: accessoryItem.imageUrl }}
-                        className="w-full h-32"
-                        resizeMode="cover"
-                      />
-                    </View>
-                    <TouchableOpacity
-                      className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
-                      onPress={() => handleRemoveItem("accessory")}
-                    >
-                      <Ionicons
-                        name="close-circle"
-                        size={24}
-                        color="black"
-                      />
-                    </TouchableOpacity>
+            {/* Accessory item */}
+            <View className="relative">
+              <Text className="text-sm font-medium mb-1 text-gray-600">Accessory</Text>
+              {accessoryItem ? (
+                <View className="relative">
+                  <View className="rounded-xl overflow-hidden border border-gray-300">
+                    <Image
+                      source={{ uri: accessoryItem.imageUrl }}
+                      className="w-full h-32"
+                      resizeMode="cover"
+                    />
                   </View>
-                ) : (
-                  <View
-                    className="w-full h-20 rounded-xl justify-center items-center bg-transparent"
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#CCCCCC',
-                    }}
+                  <TouchableOpacity
+                    className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
+                    onPress={() => handleRemoveItem("accessory")}
                   >
-                    <HStack className="items-center space-x-2">
-                      <Ionicons
-                        name="glasses-outline"
-                        size={24}
-                        color="#999999"
-                      />
-                      <Text className="text-gray-500">
-                        No accessory selected
-                      </Text>
-                    </HStack>
-                  </View>
-                )}
-              </View>
-            </VStack>
-          )}
-          
-          {/* Action button */}
-          <View className="items-center mt-6 mb-8">
-            <TouchableOpacity
-              className="px-8 py-4 rounded-xl bg-blue-500 shadow-md"
-            >
-              <Text className="text-white text-lg font-bold text-center">
-                Dress Up
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </BottomSheetScrollView>
-      </BottomSheet>
-    </GestureHandlerRootView>
+                    <Ionicons
+                      name="close-circle"
+                      size={24}
+                      color="black"
+                    />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View
+                  className="w-full h-20 rounded-xl justify-center items-center bg-transparent"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#CCCCCC',
+                  }}
+                >
+                  <HStack className="items-center space-x-2">
+                    <Ionicons
+                      name="glasses-outline"
+                      size={24}
+                      color="#999999"
+                    />
+                    <Text className="text-gray-500">
+                      No accessory selected
+                    </Text>
+                  </HStack>
+                </View>
+              )}
+            </View>
+          </VStack>
+        )}
+
+        {/* Action button */}
+
+      </BottomSheetScrollView>
+    </BottomSheet>
+
   );
 };
 

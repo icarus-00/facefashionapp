@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { Text } from "@/components/ui/text";
-import { Button ,ButtonSpinner } from "@/components/ui/button";
+import { Button, ButtonSpinner } from "@/components/ui/button";
 import { Ionicons } from "@expo/vector-icons";
 import { Input } from "@rneui/themed";
 import {
@@ -76,7 +76,7 @@ export default function LoginPage({
   const [otp, setOtp] = useState("");
   const [otpTimer, setOtpTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   // Animation config
   const animConfig = {
@@ -130,13 +130,13 @@ export default function LoginPage({
     setCanResend(false);
 
     if (timerRef.current) {
-      clearInterval(timerRef.current as NodeJS.Timeout);
+      clearInterval(timerRef.current);
     }
 
     timerRef.current = setInterval(() => {
       setOtpTimer((prev) => {
         if (prev <= 1) {
-          clearInterval(timerRef.current as NodeJS.Timeout);
+          clearInterval(timerRef.current!);
           setCanResend(true);
           return 0;
         }
@@ -536,7 +536,7 @@ export default function LoginPage({
                     focusStickBlinkingDuration={500}
                     onFocus={() => console.log("Focused")}
                     onBlur={() => console.log("Blurred")}
-                    onTextChange={(text) => {setToken(text); setOtp(text); }}
+                    onTextChange={(text) => { setToken(text); setOtp(text); }}
                     onFilled={(text) => console.log(`OTP is ${text}`)}
                     textInputProps={{
                       accessibilityLabel: "One-Time Password",

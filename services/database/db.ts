@@ -8,6 +8,10 @@ import useAttireStore from "@/store/cayegoryStore";
 interface Actor extends Models.Document {
   fileID: string;
   actorName: string;
+  age: number;
+  height: number;
+  weight: number;
+  bio: string;
   // Add other actor properties as needed
 }
 
@@ -85,6 +89,10 @@ class DatabaseService {
           actorName: actor.actorName,
           imageUrl: await storageService.getfileview(actor.fileID),
           fileID: actor.fileID,
+          age: actor.age,
+          height: actor.height,
+          weight: actor.weight,
+          bio: actor.bio,
         }))
       );
 
@@ -118,6 +126,10 @@ class DatabaseService {
         $databaseId: response.$databaseId,
         $permissions: response.$permissions,
         $updatedAt: response.$updatedAt,
+        age: response.age,
+        height: response.height,
+        weight: response.weight,
+        bio: response.bio,
       };
       return result;
     } catch (error) {

@@ -12,6 +12,8 @@ export const SafeAreaView = ({ children, style, className }: { children: React.R
 
     return (
         <View
+            collapsable={false}
+
             style={[
                 {
                     paddingTop: top,

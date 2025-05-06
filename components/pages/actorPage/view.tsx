@@ -112,16 +112,16 @@ export default function ActorPageComp(): React.JSX.Element {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 <<<<<<< HEAD
   const [activeFilter, setActiveFilter] = useState<string>("all");
-  
+
   // Animation values
   const headerOpacity = useSharedValue(0);
 =======
-  
+
   // Animation values
   const headerOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.95);
 >>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
-  
+
   useEffect(() => {
     // Entrance animations
     headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
@@ -131,7 +131,7 @@ export default function ActorPageComp(): React.JSX.Element {
     cardScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }));
   }, []);
 >>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
-  
+
   // Header animation
   const headerAnimStyle = useAnimatedStyle(() => {
     return {
@@ -183,7 +183,7 @@ export default function ActorPageComp(): React.JSX.Element {
   // Handle navigation to edit page
   const handleEditActor = () => {
     if (selectedActor) {
-      router.push({ 
+      router.push({
         pathname: "/(app)/(auth)/actor/edit",
         params: { id: selectedActor.$id }
       });
@@ -200,14 +200,14 @@ export default function ActorPageComp(): React.JSX.Element {
     const router = useRouter();
     // Check if item is a placeholder
     const isPlaceholder = "isPlaceholder" in item;
-    
+
     const itemCardScale = useSharedValue(0.95);
-    
+
     useEffect(() => {
       // Staggered animation for cards
       itemCardScale.value = withDelay(index * 100 + 200, withSpring(1, { damping: 12, stiffness: 90 }));
     }, []);
-    
+
     const cardAnimStyle = useAnimatedStyle(() => {
       return {
         transform: [{ scale: itemCardScale.value }],
@@ -272,7 +272,7 @@ export default function ActorPageComp(): React.JSX.Element {
           <View style={{ width: "100%", height: "100%" }}>
             {renderActorImage()}
           </View>
-          
+
           {/* Gradient overlay */}
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.8)']}
@@ -302,13 +302,13 @@ export default function ActorPageComp(): React.JSX.Element {
     };
 
     return (
-      <AnimatedView 
-        style={[headerAnimStyle]} 
+      <AnimatedView
+        style={[headerAnimStyle]}
         className="py-3 px-4 bg-white"
       >
         <HStack className="justify-between items-center mb-3">
           <Text className="text-2xl font-bold text-gray-800">Actors Gallery</Text>
-          
+
           {/* Add button moved to top right */}
           <Animated.View entering={ZoomIn.delay(600).duration(300)}>
             <TouchableOpacity
@@ -321,7 +321,7 @@ export default function ActorPageComp(): React.JSX.Element {
             </TouchableOpacity>
           </Animated.View>
         </HStack>
-        
+
         <HStack space="md" className="overflow-visible">
           <ScrollFlatList
             data={["All", "Popular", "Top Rated", "Upcoming", "Recent"]}
@@ -384,7 +384,7 @@ export default function ActorPageComp(): React.JSX.Element {
   // Apply active filter to the data
   const filterActors = useCallback((data: ActorWithImage[]) => {
     if (activeFilter === "all") return data;
-    
+
     // In a real app, you would implement actual filtering logic here
     // For now, we'll just return the data as is
     return data;
@@ -400,132 +400,134 @@ export default function ActorPageComp(): React.JSX.Element {
   return (
     <View className="flex-1 bg-white">
 <<<<<<< HEAD
-      {/* Actor Modal */}
-      {selectedActor && (
-        <ActorModal
-          actorName={selectedActor.actorName}
-          imageUrl={selectedActor.imageUrl}
-          fileID={selectedActor.fileID}
-          age={selectedActor.age}
-          height={selectedActor.height}
-          weight={selectedActor.weight}
-          bio={selectedActor.bio}
-          isVisible={visible}
-          onClose={handleClose}
-          onEdit={handleEditActor}
-          />
-        )}
-      
-        {/* Filter Bar */}
-        <FilterBar
-          options={filterOptions}
-          onFilterChange={setActiveFilter}
-          initialFilter="all"
-          title="Actors Gallery"
-          rightComponent={AddButton}
-          containerStyle={headerAnimStyle}
-          showIcons={true}
-          />
-        
-        {/* Actor Cards Grid */}
-        <View className="flex-1 mt-4">
-        <FlatList
+  {/* Actor Modal */ }
+  {
+    selectedActor && (
+      <ActorModal
+        actorName={selectedActor.actorName}
+        imageUrl={selectedActor.imageUrl}
+        fileID={selectedActor.fileID}
+        age={selectedActor.age}
+        height={selectedActor.height}
+        weight={selectedActor.weight}
+        bio={selectedActor.bio}
+        isVisible={visible}
+        onClose={handleClose}
+        onEdit={handleEditActor}
+      />
+    )
+  }
+
+  {/* Filter Bar */ }
+  <FilterBar
+    options={filterOptions}
+    onFilterChange={setActiveFilter}
+    initialFilter="all"
+    title="Actors Gallery"
+    rightComponent={AddButton}
+    containerStyle={headerAnimStyle}
+    showIcons={true}
+  />
+
+  {/* Actor Cards Grid */ }
+  <View className="flex-1 mt-4">
+    <FlatList
 =======
       <ModalComponent id={modalid} visible={visible} onPress={handleClose} />
       <VStack className="flex-1">
         <TabBar />
         <FlashList
 >>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
-          data={displayData}
-          numColumns={2}
-          contentContainerStyle={{
-            alignItems: 'center',
-            paddingHorizontal: spacing / 2,
+      data={displayData}
+      numColumns={2}
+      contentContainerStyle={{
+        alignItems: 'center',
+        paddingHorizontal: spacing / 2,
 
-          }}
-          renderItem={({ item, index }) => (
-            <Animated.View 
+      }}
+      renderItem={({ item, index }) => (
+        <Animated.View
 <<<<<<< HEAD
-            entering={FadeIn.delay(index * 100).duration(300)}
-            // style={{ margin: spacing }}
-            className="flex justify-center items-center"
-            >
-              {/* Use our new ActorCard component */}
-              {"isPlaceholder" in item ? (
-                <ActorCard
-                actor={item}
-                loading={loading}
-                index={index}
-                onPress={() => {}}
-                width={itemWidth}
-                height={itemHeight}
-                />
-              ) : (
-                <ActorCard
-                actor={{
-                  $id: item.$id,
-                  actorName: item.actorName,
-                  imageUrl: item.imageUrl,
-                  age: item.age,
-                  height: item.height,
-                  weight: item.weight,
-                  bio: item.bio
-                }}
-                loading={loading}
-                index={index}
-                onPress={handleActorPress}
-                width={itemWidth}
-                height={itemHeight}
-                style={{ margin: 6, borderRadius: 16 }}
-                />
-              )}
+          entering={FadeIn.delay(index * 100).duration(300)}
+          // style={{ margin: spacing }}
+          className="flex justify-center items-center"
+        >
+          {/* Use our new ActorCard component */}
+          {"isPlaceholder" in item ? (
+            <ActorCard
+              actor={item}
+              loading={loading}
+              index={index}
+              onPress={() => { }}
+              width={itemWidth}
+              height={itemHeight}
+            />
+          ) : (
+            <ActorCard
+              actor={{
+                $id: item.$id,
+                actorName: item.actorName,
+                imageUrl: item.imageUrl,
+                age: item.age,
+                height: item.height,
+                weight: item.weight,
+                bio: item.bio
+              }}
+              loading={loading}
+              index={index}
+              onPress={handleActorPress}
+              width={itemWidth}
+              height={itemHeight}
+              style={{ margin: 6, borderRadius: 16 }}
+            />
+          )}
 =======
               entering={FadeIn.delay(index * 100).duration(300)}
-              style={{ margin: spacing }}
-              className="flex justify-center items-center"
+          style={{ margin: spacing }}
+          className="flex justify-center items-center"
             >
-              <ActorCard item={item} loading={loading} index={index} />
+          <ActorCard item={item} loading={loading} index={index} />
 >>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
-            </Animated.View>
-          )}
-          keyExtractor={(item, index) => {
-            if ("isPlaceholder" in item) {
-              return `placeholder-${item.id}`;
-            }
-            return item.$id || `item-${index}`;
-          }}
+        </Animated.View>
+      )}
+      keyExtractor={(item, index) => {
+        if ("isPlaceholder" in item) {
+          return `placeholder-${item.id}`;
+        }
+        return item.$id || `item-${index}`;
+      }}
 <<<<<<< HEAD
 =======
           numColumns={numColumns}
           // contentContainerClassName="px-4 pt-1 pb-4" // Increased padding for better spacing
 >>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
-          showsVerticalScrollIndicator={false}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          ListEmptyComponent={
-            <View className="flex-1 justify-center items-center py-20">
-              <Text className="text-gray-500 text-lg">No actors found</Text>
-              <Button
-                className="mt-4 bg-primary-500 rounded-full"
-                onPress={() => router.push({ pathname: "/(app)/(auth)/actor/create" })}
+      showsVerticalScrollIndicator={false}
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+      ListEmptyComponent={
+        <View className="flex-1 justify-center items-center py-20">
+          <Text className="text-gray-500 text-lg">No actors found</Text>
+          <Button
+            className="mt-4 bg-primary-500 rounded-full"
+            onPress={() => router.push({ pathname: "/(app)/(auth)/actor/create" })}
 <<<<<<< HEAD
-                >
+          >
 =======
               >
 >>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
-                <ButtonText>Add New Actor</ButtonText>
-                <ButtonIcon className="ml-2" as={AddIcon} />
-              </Button>
-            </View>
-          }
-          ListFooterComponent={<View style={{ height: 80 }} />}
+            <ButtonText>Add New Actor</ButtonText>
+            <ButtonIcon className="ml-2" as={AddIcon} />
+          </Button>
+        </View>
+      }
+      ListFooterComponent={<View style={{ height: 80 }} />}
 <<<<<<< HEAD
-          />
-          </View>
+    />
+  </View>
 =======
         />
       </VStack>
 >>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
-    </View>
+    </View >
   );
 }

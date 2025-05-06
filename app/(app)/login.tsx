@@ -6,7 +6,9 @@ import { View, Button as ReactButton } from "react-native";
 import { account } from "@/services/config/appwrite";
 
 import { ToastGlue } from "@/context/toastContext";
-import SafeAreaView from "@/components/atoms/safeview/safeview";import { Box } from "@/components/ui/box";
+
+import SafeAreaView from "@/components/atoms/safeview/safeview";
+import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { Text } from "@/components/ui/text";
 import { Input, InputField } from "@/components/ui/input";
@@ -17,15 +19,15 @@ import LoginPage from "@/components/pages/loginPage/loginPage";
 export default function LoginScreen() {
   const [color, setColor] = useState("red");
   const router = useRouter();
-  const { current: user, login, logout, register , verifyOtp } = useUser();
+  const { current: user, login, logout, register, verifyOtp } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [token , setToken] = useState("");
-  const redirectTo ="test"
+  const [token, setToken] = useState("");
+  const redirectTo = "test"
   const handleSubmit = async () => {
     setIsLoading(true);
     setError("");
@@ -46,7 +48,7 @@ export default function LoginScreen() {
     setError("");
     try {
       console.log("sending otp")
-      const loginT = await login({ email ,redirectUrl:redirectTo  } , true);
+      const loginT = await login({ email, redirectUrl: redirectTo }, true);
       console.log("otp sent")
       console.log(loginT)
     } catch (error: any) {
@@ -56,7 +58,7 @@ export default function LoginScreen() {
       setIsLoading(false);
     }
   };
-  const handleOtpSubmit = async ()=>{
+  const handleOtpSubmit = async () => {
     setIsLoading(true);
     try {
       await verifyOtp(email, token, "email");

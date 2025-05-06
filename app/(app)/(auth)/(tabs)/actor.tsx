@@ -1,6 +1,6 @@
 import React from "react";
 <<<<<<< HEAD
-import SafeAreaView from "@/components/atoms/safeview/safeview";import ActorPageComp from "@/components/pages/actorPage/view";
+import SafeAreaView from "@/components/atoms/safeview/safeview"; import ActorPageComp from "@/components/pages/actorPage/view";
 =======
 import { SafeAreaView } from "react-native-safe-area-context";
 import ActorPageComp from "@/components/pages/actorPage/view";

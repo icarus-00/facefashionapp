@@ -42,12 +42,12 @@ export default function GetActor({
   const [loading, setLoading] = useState(true);
   const { userId, updateActorItems } = useStore();
   const [activeSlide, setActiveSlide] = useState(0);
-  
+
   // Button scale animations
   const buttonScale = useSharedValue(1);
   const editScale = useSharedValue(1);
   const deleteScale = useSharedValue(1);
-  
+
   // Handle animation for button press
   const animateButton = (scale: Animated.SharedValue<number>) => {
     scale.value = withSpring(0.95, { damping: 10 });
@@ -55,26 +55,26 @@ export default function GetActor({
       scale.value = withSpring(1, { damping: 10 });
     }, 100);
   };
-  
+
   // Button animation styles
   const buttonAnimStyle = useAnimatedStyle(() => {
     return {
       transform: [{ scale: buttonScale.value }]
     };
   });
-  
+
   const editAnimStyle = useAnimatedStyle(() => {
     return {
       transform: [{ scale: editScale.value }]
     };
   });
-  
+
   const deleteAnimStyle = useAnimatedStyle(() => {
     return {
       transform: [{ scale: deleteScale.value }]
     };
   });
-  
+
   // Memoize the close handler to improve performance
   const handleClose = useCallback(() => {
     if (onClose) onClose();
@@ -99,7 +99,7 @@ export default function GetActor({
 
   const handleDelete = async () => {
     animateButton(deleteScale);
-    
+
     try {
       if (actor?.$id) {
         await databaseService.deleteActor(actor.$id, actor.fileID);
@@ -112,7 +112,7 @@ export default function GetActor({
 
   const handleEdit = () => {
     animateButton(editScale);
-    
+
     if (actor?.$id) {
       router.push({
         pathname: "/(app)/(auth)/actor/edit",
@@ -124,7 +124,7 @@ export default function GetActor({
 
   const handleDressUp = async () => {
     animateButton(buttonScale);
-    
+
     try {
       if (actor?.$id && actor?.imageUrl) {
         await updateActorItems(actor.$id, actor.imageUrl);
@@ -143,7 +143,7 @@ export default function GetActor({
   return (
     <View style={styles.container}>
       {/* Close button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.closeButton}
         onPress={handleClose}
         activeOpacity={0.7}
@@ -151,12 +151,12 @@ export default function GetActor({
       >
         <AntDesign name="close" size={20} color="black" />
       </TouchableOpacity>
-      
+
       <View style={styles.contentContainer}>
         {/* Actor image section */}
         <View style={styles.imageContainer}>
           {actor?.imageUrl ? (
-            <Image 
+            <Image
               source={{ uri: actor.imageUrl }}
               style={styles.actorImage}
               resizeMode="cover"
@@ -166,10 +166,10 @@ export default function GetActor({
               <Text style={styles.noImageText}>No image available</Text>
             </View>
           )}
-          
+
           {/* Name overlay */}
           <View style={styles.nameOverlay}>
-            <Animated.Text 
+            <Animated.Text
               entering={FadeIn.delay(300).duration(500)}
               style={styles.actorName}
             >
@@ -177,9 +177,9 @@ export default function GetActor({
             </Animated.Text>
           </View>
         </View>
-        
+
         {/* Details section */}
-        <AnimatedScrollView 
+        <AnimatedScrollView
           entering={FadeIn.duration(300)}
           style={styles.detailsContainer}
           showsVerticalScrollIndicator={false}
@@ -192,7 +192,7 @@ export default function GetActor({
                 {actor?.description || "No biography available for this actor."}
               </Text>
             </View>
-            
+
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Details</Text>
               <View style={styles.detailsBox}>
@@ -210,10 +210,10 @@ export default function GetActor({
                 </View>
               </View>
             </View>
-          
+
             <View style={styles.buttonRow}>
               <Animated.View style={[styles.buttonWrapper, editAnimStyle]}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.actionButton, styles.editButton]}
                   onPress={handleEdit}
                   activeOpacity={0.8}
@@ -224,9 +224,9 @@ export default function GetActor({
                   </HStack>
                 </TouchableOpacity>
               </Animated.View>
-              
+
               <Animated.View style={[styles.buttonWrapper, deleteAnimStyle]}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.actionButton, styles.deleteButton]}
                   onPress={handleDelete}
                   activeOpacity={0.8}
@@ -238,9 +238,9 @@ export default function GetActor({
                 </TouchableOpacity>
               </Animated.View>
             </View>
-          
+
             <Animated.View style={[styles.dressUpWrapper, buttonAnimStyle]}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.dressUpButton}
                 onPress={handleDressUp}
                 activeOpacity={0.7}
