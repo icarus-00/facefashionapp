@@ -68,7 +68,7 @@ const dropdownData = [
 
 // Trending styles
 const trendingStyles = [
-  { id: 1, name: "Urban Minimalist", image: images.polo},
+  { id: 1, name: "Urban Minimalist", image: images.polo },
   { id: 2, name: "Boho Chic", image: images.tropical },
   { id: 3, name: "Tech Wear", image: images.trucker },
   { id: 4, name: "Tech Wear", image: images.blazer },
@@ -91,7 +91,7 @@ export default function Home() {
   const secondImageScale = useSharedValue(0.9);
   const howItWorksTranslateY = useSharedValue(50);
   const buttonScale = useSharedValue(0.95);
-  
+
   // State to track if animations have played
   const [animationState, setAnimationState] = useState({
     hasPlayed: false,
@@ -178,7 +178,7 @@ export default function Home() {
       ]
     };
   });
-  
+
   // Animation for button press
   const handleButtonPress = () => {
     buttonScale.value = withSequence(
@@ -192,35 +192,35 @@ export default function Home() {
     const isExpanded = expandedDropdown === item.id;
 
     const toggleDropdown = () => {
-        setExpandedDropdown(isExpanded ? null : item.id);
+      setExpandedDropdown(isExpanded ? null : item.id);
     };
 
     return (
-        <View className="mb-4 rounded-2xl bg-gray-100">
-            <TouchableOpacity 
-                onPress={toggleDropdown} 
-                className="flex-row items-center justify-between p-4"
-            >
-                <View className="flex-row items-center">
-                    <Image source={item.icon} className="w-6 h-6 mr-3" tintColor="black" />
-                    <Text className="text-black font-semibold">{item.title}</Text>
-                </View>
-                <Text className="text-black">{isExpanded ? '▲' : '▼'}</Text>
-            </TouchableOpacity>
-            
-            {isExpanded && (
-                <View className="p-4  border-t rounded-b-2xl border-gray-300">
-                    <Text className="text-gray-600">{item.description}</Text>
-                </View>
-            )}
-        </View>
+      <View className="mb-4 rounded-2xl bg-gray-100">
+        <TouchableOpacity
+          onPress={toggleDropdown}
+          className="flex-row items-center justify-between p-4"
+        >
+          <View className="flex-row items-center">
+            <Image source={item.icon} className="w-6 h-6 mr-3" tintColor="black" />
+            <Text className="text-black font-semibold">{item.title}</Text>
+          </View>
+          <Text className="text-black">{isExpanded ? '▲' : '▼'}</Text>
+        </TouchableOpacity>
+
+        {isExpanded && (
+          <View className="p-4  border-t rounded-b-2xl border-gray-300">
+            <Text className="text-gray-600">{item.description}</Text>
+          </View>
+        )}
+      </View>
     );
   };
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView 
-        ref={scrollRef} 
+      <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         bounces={false}
@@ -241,7 +241,7 @@ export default function Home() {
             {/* RenderWear Text */}
             <Animated.View style={[brandTextAnimStyle, { position: 'absolute', top: '93%', left: 0, right: 0, zIndex: 1 }]} className="mb-4">
               <Center>
-                <AnimatedHeading 
+                <AnimatedHeading
                   className="text-black font-extrabold"
                   size="5xl"
                 >
@@ -296,13 +296,13 @@ export default function Home() {
                   AI-Powered Outfit {"\n"}Generation
                 </Text>
                 <Text className="text-gray-600 text-center mb-2">
-                Create, customize, and try-on outfits {"\n"} in real time using advanced AI technologies.
+                  Create, customize, and try-on outfits {"\n"} in real time using advanced AI technologies.
                 </Text>
               </Center>
             </Box>
 
             {/* Categories */}
-            <HStack space="md"  className=" justify-between mb-4">
+            <HStack space="md" className=" justify-between mb-4">
               {categories.map((category, index) => (
                 <AnimatedPressable
                   key={category.id}
@@ -311,16 +311,12 @@ export default function Home() {
                   onPress={() => handleButtonPress()}
                 >
                   <View className="items-center">
-                    <Image 
+                    <Image
                       source={categories[index].icon}
                       style={{ width: 80, height: 80 }}
                       resizeMode="contain"
                     />
-<<<<<<< HEAD
-                    <Text className="text-black text-center font-bold text-sm">{category.name}</Text>
-=======
                     <Text className="text-black text-center font-bold text-xs">{category.name}</Text>
->>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
                   </View>
                 </AnimatedPressable>
               ))}
@@ -329,26 +325,22 @@ export default function Home() {
             <View className="flex-1 justify-center items-center">
               <View className="w-full">
                 <Text className="text-black text-4xl font-bold mt-8 mb-2 text-center">
-                Creating a profile{"\n"} has never been easier 
+                  Creating a profile{"\n"} has never been easier
                 </Text>
                 <Text className="text-gray-600 text-center">
-                  upload your image, pick the perfect outfit,{"\n"}setting, add your finishing touches. 
+                  upload your image, pick the perfect outfit,{"\n"}setting, add your finishing touches.
                 </Text>
               </View>
             </View>
 
-              {/* Collection Cards*/}
-            <CollectionComponent/>
+            {/* Collection Cards*/}
+            <CollectionComponent />
 
             {/* Trending Styles - Horizontal Scrolling */}
             <AnimatedBox entering={FadeIn.delay(1200).duration(800)}>
               <Text className="text-black text-4xl font-bold mt-8 mb-2 text-center">Explore Various Styles</Text>
               <Text className="text-gray-600 text-center mb-6">
-<<<<<<< HEAD
                 clean cuts or bold statements,{"\n"} discover inspiring styles for every look.
-=======
-                Whether you lean toward clean cuts or bold statements, discover inspiring styles for every look.
->>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
               </Text>
               <ScrollView
                 horizontal
@@ -356,30 +348,30 @@ export default function Home() {
                 contentContainerStyle={{ paddingRight: 20 }}
               >
                 <FlatList
-                data={trendingStyles}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 0 }}
-                snapToInterval={CARD_WIDTH + SPACING}
-                decelerationRate="fast"
-                ItemSeparatorComponent={() => <View style={{ width: SPACING }} />}
-                renderItem={({ item, index }) => (
-                <Animated.View
-                entering={SlideInRight.delay(1300 + index * 150).duration(500)}
-                >
-                <View className="overflow-hidden w-[200px] h-[260px]">
-                <Image
-                  source={item.image}
-                  style={{
-                    width: '100%',
-                    height: 260,
-                    borderRadius: 12,
-                  }}
-                />
-                </View>
-                </Animated.View>
-                )}
+                  data={trendingStyles}
+                  keyExtractor={(item) => item.id.toString()}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 0 }}
+                  snapToInterval={CARD_WIDTH + SPACING}
+                  decelerationRate="fast"
+                  ItemSeparatorComponent={() => <View style={{ width: SPACING }} />}
+                  renderItem={({ item, index }) => (
+                    <Animated.View
+                      entering={SlideInRight.delay(1300 + index * 150).duration(500)}
+                    >
+                      <View className="overflow-hidden w-[200px] h-[260px]">
+                        <Image
+                          source={item.image}
+                          style={{
+                            width: '100%',
+                            height: 260,
+                            borderRadius: 12,
+                          }}
+                        />
+                      </View>
+                    </Animated.View>
+                  )}
                 />
               </ScrollView>
             </AnimatedBox>
@@ -388,17 +380,17 @@ export default function Home() {
 
         {/* Dropdown Features */}
         <View className=" relative flex-1 mb-20 mt-6 mx-5">
-                <View className=" absolute top-0 left-0 right-5 justify-center items-center align-center">
-                </View>
-                <Text className="text-xl mb-4 font-bold text-dark-100 ">
-                How It Works: Your Virtual Styling
-                </Text>
-                {dropdownData.map((item) => (
-                    <DropdownItem key={item.id} item={item} />
-                ))}
+          <View className=" absolute top-0 left-0 right-5 justify-center items-center align-center">
+          </View>
+          <Text className="text-xl mb-4 font-bold text-dark-100 ">
+            How It Works: Your Virtual Styling
+          </Text>
+          {dropdownData.map((item) => (
+            <DropdownItem key={item.id} item={item} />
+          ))}
         </View>
         <View className="mb-10">
-        </View>  
+        </View>
       </ScrollView>
 
     </View>

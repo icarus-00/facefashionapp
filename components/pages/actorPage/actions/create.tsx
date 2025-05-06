@@ -43,19 +43,19 @@ const ActorScreen = () => {
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  
+
   // Animation values
   const headerOpacity = useSharedValue(0);
   const imageScale = useSharedValue(0.95);
   const buttonScale = useSharedValue(0.95);
-  
+
   React.useEffect(() => {
     // Entrance animations
     headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
     imageScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }));
     buttonScale.value = withDelay(400, withSpring(1, { damping: 12 }));
   }, []);
-  
+
   // Header animation
   const headerAnimStyle = useAnimatedStyle(() => {
     return {
@@ -63,7 +63,7 @@ const ActorScreen = () => {
       transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }]
     };
   });
-  
+
   // Image animation
   const imageAnimStyle = useAnimatedStyle(() => {
     return {
@@ -71,14 +71,14 @@ const ActorScreen = () => {
       opacity: interpolate(imageScale.value, [0.95, 1], [0.5, 1])
     };
   });
-  
+
   // Button animation
   const buttonAnimStyle = useAnimatedStyle(() => {
     return {
       transform: [{ scale: buttonScale.value }]
     };
   });
-  
+
   // Handle image upload
   const pickImage = async () => {
     const permissionResult =
@@ -106,7 +106,7 @@ const ActorScreen = () => {
       console.log("Image selection canceled");
     }
   };
-  
+
   const prepareNativeFile = async (file: ImagePicker.ImagePickerAsset) => {
     try {
       const url = new URL(file.uri);
@@ -129,12 +129,16 @@ const ActorScreen = () => {
       withTiming(0.92, { duration: 100 }),
       withSpring(1, { damping: 4, stiffness: 300 })
     );
-    
+
     try {
       if (asset) {
         const file = await prepareNativeFile(asset!)!;
         console.log("uploading");
-        await databaseService.addActor(name, file);
+        if (file) {
+          await databaseService.addActor(name, file);
+        } else {
+          throw new Error("File preparation failed");
+        }
         router.back();
       } else {
         alert("Please select an image for your actor");
@@ -148,7 +152,7 @@ const ActorScreen = () => {
   return (
     <View style={styles.container}>
       {/* Header with back button */}
-      <AnimatedView 
+      <AnimatedView
         style={[styles.header, headerAnimStyle]}
         entering={FadeIn.duration(500)}
       >
@@ -160,9 +164,9 @@ const ActorScreen = () => {
           >
             <MaterialIcons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-          
+
           <Text style={styles.headerTitle}>Create Actor</Text>
-          
+
           {/* Empty view for spacing */}
           <View style={{ width: 40 }} />
         </HStack>
@@ -170,7 +174,7 @@ const ActorScreen = () => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Image Upload Section */}
-        <Animated.View 
+        <Animated.View
           style={[styles.imageContainer, imageAnimStyle]}
           entering={FadeIn.delay(300).duration(500)}
         >
@@ -242,7 +246,7 @@ const ActorScreen = () => {
             />
           </View>
         </Animated.View>
-        
+
         <Animated.View entering={SlideInRight.delay(600).duration(500)}>
           <View style={styles.formField}>
             <Text style={styles.fieldLabel}>Weight & Height</Text>
@@ -283,7 +287,7 @@ const ActorScreen = () => {
         </Animated.View>
 
         {/* Submit Button */}
-        <Animated.View 
+        <Animated.View
           style={[styles.buttonContainer, buttonAnimStyle]}
           entering={ZoomIn.delay(800).duration(300)}
         >
@@ -420,18 +424,10 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: "center",
-<<<<<<< HEAD
-    // marginVertical: 10,
-    marginBottom: 20,
-  },
-  submitButton: {
-    backgroundColor: "#121212",
-=======
     marginVertical: 32,
   },
   submitButton: {
     backgroundColor: "#6D28D9",
->>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
     borderRadius: 30,
     paddingVertical: 16,
     paddingHorizontal: 32,
