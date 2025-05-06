@@ -10,8 +10,7 @@ import { Center } from "@/components/ui/center";
 import { Pressable } from "@/components/ui/pressable";
 import { Heading } from "@/components/ui/heading";
 import { ScrollView } from "react-native-gesture-handler";
-import SafeAreaView from "@/components/atoms/safeview/safeview";
-import { Card } from "@/components/ui/card";
+import SafeAreaView from "@/components/atoms/safeview/safeview";import { Card } from "@/components/ui/card";
 import { LinearGradient } from "expo-linear-gradient";
 import RootNav from "@/components/atoms/rootNavBar";
 import Animated, {

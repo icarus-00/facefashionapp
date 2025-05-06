@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { ThemedView } from "@/components/ThemedView"

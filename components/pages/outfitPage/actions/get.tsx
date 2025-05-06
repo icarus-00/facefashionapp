@@ -1,4 +1,3 @@
-"use client"
 import { Image, Text, View, StyleSheet, Dimensions, FlatList } from "react-native"
 import { router } from "expo-router"
 import databaseService, { type OutfitWithImage } from "@/services/database/db"

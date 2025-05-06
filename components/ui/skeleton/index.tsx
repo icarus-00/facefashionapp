@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { Animated, Easing, Platform, View } from 'react-native';
+import { Animated, Easing, View } from 'react-native';
 import { skeletonStyle, skeletonTextStyle } from './styles';
 
 type ISkeletonProps = React.ComponentProps<typeof View> &
@@ -41,19 +41,19 @@ const Skeleton = forwardRef<
       toValue: 1, // Start with opacity 1
       duration: animationDuration / 2, // Third of the animation duration
       easing: customTimingFunction,
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: typeof window === 'undefined',
     }),
     Animated.timing(pulseAnim, {
       toValue: 0.75,
       duration: animationDuration / 2, // Third of the animation duration
       easing: customTimingFunction,
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: typeof window === 'undefined',
     }),
     Animated.timing(pulseAnim, {
       toValue: 1,
       duration: animationDuration / 2, // Third of the animation duration
       easing: customTimingFunction,
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: typeof window === 'undefined',
     }),
   ]);
 

@@ -1,24 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { ThemedView } from "@/components/ThemedView";
-import { View, Image, Dimensions, Pressable, FlatList } from "react-native";
-import SafeAreaView from "@/components/atoms/safeview/safeview";
-import { Text } from "react-native";
-import { FlashList } from "@shopify/flash-list";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Box } from "@/components/ui/box";
-import databaseService, { ActorWithImage } from "@/services/database/db";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { AddIcon } from "@/components/ui/icon";
-import { useRouter } from "expo-router";
-import { Modal } from "@/components/ui/modal";
+import React from "react";
+<<<<<<< HEAD
+import SafeAreaView from "@/components/atoms/safeview/safeview"; import ActorPageComp from "@/components/pages/actorPage/view";
+=======
+import { SafeAreaView } from "react-native-safe-area-context";
 import ActorPageComp from "@/components/pages/actorPage/view";
-import RootNav from "@/components/atoms/rootNavBar";
-// Define types for our data
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
 
 export default function Actor(): React.JSX.Element {
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <RootNav name="RenderWear" onPress={() => { }} />
       <ActorPageComp />
     </SafeAreaView>
   );

@@ -8,4 +8,6 @@ const client = new Client()
 
 const account = new Account(client);
 account;
+
 export { account, client };
+

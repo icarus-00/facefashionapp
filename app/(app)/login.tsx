@@ -6,6 +6,7 @@ import { View, Button as ReactButton } from "react-native";
 import { account } from "@/services/config/appwrite";
 
 import { ToastGlue } from "@/context/toastContext";
+
 import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { createRadio } from '@gluestack-ui/radio';
-import { Pressable, View, Platform, Text } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import {
   withStyleContext,
@@ -14,7 +14,7 @@ import { PrimitiveIcon, UIIcon } from '@gluestack-ui/icon';
 const SCOPE = 'Radio';
 
 const UIRadio = createRadio({
-  Root: (Platform.OS === 'web'
+  Root: (typeof window !== 'undefined'
     ? withStyleContext(View, SCOPE)
     : withStyleContext(Pressable, SCOPE)) as ReturnType<
     typeof withStyleContext<typeof Pressable>

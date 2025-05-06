@@ -31,6 +31,7 @@ export default function TabLayout() {
           height: "100%",
           justifyContent: "center",
           alignItems: "center",
+          // backgroundColor: Colors["light"].primary[500],
         },
         tabBarIconStyle: {
           width: "100%",
@@ -41,24 +42,26 @@ export default function TabLayout() {
 
         tabBarStyle: {
           backgroundColor: Colors["light"].primary[500],
-          borderTopRightRadius: 10,
-          borderTopLeftRadius: 10,
-          width: width,
-          height: width / 6,
+          width: width - 20,
+          height:  70,
           alignContent: "center",
           paddingHorizontal: 20,
           borderWidth: 1,
           borderColor: "#0f0d23",
-        },
-
-        headerStyle: {
-          backgroundColor: Colors["light"].primary[500],
+          paddingTop: 0,
+          paddingBottom: 0,
+          borderRadius: 50,
+          position: 'absolute',
+          overflow: 'hidden',
+          bottom: 20,
+          marginHorizontal: 10,
         },
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
+          headerShown: false,
           title: "Home",
 
           tabBarIcon: ({ color }: { color: string }) => (
@@ -69,7 +72,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="actor"
         options={{
+          headerShown: false,
           title: "Actor",
+
           tabBarIcon: ({ color }) => (
             <Ionicons name="people" size={width / 15} color={color} />
           ),

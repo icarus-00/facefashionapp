@@ -1,45 +1,83 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { ThemedView } from "@/components/ThemedView";
-import { View, Image, Dimensions, Pressable, FlatList } from "react-native";
-import SafeAreaView from "@/components/atoms/safeview/safeview";
+<<<<<<< HEAD
+import { View, Dimensions, TouchableOpacity, Text, FlatList } from "react-native";
+import databaseService, { ActorWithImage } from "@/services/database/db";
+import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
+import { AddIcon } from "@/components/ui/icon";
+import { router } from "expo-router";
+=======
+import { View, Image, Dimensions, Pressable, FlatList, TouchableOpacity } from "react-native";
 import { Text } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Box } from "@/components/ui/box";
 import databaseService, { ActorWithImage } from "@/services/database/db";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { AddIcon, ArrowLeftIcon, CloseIcon, Icon } from "@/components/ui/icon";
+import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
+import { AddIcon } from "@/components/ui/icon";
 import { router, useRouter } from "expo-router";
 import GetActor from "./actions/get";
-import { SpeedDial } from "@rneui/themed";
 import Modal from "react-native-modal";
-import {
-  Directions,
-  Gesture,
-  GestureDetector,
-} from "react-native-gesture-handler";
-import { FlingGesture } from "react-native-gesture-handler/lib/typescript/handlers/gestures/flingGesture";
-import { ModalCloseButton, ModalHeader } from "@/components/ui/modal";
-import { AntDesign } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { HStack } from "@/components/ui/hstack";
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
+import { VStack } from "@/components/ui/vstack";
+import Animated, {
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+<<<<<<< HEAD
+  interpolate,
+  FadeIn,
+  withDelay,
+} from "react-native-reanimated";
+
+// Import our new components
+import FilterBar, { FilterOption } from "@/components/molecules/FilterBar";
+import ActorCard, { ActorInfo } from "@/components/molecules/ActorCard";
+import ActorModal from "@/components/molecules/ActorModal";
+
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
-const spacing = 2;
-const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
+const spacing = 16; // Increased spacing for better visual appearance
+const itemWidth = (screenWidth) / numColumns - spacing; // Adjusted calculation for larger cards
+const itemHeight = itemWidth * 1.6; // Increased height ratio for taller cards
+=======
+  withSequence,
+  withDelay,
+  withSpring,
+  interpolate,
+  FadeIn,
+  ZoomIn,
+} from "react-native-reanimated";
+
+// Define types for our data
+const { width: screenWidth } = Dimensions.get("screen");
+const numColumns = 2;
+const spacing = 12; // Increased spacing for better visual appearance
+const itemWidth = (screenWidth - spacing * (numColumns + 3)) / numColumns; // Additional spacing for more margin
 const itemHeight = itemWidth * 1.5;
 
 // Define default image
 const DEFAULT_IMAGE = "https://placehold.co/900x1600";
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
 
 // Create a union type for actor data items
 type ActorItem = ActorWithImage | { id: number; isPlaceholder: true };
 
+<<<<<<< HEAD
+=======
 // Props for ActorCard component
 interface ActorCardProps {
   item: ActorItem;
   loading: boolean;
   index: number;
 }
+
+const AnimatedBox = Animated.createAnimatedComponent(Box);
+const AnimatedView = Animated.createAnimatedComponent(View);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 const ModalComponent = ({
   id,
   visible,
@@ -65,19 +103,49 @@ const ModalComponent = ({
   );
 };
 
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
 export default function ActorPageComp(): React.JSX.Element {
   const [visible, setVisible] = useState(false);
-  const [modalid, setModalId] = useState("");
+  const [selectedActor, setSelectedActor] = useState<ActorWithImage | null>(null);
   const [actors, setActors] = useState<ActorWithImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+<<<<<<< HEAD
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+=======
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const cardScale = useSharedValue(0.95);
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
+
+  useEffect(() => {
+    // Entrance animations
+    headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
+<<<<<<< HEAD
+  }, [headerOpacity]);
+=======
+    cardScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }));
+  }, []);
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
+
+  // Header animation
+  const headerAnimStyle = useAnimatedStyle(() => {
+    return {
+      opacity: headerOpacity.value,
+      transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }]
+    };
+  });
 
   const fetchData = useCallback(async (): Promise<void> => {
     try {
       const data = await databaseService.listActors();
       setActors(data);
     } catch (error) {
-      console.error("Error fetching outfits: ", error);
+      console.error("Error fetching actors: ", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -95,6 +163,33 @@ export default function ActorPageComp(): React.JSX.Element {
     fetchData();
   }, [fetchData]);
 
+<<<<<<< HEAD
+  // Handle actor selection for modal
+  const handleActorPress = (actor: ActorInfo) => {
+    // Find the complete actor data
+    const selectedActor = actors.find(a => a.$id === actor.$id);
+    if (selectedActor) {
+      setSelectedActor(selectedActor);
+      setVisible(true);
+    }
+  };
+
+  // Handle modal close
+  function handleClose(): void {
+    setVisible(false);
+    setSelectedActor(null);
+  }
+
+  // Handle navigation to edit page
+  const handleEditActor = () => {
+    if (selectedActor) {
+      router.push({
+        pathname: "/(app)/(auth)/actor/edit",
+        params: { id: selectedActor.$id }
+      });
+      handleClose();
+    }
+=======
   // Actor card component with placeholder
   function ActorCard({
     item,
@@ -105,6 +200,20 @@ export default function ActorPageComp(): React.JSX.Element {
     const router = useRouter();
     // Check if item is a placeholder
     const isPlaceholder = "isPlaceholder" in item;
+
+    const itemCardScale = useSharedValue(0.95);
+
+    useEffect(() => {
+      // Staggered animation for cards
+      itemCardScale.value = withDelay(index * 100 + 200, withSpring(1, { damping: 12, stiffness: 90 }));
+    }, []);
+
+    const cardAnimStyle = useAnimatedStyle(() => {
+      return {
+        transform: [{ scale: itemCardScale.value }],
+        opacity: interpolate(itemCardScale.value, [0.95, 1], [0.5, 1])
+      };
+    });
 
     // Safe way to get actor name
     const getActorName = (): string => {
@@ -124,7 +233,6 @@ export default function ActorPageComp(): React.JSX.Element {
         // Use the imageUrl from ActorWithImage
         const actorItem = item as ActorWithImage;
         return (
-          ///backlog: fix images biggger than 1 mb not rendering
           <Image
             source={{ uri: fallbackImage ? DEFAULT_IMAGE : actorItem.imageUrl }}
             style={{ width: "100%", height: "100%" }}
@@ -143,25 +251,46 @@ export default function ActorPageComp(): React.JSX.Element {
     };
 
     return (
-      <Pressable
-        className="overflow-hidden rounded-m shadow-md shadow-black"
-        style={{ width: itemWidth }}
+      <AnimatedPressable
+        style={[cardAnimStyle]}
+        className="overflow-hidden rounded-xl shadow-lg elevation-3"
         onPress={() => {
           if (!("isPlaceholder" in item)) {
+            itemCardScale.value = withSequence(
+              withTiming(0.97, { duration: 100 }),
+              withSpring(1, { damping: 4, stiffness: 300 })
+            );
             setModalId(item.$id);
             setVisible(true);
           }
         }}
       >
         <Box
-          className="bg-background-100 rounded-sm overflow-hidden"
+          className="bg-background-50 rounded-xl overflow-hidden"
           style={{ width: itemWidth, height: itemHeight }}
         >
           <View style={{ width: "100%", height: "100%" }}>
             {renderActorImage()}
           </View>
+
+          {/* Gradient overlay */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 60,
+              justifyContent: 'flex-end',
+              paddingHorizontal: 10,
+              paddingBottom: 8
+            }}
+          >
+            <Text className="text-white font-semibold text-base">{getActorName()}</Text>
+          </LinearGradient>
         </Box>
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 
@@ -173,97 +302,232 @@ export default function ActorPageComp(): React.JSX.Element {
     };
 
     return (
-      <View className="flex-row justify-between items-center bg-white shadow-md px-4">
-        <FlatList
-          data={["All", "Popular", "Top Rated", "Upcoming", "Now Playing"]}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <Button
-              className={`mx-1 rounded-md ${selectedTab === item ? "bg-primary-400" : "bg-gray-100"
-                }`}
-              onPress={() => handleTabPress(item)}
+      <AnimatedView
+        style={[headerAnimStyle]}
+        className="py-3 px-4 bg-white"
+      >
+        <HStack className="justify-between items-center mb-3">
+          <Text className="text-2xl font-bold text-gray-800">Actors Gallery</Text>
+
+          {/* Add button moved to top right */}
+          <Animated.View entering={ZoomIn.delay(600).duration(300)}>
+            <TouchableOpacity
+              className="h-10 w-10 bg-primary-500 rounded-full justify-center items-center"
+              onPress={() => {
+                router.push({ pathname: "/(app)/(auth)/actor/create" });
+              }}
             >
-              <ButtonText
-                className={`${selectedTab === item ? "text-white" : "text-typography-500"
-                  }`}
+              <Text className="text-white mb-1 font-medium text-2xl">+</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </HStack>
+
+        <HStack space="md" className="overflow-visible">
+          <ScrollFlatList
+            data={["All", "Popular", "Top Rated", "Upcoming", "Recent"]}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 20 }}
+            renderItem={({ item }: { item: string }) => (
+              <TouchableOpacity
+                onPress={() => handleTabPress(item)}
+                className={`py-2 px-4 mr-2 rounded-full ${
+                  selectedTab === item ? "bg-primary-500" : "bg-gray-100"
+                }`}
               >
-                {item}
-              </ButtonText>
-            </Button>
-          )}
-          keyExtractor={(item) => item}
-        />
-        <Button
-          size="md"
-          variant="outline"
-          className="rounded-full h-[3.5] w-[3.5] border-black p-3.5"
-          onPress={() => {
-            router.push({ pathname: "/(app)/(auth)/actor/create" });
-          }}
-        >
-          <ButtonIcon className="text-black" size="md" as={AddIcon} />
-        </Button>
-      </View>
+                <Text
+                  className={`font-medium ${
+                    selectedTab === item ? "text-white" : "text-gray-700"
+                  }`}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item}
+          />
+        </HStack>
+      </AnimatedView>
     );
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
   };
+
+  // Filter options for FilterBar
+  const filterOptions: FilterOption[] = [
+    { id: "all", label: "All" },
+    { id: "popular", label: "Popular", icon: "star" },
+    { id: "top_rated", label: "Top Rated", icon: "trophy" },
+    { id: "upcoming", label: "Upcoming", icon: "calendar" },
+    { id: "recent", label: "Recent", icon: "clock-o" },
+  ];
+
+  // Add button component for the FilterBar
+  const AddButton = (
+    <TouchableOpacity
+      className="h-10 w-10 bg-primary-500 rounded-full justify-center items-center"
+      onPress={() => {
+        router.push({ pathname: "/(app)/(auth)/actor/create" });
+      }}
+    >
+      <Text className="text-white mb-1 font-medium text-2xl">+</Text>
+    </TouchableOpacity>
+  );
 
   // Generate placeholder data with proper typing
   const getPlaceholderData = (): ActorItem[] => {
-    return Array.from({ length: 4 }, (_, index) => ({
+    return Array.from({ length: 8 }, (_, index) => ({
       id: index,
       isPlaceholder: true,
     }));
   };
 
-  const displayData: ActorItem[] = loading ? getPlaceholderData() : actors;
+  // Apply active filter to the data
+  const filterActors = useCallback((data: ActorWithImage[]) => {
+    if (activeFilter === "all") return data;
 
-  function handleClose(): void {
-    console.log("closing");
-    setVisible(false);
-    setModalId("");
-  }
+    // In a real app, you would implement actual filtering logic here
+    // For now, we'll just return the data as is
+    return data;
+  }, [activeFilter]);
+
+  const displayData: ActorItem[] = loading ? getPlaceholderData() : filterActors(actors);
+
+  // Component to replace regular FlatList for types
+  const ScrollFlatList = ({ ...props }: FlatList['props']) => (
+    <FlatList {...props} />
+  );
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ThemedView className="flex-1">
-        <ModalComponent id={modalid} visible={visible} onPress={handleClose} />
+    <View className="flex-1 bg-white">
+<<<<<<< HEAD
+  {/* Actor Modal */ }
+  {
+    selectedActor && (
+      <ActorModal
+        actorName={selectedActor.actorName}
+        imageUrl={selectedActor.imageUrl}
+        fileID={selectedActor.fileID}
+        age={selectedActor.age}
+        height={selectedActor.height}
+        weight={selectedActor.weight}
+        bio={selectedActor.bio}
+        isVisible={visible}
+        onClose={handleClose}
+        onEdit={handleEditActor}
+      />
+    )
+  }
+
+  {/* Filter Bar */ }
+  <FilterBar
+    options={filterOptions}
+    onFilterChange={setActiveFilter}
+    initialFilter="all"
+    title="Actors Gallery"
+    rightComponent={AddButton}
+    containerStyle={headerAnimStyle}
+    showIcons={true}
+  />
+
+  {/* Actor Cards Grid */ }
+  <View className="flex-1 mt-4">
+    <FlatList
+=======
+      <ModalComponent id={modalid} visible={visible} onPress={handleClose} />
+      <VStack className="flex-1">
         <TabBar />
         <FlashList
-          data={displayData}
-          estimatedItemSize={itemHeight}
-          renderItem={({ item, index }) => (
-            <View
-              style={{ margin: spacing }}
-              className="flex justify-center items-center shadow-md shadow-black "
-            >
-              <ActorCard item={item} loading={loading} index={index} />
-              <View className="w-full  h-10 bg-white p-2">
-                <Text className="text-black font-medium">
-                  {'isPlaceholder' in item ? 'Loading...' : item.actorName}
-                </Text>
-              </View>
-            </View>
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
+      data={displayData}
+      numColumns={2}
+      contentContainerStyle={{
+        alignItems: 'center',
+        paddingHorizontal: spacing / 2,
+
+      }}
+      renderItem={({ item, index }) => (
+        <Animated.View
+<<<<<<< HEAD
+          entering={FadeIn.delay(index * 100).duration(300)}
+          // style={{ margin: spacing }}
+          className="flex justify-center items-center"
+        >
+          {/* Use our new ActorCard component */}
+          {"isPlaceholder" in item ? (
+            <ActorCard
+              actor={item}
+              loading={loading}
+              index={index}
+              onPress={() => { }}
+              width={itemWidth}
+              height={itemHeight}
+            />
+          ) : (
+            <ActorCard
+              actor={{
+                $id: item.$id,
+                actorName: item.actorName,
+                imageUrl: item.imageUrl,
+                age: item.age,
+                height: item.height,
+                weight: item.weight,
+                bio: item.bio
+              }}
+              loading={loading}
+              index={index}
+              onPress={handleActorPress}
+              width={itemWidth}
+              height={itemHeight}
+              style={{ margin: 6, borderRadius: 16 }}
+            />
           )}
-          keyExtractor={(item, index) => {
-            if ("isPlaceholder" in item) {
-              return `placeholder-${item.id}`;
-            }
-            return item.$id || `item-${index}`;
-          }}
+=======
+              entering={FadeIn.delay(index * 100).duration(300)}
+          style={{ margin: spacing }}
+          className="flex justify-center items-center"
+            >
+          <ActorCard item={item} loading={loading} index={index} />
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
+        </Animated.View>
+      )}
+      keyExtractor={(item, index) => {
+        if ("isPlaceholder" in item) {
+          return `placeholder-${item.id}`;
+        }
+        return item.$id || `item-${index}`;
+      }}
+<<<<<<< HEAD
+=======
           numColumns={numColumns}
-          contentContainerClassName="px-2 py-2"
-          showsVerticalScrollIndicator={false}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          ListEmptyComponent={
-            <View className="flex-1 justify-center items-center py-20">
-              <Text className="text-gray-500">No actors found</Text>
-            </View>
-          }
-          ListFooterComponent={<View style={{ height: 20 }} />}
+          // contentContainerClassName="px-4 pt-1 pb-4" // Increased padding for better spacing
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
+      showsVerticalScrollIndicator={false}
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+      ListEmptyComponent={
+        <View className="flex-1 justify-center items-center py-20">
+          <Text className="text-gray-500 text-lg">No actors found</Text>
+          <Button
+            className="mt-4 bg-primary-500 rounded-full"
+            onPress={() => router.push({ pathname: "/(app)/(auth)/actor/create" })}
+<<<<<<< HEAD
+          >
+=======
+              >
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
+            <ButtonText>Add New Actor</ButtonText>
+            <ButtonIcon className="ml-2" as={AddIcon} />
+          </Button>
+        </View>
+      }
+      ListFooterComponent={<View style={{ height: 80 }} />}
+<<<<<<< HEAD
+    />
+  </View>
+=======
         />
-      </ThemedView>
-    </SafeAreaView>
+      </VStack>
+>>>>>>> 1f8269efac2356a6a9cf697b823029dd810d29bf
+    </View >
   );
 }
