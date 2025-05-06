@@ -5,7 +5,7 @@ import {
   ID,
   Permission,
   Role,
-} from "react-native-appwrite";
+} from "@icarus00x/react-native-appwrite-expo-newarch";
 import { account } from "@/services/config/appwrite";
 
 class StorageService {
@@ -87,7 +87,7 @@ class StorageService {
     try {
       try {
         await this.storage.deleteFile(this.bucketId, fileId);
-      } catch (error) {}
+      } catch (error) { }
       const result = await this.storage.createFile(
         this.bucketId,
         ID.unique(),

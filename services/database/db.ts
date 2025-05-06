@@ -1,4 +1,4 @@
-import { Databases, Client, Models, Functions } from "react-native-appwrite";
+import { Databases, Client, Models, Functions } from "@icarus00x/react-native-appwrite-expo-newarch";
 import storageService from "@/services/config/files";
 import outfit from "../../app/(app)/(auth)/(tabs)/outfit";
 import { getPresignedUrls } from "../generation/gen";
@@ -8,6 +8,10 @@ import useAttireStore from "@/store/cayegoryStore";
 interface Actor extends Models.Document {
   fileID: string;
   actorName: string;
+  age: number;
+  height: number;
+  weight: number;
+  bio: string;
   // Add other actor properties as needed
 }
 
@@ -85,6 +89,10 @@ class DatabaseService {
           actorName: actor.actorName,
           imageUrl: await storageService.getfileview(actor.fileID),
           fileID: actor.fileID,
+          age: actor.age,
+          height: actor.height,
+          weight: actor.weight,
+          bio: actor.bio,
         }))
       );
 
@@ -118,6 +126,10 @@ class DatabaseService {
         $databaseId: response.$databaseId,
         $permissions: response.$permissions,
         $updatedAt: response.$updatedAt,
+        age: response.age,
+        height: response.height,
+        weight: response.weight,
+        bio: response.bio,
       };
       return result;
     } catch (error) {
@@ -186,7 +198,7 @@ class DatabaseService {
       );
       try {
         await storageService.deleteFile(imageID);
-      } catch (error) {}
+      } catch (error) { }
     } catch (error) {
       console.error("Error deleting actor:", error);
       throw error;
@@ -335,7 +347,7 @@ class DatabaseService {
       );
       try {
         await storageService.deleteFile(imageID);
-      } catch (error) {}
+      } catch (error) { }
     } catch (error) {
       console.error("Error deleting outfit:", error);
       throw error;

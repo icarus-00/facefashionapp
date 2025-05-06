@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ThemedView } from "@/components/ThemedView";
 import { View, Image, Dimensions, Pressable, FlatList } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { Text } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Skeleton } from "@/components/ui/skeleton";

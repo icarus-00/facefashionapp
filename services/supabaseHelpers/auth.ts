@@ -1,3 +1,3 @@
-import { client } from "@/utils/config/supabase";
+/*import { client } from "@/utils/config/supabase";*/
 
 

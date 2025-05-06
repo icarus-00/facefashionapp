@@ -1,6 +1,6 @@
 import { Image, Text, View, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { VStack } from "@/components/ui/vstack";
 import databaseService, { ActorWithImage } from "@/services/database/db";
 import { useEffect, useState, useRef } from "react";

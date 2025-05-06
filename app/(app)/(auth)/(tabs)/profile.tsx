@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FlashList } from "@shopify/flash-list";
 import { account } from "@/services/config/appwrite";
 import { ScrollView } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
+import SafeAreaView from "@/components/atoms/safeview/safeview";
 import ProfilePage from "@/components/pages/profilePage/profile";
 import { ThemedView } from "@/components/ThemedView";
 //empty array of four items

@@ -10,7 +10,7 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { useEffect, useState, useRef } from "react";
 import {
   Badge,

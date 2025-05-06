@@ -1,7 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import databaseService, { generationsWithImage } from "@/services/database/db";
 import { View, Text, Image, Dimensions } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { useEffect, useState } from "react";
 import {
   Badge,

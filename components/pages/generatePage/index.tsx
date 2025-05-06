@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Dimensions, View, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "react-native";
 import { Text } from "react-native";

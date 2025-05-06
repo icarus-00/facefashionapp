@@ -13,7 +13,7 @@ import {
   View,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform,
+
   ScrollView,
   Modal,
 } from "react-native";
@@ -77,7 +77,7 @@ export default function LoginPage({
   const [otp, setOtp] = useState("");
   const [otpTimer, setOtpTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   // Animation config
   const animConfig = {
@@ -131,13 +131,13 @@ export default function LoginPage({
     setCanResend(false);
 
     if (timerRef.current) {
-      clearInterval(timerRef.current as NodeJS.Timeout);
+      clearInterval(timerRef.current);
     }
 
     timerRef.current = setInterval(() => {
       setOtpTimer((prev) => {
         if (prev <= 1) {
-          clearInterval(timerRef.current as NodeJS.Timeout);
+          clearInterval(timerRef.current!);
           setCanResend(true);
           return 0;
         }
@@ -306,7 +306,7 @@ export default function LoginPage({
   return (
     <>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+
         className="flex-1"
       >
         <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>

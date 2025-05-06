@@ -1,21 +1,18 @@
-"use client"
-
 import type React from "react"
-
+import { useState } from "react"
 import { Box } from "@/components/ui/box"
 import type { OutfitWithImage } from "@/interfaces/outfitDB"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useState, useEffect } from "react"
-import { View, Image, Text, Dimensions, TouchableOpacity } from "react-native"
-import { Gesture, GestureDetector } from "react-native-gesture-handler"
+import { View, Image, Text, Dimensions, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import Animated, { useSharedValue, withTiming, useAnimatedStyle } from "react-native-reanimated"
-
+import { Pressable } from "react-native-gesture-handler"
 const { width: screenWidth } = Dimensions.get("screen")
 const numColumns = 2
-const spacing = 2
+const spacing = 4
 const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns
-const itemHeight = itemWidth * 1.777
+// Using 9:16 aspect ratio (portrait)
+const itemHeight = itemWidth * 1.6
+
 const DEFAULT_IMAGE = "https://placehold.co/900x1600"
 
 // Create a union type for outfit data items
@@ -43,20 +40,6 @@ export default function OutfitCard({
 }: OutfitCardProps): React.JSX.Element {
   const [fallbackImage, setFallbackImage] = useState<boolean>(false)
 
-  // Animation for checkbox opacity
-  const checkboxOpacity = useSharedValue(0)
-
-  // Use useEffect to update the animation value when selecting changes
-  useEffect(() => {
-    checkboxOpacity.value = withTiming(selecting ? 1 : 0, { duration: 200 })
-  }, [selecting])
-
-  const checkboxAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: checkboxOpacity.value,
-    }
-  })
-
   // Check if item is a placeholder
   const isPlaceholder = "isPlaceholder" in item
 
@@ -66,10 +49,22 @@ export default function OutfitCard({
     return item.outfitName || "Unknown outfit"
   }
 
+  // Safe way to get brand
+  const getBrand = (): string => {
+    if (isPlaceholder) return ""
+    return (item as OutfitWithImage).brand || ""
+  }
+
+  // Safe way to get theme
+  const getTheme = (): string => {
+    if (isPlaceholder) return ""
+    return (item as OutfitWithImage).attireTheme || ""
+  }
+
   // Safe way to render image
   const renderOutfitImage = (): React.JSX.Element => {
     if (loading || isPlaceholder) {
-      return <Skeleton variant="sharp" style={{ width: "100%", height: "100%" }} />
+      return <Skeleton variant="sharp" style={styles.image} />
     }
 
     try {
@@ -80,7 +75,7 @@ export default function OutfitCard({
           source={{
             uri: fallbackImage ? DEFAULT_IMAGE : outfitItem.imageUrl,
           }}
-          style={{ width: "100%", height: "100%" }}
+          style={styles.image}
           resizeMode="cover"
           onError={() => setFallbackImage(true)}
         />
@@ -88,114 +83,110 @@ export default function OutfitCard({
     } catch (error) {
       console.error("Image rendering error:", error)
       return (
-        <View
-          style={{
-            flex: 1,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "#f0f0f0",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#666" }}>Image not available</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Image not available</Text>
         </View>
       )
     }
   }
 
-  // Create a gesture for long press
-  const longPressGesture = Gesture.LongPress()
-    .runOnJS(true)
-    .minDuration(500)
-    .onStart(() => {
-      if (onLongPress) {
-        onLongPress()
-      }
-    })
-
   return (
-    <GestureDetector gesture={longPressGesture}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={onPress}
-        style={{
-          width: itemWidth,
-          height: itemHeight,
-          margin: spacing / 2,
-        }}
-      >
-        <View
-          style={{
-            overflow: "hidden",
-            borderRadius: 8,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-            elevation: 2,
-            position: "relative",
-          }}
-        >
-          <Box
-            style={{
-              width: itemWidth,
-              height: itemHeight,
-              backgroundColor: "#f9f9f9",
-              borderRadius: 8,
-              overflow: "hidden",
-            }}
-          >
-            <View style={{ width: "100%", height: "100%" }}>{renderOutfitImage()}</View>
-          </Box>
+    <Pressable onPress={() => onPress()} onLongPress={onLongPress} delayLongPress={500} style={styles.container}>
+      <View style={styles.cardContainer}>
+        {/* Image container */}
+        <Box style={styles.imageBox}>{renderOutfitImage()}</Box>
 
-          {/* Item info overlay at bottom */}
-          {!isPlaceholder && !loading && (
-            <View
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: "rgba(0,0,0,0.6)",
-                padding: 8,
-              }}
-            >
-              <Text style={{ color: "white", fontSize: 14, fontWeight: "500" }} numberOfLines={1} ellipsizeMode="tail">
-                {getOutfitName()}
-              </Text>
-              {!isPlaceholder && (item as OutfitWithImage).brand && (
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }} numberOfLines={1} ellipsizeMode="tail">
-                  {(item as OutfitWithImage).brand}
-                </Text>
-              )}
-            </View>
-          )}
+        {/* Info section below image */}
+        <View style={styles.infoSection}>
+          <Text style={styles.outfitName} numberOfLines={1} ellipsizeMode="tail">
+            {getOutfitName()}
+          </Text>
 
-          {/* Checkbox - only show when in selecting mode */}
-          {selecting && (
-            <Animated.View
-              style={[
-                {
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  backgroundColor: "rgba(255,255,255,0.8)",
-                  borderRadius: 12,
-                  padding: 2,
-                },
-                checkboxAnimatedStyle,
-              ]}
-            >
-              {selected ? (
-                <Ionicons name="checkbox" size={22} color="#0066cc" />
-              ) : (
-                <Ionicons name="checkbox-outline" size={22} color="#666666" />
-              )}
-            </Animated.View>
-          )}
+          {getBrand() ? (
+            <Text style={styles.brandText} numberOfLines={1} ellipsizeMode="tail">
+              {getBrand()}
+            </Text>
+          ) : null}
+
+          {getTheme() ? (
+            <Text style={styles.themeText} numberOfLines={1} ellipsizeMode="tail">
+              {getTheme()}
+            </Text>
+          ) : null}
         </View>
-      </TouchableOpacity>
-    </GestureDetector>
+
+        {/* Selection indicator */}
+        {selecting && (
+          <View style={styles.selectionIndicator}>
+            {selected ? (
+              <Ionicons name="checkmark-circle" size={22} color="#000" />
+            ) : (
+              <Ionicons name="ellipse-outline" size={22} color="#666" />
+            )}
+          </View>
+        )}
+      </View>
+    </Pressable>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: itemWidth,
+    height: itemHeight + 60, // Extra height for info section
+    margin: spacing / 2,
+  },
+  cardContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    position: "relative",
+  },
+  imageBox: {
+    width: "100%",
+    height: itemHeight,
+    backgroundColor: "#f9f9f9",
+    overflow: "hidden",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  errorContainer: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#666",
+  },
+  infoSection: {
+    padding: 8,
+  },
+  outfitName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 2,
+  },
+  brandText: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 2,
+  },
+  themeText: {
+    fontSize: 12,
+    color: "#666",
+    fontStyle: "italic",
+  },
+  selectionIndicator: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 12,
+    padding: 2,
+  },
+})

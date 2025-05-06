@@ -1,5 +1,5 @@
 // context/authcontext.tsx
-import { ID , Models } from "react-native-appwrite";
+import { ID, Models } from "react-native-appwrite";
 import {
   createContext,
   useContext,
@@ -11,8 +11,8 @@ import { account } from "@/services/config/appwrite";
 import { ToastGlue } from "@/context/toastContext";
 import useStore from "@/store/lumaGeneration/useStore";
 import { router } from "expo-router";
-import { client } from "@/utils/config/supabase";
-import { EmailOtpType, Session,User as UserInterface } from '@supabase/supabase-js'// Define types for the user and context
+//import { client } from "@/utils/config/supabase";
+//import { EmailOtpType, Session,User as UserInterface } from '@supabase/supabase-js'// Define types for the user and context
 import { makeRedirectUri } from 'expo-auth-session'
 
 type User = {
@@ -28,9 +28,9 @@ interface emailpasswordCreds {
   email: string;
   password: string;
 }
-interface OtpCreds{
-  email:string;
-  redirectUrl:string;
+interface OtpCreds {
+  email: string;
+  redirectUrl: string;
 }
 
 type UserContextType = {
@@ -39,7 +39,7 @@ type UserContextType = {
   login: (creds: emailpasswordCreds | OtpCreds, otp?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
-  verifyOtp:(email:string ,token:string , type:EmailOtpType)=>Promise<void>;
+  verifyOtp: (email: string, token: string, type: string | "email") => Promise<void>;
   Toast: (message: string) => void;
 };
 
@@ -67,20 +67,18 @@ export default function UserProvider({
   const { initializeUserId } = useStore();
   async function login(
     creds: emailpasswordCreds | OtpCreds,
-    otp:boolean = false
+    otp: boolean = false
   ): Promise<void> {
     try {
-      if (otp)
-      {
-        const {email, redirectUrl} = creds as OtpCreds;
+      if (otp) {
+        const { email, redirectUrl } = creds as OtpCreds;
         await account.createEmailToken(ID.unique(), email);
-        await client.auth.signInWithOtp({email:email })
+        //await client.auth.signInWithOtp({email:email })
       }
-      else
-      {
+      else {
 
-        const {email, password} = creds as emailpasswordCreds;
-        const appwriteLogin = await account.createEmailPasswordSession(email , password);
+        const { email, password } = creds as emailpasswordCreds;
+        const appwriteLogin = await account.createEmailPasswordSession(email, password);
         const getaccount = await account.get();
         const userDetails = await account.get();
         console.log("user details acquired");
@@ -97,10 +95,9 @@ export default function UserProvider({
       throw error;
     }
   }
-  async function verifyOtp (email:string ,token:string , type:EmailOtpType) :Promise<void>
-  {
+  async function verifyOtp(email: string, token: string, type: string): Promise<void> {
     try {
-//      const result = await account.createSession;
+      //      const result = await account.createSession;
       const userDetails = await account.get()
       console.log("user details acquired");
       initializeUserId(userDetails.$id!);
@@ -136,7 +133,7 @@ export default function UserProvider({
   async function register(email: string, password: string): Promise<void> {
     try {
       await account.create(ID.unique(), email, password);
-      const result = await login({email , password});
+      const result = await login({ email, password });
       console.log(result);
       ToastGlue("Account created successfully");
     } catch (error) {
@@ -171,7 +168,7 @@ export default function UserProvider({
 
   return (
     <UserContext.Provider
-      value={{ current: user, isLoading, login, logout, register, Toast , verifyOtp }}
+      value={{ current: user, isLoading, login, logout, register, Toast, verifyOtp }}
     >
       {children}
     </UserContext.Provider>
