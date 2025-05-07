@@ -342,38 +342,34 @@ export default function Home() {
               <Text className="text-gray-600 text-center mb-6">
                 clean cuts or bold statements,{"\n"} discover inspiring styles for every look.
               </Text>
-              <ScrollView
+
+              <FlatList
+                data={trendingStyles}
+                keyExtractor={(item) => item.id.toString()}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 20 }}
-              >
-                <FlatList
-                  data={trendingStyles}
-                  keyExtractor={(item) => item.id.toString()}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: 0 }}
-                  snapToInterval={CARD_WIDTH + SPACING}
-                  decelerationRate="fast"
-                  ItemSeparatorComponent={() => <View style={{ width: SPACING }} />}
-                  renderItem={({ item, index }) => (
-                    <Animated.View
-                      entering={SlideInRight.delay(1300 + index * 150).duration(500)}
-                    >
-                      <View className="overflow-hidden w-[200px] h-[260px]">
-                        <Image
-                          source={item.image}
-                          style={{
-                            width: '100%',
-                            height: 260,
-                            borderRadius: 12,
-                          }}
-                        />
-                      </View>
-                    </Animated.View>
-                  )}
-                />
-              </ScrollView>
+                contentContainerStyle={{ paddingHorizontal: 0 }}
+                snapToInterval={CARD_WIDTH + SPACING}
+                decelerationRate="fast"
+                ItemSeparatorComponent={() => <View style={{ width: SPACING }} />}
+                renderItem={({ item, index }) => (
+                  <Animated.View
+                    entering={SlideInRight.delay(1300 + index * 150).duration(500)}
+                  >
+                    <View className="overflow-hidden w-[200px] h-[260px]">
+                      <Image
+                        source={item.image}
+                        style={{
+                          width: '100%',
+                          height: 260,
+                          borderRadius: 12,
+                        }}
+                      />
+                    </View>
+                  </Animated.View>
+                )}
+              />
+
             </AnimatedBox>
           </VStack>
         </Animated.View>

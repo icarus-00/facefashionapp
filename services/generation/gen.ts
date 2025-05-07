@@ -16,12 +16,13 @@ const imageCachedInput =
 const videoGenEndpoint =
   process.env.EXPO_PUBLIC_ENCORE_API_ENDPOINT + "/videogen";
 
-function generateImage(imageApi: ImageGenInput) {
-  const data = generateImageApi(
+async function generateImage(imageApi: ImageGenInput) {
+  const data = await generateImageApi(
     imageApi.actorRef,
     imageApi.outfitRefs,
     imageApi.prompt
   );
+  console.log("data", data);
   fetch(imageGenEndpoint, {
     method: "POST",
     headers: {

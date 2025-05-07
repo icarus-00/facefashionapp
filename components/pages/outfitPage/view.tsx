@@ -1,7 +1,18 @@
+"use client"
+
 import type React from "react"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { ThemedView } from "@/components/ThemedView"
-import { View, Dimensions, FlatList, StyleSheet, Text, ActivityIndicator, TouchableOpacity } from "react-native"
+import {
+  View,
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  ActivityIndicator,
+  TouchableOpacity,
+  Platform,
+} from "react-native"
 import { FlashList } from "@shopify/flash-list"
 import databaseService from "@/services/database/db"
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button"
@@ -24,16 +35,18 @@ import Animated, {
   interpolate,
   FadeIn,
   ZoomIn,
+  cancelAnimation,
 } from "react-native-reanimated"
 
 // Define types for our data
 const { width: screenWidth } = Dimensions.get("screen")
 const numColumns = 2
-const spacing = 7 // Match with the spacing in outfitCard
+const spacing = Platform.OS === "android" ? 10 : 7 // Increased spacing for Android
 const itemWidth = (screenWidth - spacing * (numColumns + 3)) / numColumns
 const itemHeight = itemWidth * 1.5
 
 // Define constants
+const CATEGORIES = ["All", "Full", "Tops", "Bottoms", "Accessories"]
 
 type OutfitItem = OutfitWithImage | { id: number; isPlaceholder: true }
 
@@ -43,6 +56,7 @@ export default function OutFitPageComp({
   selecting?: boolean
 }): React.JSX.Element {
   const [outfits, setOutfits] = useState<OutfitWithImage[]>([])
+  const [filteredOutfits, setFilteredOutfits] = useState<OutfitWithImage[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [refreshing, setRefreshing] = useState<boolean>(false)
   const [attireTheme, setAttireTheme] = useState<string[]>([])
@@ -60,25 +74,44 @@ export default function OutFitPageComp({
   // Get store methods
   const { outfitItems, addOutfitItem, removeOutfitItem, clearOutfitItems } = useStore()
 
+  // Animation refs to track if animations have run
+  const animationsRun = useRef(false)
+  const isInitialMount = useRef(true)
+
   const router = useRouter()
 
   // Animation values
   const headerOpacity = useSharedValue(0)
   const cardScale = useSharedValue(0.95)
 
+  // Run entrance animations only once on initial mount
   useEffect(() => {
-    // Entrance animations
-    headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }))
-    cardScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }))
+    if (isInitialMount.current && !animationsRun.current) {
+      // Set animations as run
+      animationsRun.current = true
+
+      // Run entrance animations
+      headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }))
+      cardScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }))
+
+      // Mark initial mount as complete
+      isInitialMount.current = false
+    }
+
+    // Cleanup animations on unmount
+    return () => {
+      cancelAnimation(headerOpacity)
+      cancelAnimation(cardScale)
+    }
   }, [headerOpacity, cardScale])
 
   // Header animation
   const headerAnimStyle = useAnimatedStyle(() => {
     return {
       opacity: headerOpacity.value,
-      transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }]
+      transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }],
     }
-  })
+  }, [])
 
   // Initialize selection mode from props
   useEffect(() => {
@@ -93,25 +126,72 @@ export default function OutFitPageComp({
   // Use useCallback to prevent recreation of this function on every render
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true)
-    setAttireTheme([])
     try {
       const data = await databaseService.ListOutfits()
       const themes = useAttireStore.getState().themes
-      setAttireTheme(themes || [])
+
+      // Only update attireTheme if it has changed
+      if (JSON.stringify(themes) !== JSON.stringify(attireTheme)) {
+        setAttireTheme(themes || [])
+      }
+
       setOutfits(data || [])
+      // Apply initial filtering
+      applyFilters(data || [], activeFilter, selectedSubFilter)
     } catch (error) {
       console.error("Error fetching outfits: ", error)
       setOutfits([])
+      setFilteredOutfits([])
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
+  }, [activeFilter, selectedSubFilter])
+
+  // Apply filters based on category and subcategory
+  const applyFilters = useCallback((data: OutfitWithImage[], category: string, subCategory?: string) => {
+    let result = [...data]
+
+    // Filter by category (case-insensitive)
+    if (category && category.toLowerCase() !== "all") {
+      result = result.filter((outfit) => {
+        const garmentType = (outfit.garmentType || "").toLowerCase()
+        const categoryLower = category.toLowerCase()
+
+        switch (categoryLower) {
+          case "full":
+            return garmentType.includes("full") || garmentType.includes("dress") || garmentType.includes("suit")
+          case "tops":
+            return garmentType.includes("top") || garmentType.includes("shirt") || garmentType.includes("blouse")
+          case "bottoms":
+            return garmentType.includes("bottom") || garmentType.includes("pant") || garmentType.includes("skirt")
+          case "accessories":
+            return garmentType.includes("accessory") || garmentType.includes("hat") || garmentType.includes("jewelry")
+          default:
+            return true
+        }
+      })
+    }
+
+    // Filter by subcategory if selected
+    if (subCategory) {
+      result = result.filter((outfit) => (outfit.attireTheme || "").toLowerCase() === subCategory.toLowerCase())
+    }
+
+    setFilteredOutfits(result)
   }, [])
 
   // Only call fetchData on initial mount and manual refreshes
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Apply filters when activeFilter or selectedSubFilter changes
+  useEffect(() => {
+    if (outfits.length > 0) {
+      applyFilters(outfits, activeFilter, selectedSubFilter)
+    }
+  }, [activeFilter, selectedSubFilter, outfits, applyFilters])
 
   // Handle refresh separately without retriggering the useEffect
   const handleRefresh = useCallback(() => {
@@ -135,25 +215,20 @@ export default function OutFitPageComp({
         removeOutfitItem("full") // Assuming all outfits are "full" category
       } else {
         // Add to selection
-        addOutfitItem(outfit.$id, "full", outfit.imageUrl)
+        addOutfitItem(outfit.fileID, "full", outfit.imageUrl)
       }
     },
     [isOutfitSelected, addOutfitItem, removeOutfitItem],
   )
 
-  const TabBar = (): React.JSX.Element => {
-    const [selectedTab, setSelectedTab] = useState<string>("All")
-
+  // Memoize the TabBar component to prevent unnecessary re-renders
+  const TabBar = useMemo(() => {
     const handleTabPress = (tab: string): void => {
-      setSelectedTab(tab)
       setActiveFilter(tab.toLowerCase())
     }
 
     return (
-      <Animated.View
-        style={[headerAnimStyle]}
-        className="py-3 px-4 bg-white"
-      >
+      <Animated.View style={[headerAnimStyle]} className="py-3 px-4 bg-white">
         <HStack className="justify-between items-center mb-3">
           <Text className="text-2xl font-bold text-gray-800">Outfits Gallery</Text>
 
@@ -166,31 +241,29 @@ export default function OutFitPageComp({
                   setIsSelecting(false)
                   clearOutfitItems()
                 } else {
-                  router.push("/(app)/(auth)/outfit/add")
+                  router.push({ pathname: "/(app)/(auth)/outfit/create" })
                 }
               }}
             >
-              <Text className="text-white mb-1 font-medium text-2xl">
-                {isSelecting ? "×" : "+"}
-              </Text>
+              <Text className="text-white mb-1 font-medium text-2xl">{isSelecting ? "×" : "+"}</Text>
             </TouchableOpacity>
           </Animated.View>
         </HStack>
 
         <HStack space="md" className="overflow-visible">
           <FlatList
-            data={["All", "Casual", "Formal", "Sports", "Seasonal"]}
+            data={CATEGORIES}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingRight: 20 }}
             renderItem={({ item }: { item: string }) => (
               <TouchableOpacity
                 onPress={() => handleTabPress(item)}
-                className={`py-2 px-4 mr-2 rounded-full ${selectedTab === item ? "bg-primary-500" : "bg-gray-100"
+                className={`py-2 px-4 mr-2 rounded-full ${activeFilter.toLowerCase() === item.toLowerCase() ? "bg-primary-500" : "bg-gray-100"
                   }`}
               >
                 <Text
-                  className={`font-medium ${selectedTab === item ? "text-white" : "text-gray-700"
+                  className={`font-medium ${activeFilter.toLowerCase() === item.toLowerCase() ? "text-white" : "text-gray-700"
                     }`}
                 >
                   {item}
@@ -202,39 +275,29 @@ export default function OutFitPageComp({
         </HStack>
       </Animated.View>
     )
-  }
+  }, [headerAnimStyle, isSelecting, activeFilter, router, clearOutfitItems])
 
   // Generate placeholder data with proper typing
-  const getPlaceholderData = (): OutfitItem[] => {
+  const getPlaceholderData = useCallback((): OutfitItem[] => {
     return Array.from({ length: 6 }, (_, index) => ({
       id: index,
       isPlaceholder: true,
     }))
-  }
+  }, [])
 
-  const filterOutfits = useCallback((data: OutfitWithImage[]) => {
-    if (activeFilter === "all") return data
-    
-    // In a real app, you would implement actual filtering logic here
-    return data
-  }, [activeFilter])
+  const displayData: OutfitItem[] = useMemo(() => {
+    return loading ? getPlaceholderData() : filteredOutfits
+  }, [loading, filteredOutfits, getPlaceholderData])
 
-  const displayData: OutfitItem[] = loading ? getPlaceholderData() : filterOutfits(outfits)
+  const handleCardPress = useCallback((item: OutfitItem) => {
+    if ("isPlaceholder" in item) return
 
-  const handleCardPress = useCallback(
-    (item: OutfitItem) => {
-      if ("isPlaceholder" in item) return
-
-      {
-        // Open modal with item details
-        setModalProps({
-          id: item.$id || "",
-          visible: true,
-        })
-      }
-    },
-    [],
-  )
+    // Open modal with item details
+    setModalProps({
+      id: item.$id || "",
+      visible: true,
+    })
+  }, [])
 
   const handleCardLongPress = useCallback(
     (item: OutfitItem) => {
@@ -267,8 +330,8 @@ export default function OutFitPageComp({
     <ThemedView style={styles.container}>
       <VStack className="flex-1">
         {/* Header with tabs */}
-        <TabBar />
-        
+        {TabBar}
+
         {/* SubCategories filter */}
         <View style={styles.subCategoriesContainer}>
           <SubCategoriesExbandableFilter
@@ -288,17 +351,16 @@ export default function OutFitPageComp({
           <FlashList
             extraData={[outfitItems, isSelecting]} // Make sure list re-renders when selection changes
             data={displayData}
-            estimatedItemSize={itemHeight} 
+            estimatedItemSize={itemHeight}
             numColumns={numColumns}
             contentContainerStyle={{
-              paddingHorizontal: spacing / 2,
-              paddingBottom: bottomSheetVisible ? 100 : 20
+              paddingHorizontal: spacing,
+              paddingBottom: selecting ? 100 : 20,
             }}
             renderItem={({ item, index }) => (
               <Animated.View
-                entering={FadeIn.delay(index * 100).duration(300)}
-                style={{ margin: spacing }}
-                className="flex justify-center items-center"
+                entering={FadeIn.delay(index * 50).duration(300)}
+                style={[styles.cardContainer, Platform.OS === "android" && styles.androidCardContainer]}
               >
                 {renderItem({ item, index })}
               </Animated.View>
@@ -317,7 +379,7 @@ export default function OutFitPageComp({
                 <Text className="text-gray-500 text-lg">No outfits found</Text>
                 <Button
                   className="mt-4 bg-primary-500 rounded-full"
-                  onPress={() => router.push("/(app)/(auth)/outfit/add")}
+                  onPress={() => router.push("/(app)/(auth)/outfit/create")}
                 >
                   <ButtonText>Add New Outfit</ButtonText>
                   <ButtonIcon className="ml-2" as={AddIcon} />
@@ -329,11 +391,15 @@ export default function OutFitPageComp({
         )}
 
         {/* Modal for outfit details */}
-        <ModalComponent
-          id={modalProps.id}
-          visible={modalProps.visible}
-          onPress={() => setModalProps({ id: "", visible: false })}
-        />
+        {modalProps.visible && (
+          <View className="absolute bottom-0 top-0 right-0 left-0 w-full h-full justify-center items-center">
+            <ModalComponent
+              id={modalProps.id}
+              visible={modalProps.visible}
+              onPress={() => setModalProps({ id: "", visible: false })}
+            />
+          </View>
+        )}
       </VStack>
     </ThemedView>
   )
@@ -356,5 +422,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  cardContainer: {
+    margin: spacing,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  androidCardContainer: {
+    // Android-specific adjustments
+    marginVertical: spacing * 1.2,
   },
 })

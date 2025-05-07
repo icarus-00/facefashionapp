@@ -326,7 +326,11 @@ export default function ActorPageComp(): React.JSX.Element {
 
   return (
     <View className="flex-1 bg-white">
-      <ModalComponent id={modalId} visible={visible} onPress={handleClose} />
+      {
+        visible &&
+        <View className="flex-1  w-full bottom-0 top-0 left-0 right-0 justify-center items-center absloute">
+          <ModalComponent id={modalId} visible={visible} onPress={handleClose} />
+        </View>}
       <VStack className="flex-1">
         <TabBar />
         <FlashList

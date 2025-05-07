@@ -31,7 +31,7 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Define snap points
-  const snapPoints = ["10%", "85%"];
+  const snapPoints = ["20%", "100%"];
 
   // Get outfit items by category
   const getItemByCategory = (category: string) => {

@@ -128,7 +128,7 @@ export default function GetActor({
 
     try {
       if (actor?.$id && actor?.imageUrl) {
-        await updateActorItems(actor.$id, actor.imageUrl);
+        await updateActorItems(actor.fileID, actor.imageUrl);
         router.push("/(app)/(auth)/(tabs)/outfit");
         if (onClose) onClose();
       }

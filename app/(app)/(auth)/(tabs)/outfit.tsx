@@ -8,22 +8,25 @@ import { useRouter } from "expo-router"
 import SelectedItemsModal from "@/components/atoms/selectedItemsModal"
 import OutFitPageComp from "@/components/pages/outfitPage/view"
 import useStore from "@/store/lumaGeneration/useStore"
-
+import { generateImage } from "@/services/generation/gen"
 export default function Outfit() {
   const { getLength, outfitItems, actorItems } = useStore()
   const router = useRouter()
 
   const selecting = getLength() > 0
   const [modalvisible, setModalVisible] = useState(false)
+  const handleNextClick = () => {
 
+  }
   // Animation values
   const scaleAnim = useRef(new Animated.Value(1)).current
   const rotateAnim = useRef(new Animated.Value(0)).current
+  const shakeAnim = useRef(new Animated.Value(0)).current
+  const pulseAnim = useRef(new Animated.Value(1)).current
 
   useEffect(() => {
     setModalVisible(selecting)
 
-    // Button animation
     if (selecting) {
       Animated.parallel([
         Animated.timing(scaleAnim, {
@@ -37,27 +40,51 @@ export default function Outfit() {
           duration: 300,
           useNativeDriver: true,
         }),
+        Animated.timing(shakeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
       ]).start()
     } else {
       Animated.parallel([
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
+        // Reset scale and rotation
+        Animated.timing(scaleAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(rotateAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+        // New disabled animations
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(shakeAnim, { toValue: 5, duration: 50, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: -5, duration: 50, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: 5, duration: 50, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+          ])
+        ),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(pulseAnim, { toValue: 0.8, duration: 1000, useNativeDriver: true }),
+            Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+          ])
+        )
       ]).start()
     }
-  }, [selecting, scaleAnim, rotateAnim])
+  }, [selecting, scaleAnim, rotateAnim, shakeAnim, pulseAnim])
 
-  const handleForwardPress = () => {
+  const handleForwardPress = async () => {
     // Navigate to the next screen or perform action with selected items
     if (selecting && outfitItems.length > 0) {
-      router.push("/(auth)/generate")
+      console.log("Selected items:", actorItems.imageID)
+      await generateImage({
+        actorRef: actorItems.imageID,
+        outfitRefs: outfitItems.map((item) => item.imageID),
+        prompt: "Generate an image combining the actor and outfit items"
+      })
+      router.push("/(app)/(auth)/(tabs)/generations")
     }
   }
 
@@ -77,7 +104,12 @@ export default function Outfit() {
         style={[
           styles.buttonContainer,
           {
-            transform: [{ scale: scaleAnim }, { rotate: spin }],
+            transform: [
+              { scale: scaleAnim },
+              { rotate: spin },
+              { translateX: shakeAnim }
+            ],
+            opacity: pulseAnim
           },
         ]}
       >
@@ -87,6 +119,7 @@ export default function Outfit() {
           android_ripple={{ color: "rgba(255,255,255,0.2)", radius: 28 }}
           disabled={!selecting || outfitItems.length === 0}
         >
+
           <Ionicons name={selecting ? "arrow-forward" : "add"} size={24} color="white" />
         </Pressable>
       </Animated.View>
@@ -102,7 +135,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     position: "absolute",
     right: 20,
-    bottom: 20,
+    bottom: 100,
     zIndex: 50,
   },
   forwardButton: {
@@ -118,9 +151,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   activeButton: {
-    backgroundColor: "#000",
+    backgroundColor: "black",
   },
   inactiveButton: {
-    backgroundColor: "#333",
+    backgroundColor: "gray",
   },
 })

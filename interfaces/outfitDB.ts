@@ -45,12 +45,12 @@ interface OutfitWithImage extends Outfit {
 
 interface OutfitAdd {
   outfitName: string;
-  fileID: string | "";
-  brand: string;
-  size: string;
-  attireTheme: string;
-  material: string;
-  garmentType: string | "Tops" | "Bottoms" | "Full" | "Accessories";
+  fileID?: string;
+  brand?: string;
+  size?: string;
+  attireTheme?: string;
+  material?: string;
+  garmentType?: string | "Tops" | "Bottoms" | "Full" | "Accessories";
   file: { name: string; type: string; size: number; uri: string };
 }
 

@@ -36,6 +36,7 @@ interface VideoApi {
   videoprompt: string;
 }
 interface ImageGenInput {
+
   actorRef: string;
   outfitRefs: string[];
   prompt: string;

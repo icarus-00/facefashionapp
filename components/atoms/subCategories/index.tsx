@@ -1,384 +1,281 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import { View, Text, Pressable, ScrollView, type LayoutChangeEvent, Dimensions, StyleSheet } from "react-native"
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-  interpolate,
-  runOnJS,
-} from "react-native-reanimated"
-import { Ionicons } from "@expo/vector-icons"
+import { useState, useCallback, useMemo, memo } from "react"
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, Dimensions } from "react-native"
+import { Skeleton } from "@/components/ui/skeleton"
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window")
-const EXPANDED_HEIGHT = 240 // Static height for expanded overlay
-const MAX_CHIP_WIDTH_PERCENTAGE = 0.45 // Maximum width a chip can take (as % of container)
+// Default categories that should always appear first
+const DEFAULT_CATEGORIES = ["Casual", "Formal", "Sports", "Seasonal"]
+const { width: screenWidth } = Dimensions.get("window")
 
-interface ChipMeasurement {
-  theme: string
-  width: number
-  measured: boolean
-}
-
-interface SubCategoriesFilterProps {
+interface SubCategoriesExbandableFilterProps {
   themes: string[]
-  loading?: boolean
-  selected?: string | string[]
+  selected?: string
+  onChange: (selected: string | string[]) => void
   multiSelect?: boolean
-  onChange: (selection: string | string[]) => void
+  loading?: boolean
 }
 
-export default function SubCategoriesExbandableFilter({
-  themes = [],
-  loading = false,
-  selected = [],
-  multiSelect = false,
-  onChange,
-}: SubCategoriesFilterProps) {
-  const [expanded, setExpanded] = useState(false)
-  const animation = useSharedValue(0)
-  const selectedArray = Array.isArray(selected) ? selected : selected ? [selected] : []
+const SubCategoriesExbandableFilter = memo(
+  ({ themes = [], selected, onChange, multiSelect = false, loading = false }: SubCategoriesExbandableFilterProps) => {
+    const [modalVisible, setModalVisible] = useState(false)
 
-  // Container measurements
-  const [containerWidth, setContainerWidth] = useState(SCREEN_WIDTH)
-  const [visibleThemes, setVisibleThemes] = useState<string[]>([])
-  const [hiddenThemes, setHiddenThemes] = useState<string[]>([])
-  const [showExpandButton, setShowExpandButton] = useState(false)
+    // Process themes to ensure default categories appear first and remove duplicates
+    const processedThemes = useMemo(() => {
+      if (!themes || themes.length === 0) return DEFAULT_CATEGORIES
 
-  // Use a ref to store measurements to avoid re-renders
-  const chipMeasurementsRef = useRef<ChipMeasurement[]>([])
+      // Create a set of all themes (case-insensitive)
+      const themeSet = new Set(themes.map((theme) => theme?.toLowerCase()).filter(Boolean))
 
-  // Initialize chip measurements once when themes change
-  useEffect(() => {
-    if (!themes || themes.length === 0) return
+      // Add default categories if they don't exist
+      DEFAULT_CATEGORIES.forEach((cat) => themeSet.add(cat.toLowerCase()))
 
-    // Only update if themes have changed
-    const currentThemes = chipMeasurementsRef.current.map((chip) => chip.theme)
-    const themesChanged =
-      themes.some((theme) => !currentThemes.includes(theme)) || currentThemes.some((theme) => !themes.includes(theme))
+      // Convert back to array and sort
+      const allThemes = Array.from(themeSet)
 
-    if (themesChanged) {
-      chipMeasurementsRef.current = themes.map((theme) => {
-        const existing = chipMeasurementsRef.current.find((chip) => chip.theme === theme)
-        return (
-          existing || {
-            theme,
-            width: Math.min(theme.length * 10 + 40, containerWidth * MAX_CHIP_WIDTH_PERCENTAGE),
-            measured: true,
+      // Sort to ensure default categories appear first
+      return allThemes.sort((a, b) => {
+        const aIsDefault = DEFAULT_CATEGORIES.some((cat) => cat.toLowerCase() === a)
+        const bIsDefault = DEFAULT_CATEGORIES.some((cat) => cat.toLowerCase() === b)
+
+        if (aIsDefault && !bIsDefault) return -1
+        if (!aIsDefault && bIsDefault) return 1
+        return a.localeCompare(b)
+      })
+    }, [themes])
+
+    const toggleModal = useCallback(() => {
+      setModalVisible((prev) => !prev)
+    }, [])
+
+    const handleSelect = useCallback(
+      (theme: string) => {
+        if (multiSelect) {
+          // Handle multi-select logic
+          const currentSelected = Array.isArray(selected) ? selected : selected ? [selected] : []
+          const isAlreadySelected = currentSelected.includes(theme)
+
+          if (isAlreadySelected) {
+            onChange(currentSelected.filter((t) => t !== theme))
+          } else {
+            onChange([...currentSelected, theme])
           }
+        } else {
+          // Single select
+          onChange(theme === selected ? "" : theme)
+          // Close modal after selection in single select mode
+          if (!multiSelect) {
+            setModalVisible(false)
+          }
+        }
+      },
+      [selected, onChange, multiSelect],
+    )
+
+    const isSelected = useCallback(
+      (theme: string) => {
+        if (Array.isArray(selected)) {
+          return selected.includes(theme)
+        }
+        return theme === selected
+      },
+      [selected],
+    )
+
+    const isDefaultCategory = useCallback((theme: string) => {
+      return DEFAULT_CATEGORIES.some((cat) => cat.toLowerCase() === theme.toLowerCase())
+    }, [])
+
+    const renderItem = useCallback(
+      ({ item }: { item: string }) => {
+        const isItemSelected = isSelected(item)
+        const isDefault = isDefaultCategory(item)
+
+        return (
+          <TouchableOpacity
+            onPress={() => handleSelect(item)}
+            style={[styles.categoryItem, isItemSelected && styles.selectedItem, isDefault && styles.defaultItem]}
+          >
+            <Text style={[styles.categoryText, isItemSelected && styles.selectedText]}>
+              {item.charAt(0).toUpperCase() + item.slice(1)}
+            </Text>
+          </TouchableOpacity>
         )
-      })
+      },
+      [handleSelect, isSelected, isDefaultCategory],
+    )
 
-      calculateVisibleThemes()
-    }
-  }, [themes])
-
-  // Calculate visible themes based on container width - use callback to avoid recreation
-  const calculateVisibleThemes = useCallback(() => {
-    if (containerWidth <= 0 || !themes || themes.length === 0) {
-      return
-    }
-
-    let availableWidth = containerWidth - 60 // Reserve space for expand button
-    const visible: string[] = []
-    const hidden: string[] = []
-
-    // Sort by selection status (selected first) then by theme name
-    const sortedThemes = [...themes].sort((a, b) => {
-      const aSelected = selectedArray.includes(a) ? 0 : 1
-      const bSelected = selectedArray.includes(b) ? 0 : 1
-      if (aSelected !== bSelected) return aSelected - bSelected
-      return a.localeCompare(b)
-    })
-
-    // Calculate visible and hidden themes without triggering state updates
-    let shouldShowExpand = false
-    for (const theme of sortedThemes) {
-      const chip = chipMeasurementsRef.current.find((c) => c.theme === theme)
-      if (!chip) continue
-
-      const chipWidth = chip.width
-
-      if (availableWidth >= chipWidth + 16) {
-        // 16px for margin
-        visible.push(theme)
-        availableWidth -= chipWidth + 16
-      } else {
-        hidden.push(theme)
-        shouldShowExpand = true
-      }
-    }
-
-    // Batch state updates to prevent maximum update depth exceeded
-    requestAnimationFrame(() => {
-      setVisibleThemes(visible)
-      setHiddenThemes(hidden)
-      setShowExpandButton(shouldShowExpand)
-    })
-  }, [containerWidth, themes, selectedArray])
-
-  // Recalculate visible themes when container width or selection changes
-  useEffect(() => {
-    calculateVisibleThemes()
-  }, [calculateVisibleThemes, containerWidth, selectedArray])
-
-  const toggle = () => {
-    if (expanded) {
-      animation.value = withTiming(
-        0,
-        {
-          duration: 300,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        },
-        () => {
-          runOnJS(setExpanded)(false)
-        },
+    if (loading) {
+      return (
+        <View style={styles.container}>
+          <View style={styles.skeletonRow}>
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} style={styles.skeletonItem} />
+            ))}
+          </View>
+        </View>
       )
-    } else {
-      setExpanded(true)
-      animation.value = withTiming(1, {
-        duration: 300,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      })
-    }
-  }
-
-  const handleSelect = useCallback(
-    (theme: string) => {
-      if (multiSelect) {
-        const isSelected = selectedArray.includes(theme)
-        const next = isSelected ? selectedArray.filter((t) => t !== theme) : [...selectedArray, theme]
-        onChange(next)
-      } else {
-        onChange(theme)
-        if (expanded) toggle()
-      }
-    },
-    [multiSelect, selectedArray, onChange, expanded],
-  )
-
-  // Measure the container width
-  const handleContainerLayout = (event: LayoutChangeEvent) => {
-    const { width } = event.nativeEvent.layout
-    setContainerWidth(width)
-  }
-
-  // Measure a chip's width - store in ref to avoid re-renders
-  const measureChip = (theme: string, event: LayoutChangeEvent) => {
-    const { width } = event.nativeEvent.layout
-
-    const existingIndex = chipMeasurementsRef.current.findIndex((chip) => chip.theme === theme)
-    if (existingIndex >= 0) {
-      chipMeasurementsRef.current[existingIndex].width = width
-      chipMeasurementsRef.current[existingIndex].measured = true
-    } else {
-      chipMeasurementsRef.current.push({ theme, width, measured: true })
     }
 
-    // Don't call setState here to avoid re-renders
-  }
+    // Display only the first few items in the horizontal list
+    const displayedThemes = processedThemes.slice(0, 4)
 
-  // Animated styles for expanded overlay card
-  const overlayStyle = useAnimatedStyle(() => {
-    return {
-      height: interpolate(animation.value, [0, 1], [0, EXPANDED_HEIGHT]),
-      opacity: interpolate(animation.value, [0, 0.5, 1], [0, 0.7, 1]),
-      transform: [{ translateY: interpolate(animation.value, [0, 1], [-10, 0]) }],
-    }
-  })
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerText}>Categories</Text>
+          {processedThemes.length > 4 && (
+            <TouchableOpacity onPress={toggleModal} style={styles.viewAllButton}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
-  // Animated styles for backdrop
-  const backdropStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(animation.value, [0, 1], [0, 0.3]),
-    }
-  })
-
-  // Render a theme chip
-  const renderThemeChip = (theme: string, inOverlay = false) => (
-    <Pressable
-      key={`${theme}-${inOverlay ? "overlay" : "main"}`}
-      onPress={() => handleSelect(theme)}
-      onLayout={inOverlay ? undefined : (event) => measureChip(theme, event)}
-      style={[
-        styles.chip,
-        selectedArray.includes(theme) ? styles.selectedChip : styles.unselectedChip,
-        inOverlay ? {} : { maxWidth: containerWidth * MAX_CHIP_WIDTH_PERCENTAGE },
-      ]}
-    >
-      <Text
-        style={[styles.chipText, selectedArray.includes(theme) ? styles.selectedChipText : styles.unselectedChipText]}
-        numberOfLines={1}
-      >
-        {theme}
-      </Text>
-    </Pressable>
-  )
-
-  if (!themes || themes.length === 0) {
-    return null
-  }
-
-  return (
-    <View style={styles.container}>
-      {/* Main horizontal row with visible chips */}
-      <View style={styles.chipRow} onLayout={handleContainerLayout}>
-        <ScrollView
+        {/* Horizontal scrolling list for main view */}
+        <FlatList
+          data={displayedThemes}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => `${item}-${index}`}
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {visibleThemes.map((theme) => renderThemeChip(theme))}
-        </ScrollView>
+          contentContainerStyle={styles.listContainer}
+        />
 
-        {/* Only show expand button when there are hidden themes */}
-        {showExpandButton && (
-          <Pressable onPress={toggle} style={styles.expandButton}>
-            <Ionicons name={expanded ? "remove" : "add"} size={20} color="black" />
-          </Pressable>
-        )}
-      </View>
+        {/* Modal for expanded view */}
+        <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={toggleModal}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>All Categories</Text>
+                <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>×</Text>
+                </TouchableOpacity>
+              </View>
 
-      {/* Backdrop when expanded */}
-      {expanded && <Animated.View style={[styles.backdrop, backdropStyle]} pointerEvents="none" />}
-
-      {/* Expanded overlay card */}
-      {expanded && (
-        <Animated.View style={[styles.overlay, overlayStyle]}>
-          <View style={styles.overlayHeader}>
-            <Text style={styles.overlayTitle}>All Categories</Text>
-            <Pressable onPress={toggle} style={styles.closeButton}>
-              <Ionicons name="close" size={20} color="#333" />
-            </Pressable>
+              {/* Grid layout for categories in modal */}
+              <FlatList
+                data={processedThemes}
+                renderItem={renderItem}
+                keyExtractor={(item, index) => `modal-${item}-${index}`}
+                numColumns={3}
+                contentContainerStyle={styles.modalListContainer}
+              />
+            </View>
           </View>
-
-          <ScrollView style={styles.overlayScroll}>
-            <View style={styles.overlayChipContainer}>{themes.map((theme) => renderThemeChip(theme, true))}</View>
-          </ScrollView>
-        </Animated.View>
-      )}
-
-      {loading && (
-        <View style={styles.loadingIcon}>
-          <Ionicons name="reload-outline" size={20} color="#888" />
-        </View>
-      )}
-    </View>
-  )
-}
+        </Modal>
+      </View>
+    )
+  },
+)
 
 const styles = StyleSheet.create({
   container: {
-
-  },
-  chipRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "white",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  chip: {
-    paddingHorizontal: 12,
     paddingVertical: 8,
-    marginHorizontal: 4,
-    marginVertical: 4,
-    borderRadius: 6,
-  },
-  selectedChip: {
-    backgroundColor: "#000", // Changed to black per requirements
-  },
-  unselectedChip: {
-    backgroundColor: "#f0f0f0",
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  selectedChipText: {
-    color: "white",
-  },
-  unselectedChipText: {
-    color: "#333",
-  },
-  expandButton: {
-    height: 36,
-    width: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 8,
-  },
-  backdrop: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "black",
-    zIndex: 5,
-  },
-  overlay: {
-    position: "absolute",
-    top: 60,
-    left: 8,
-    right: 8,
     backgroundColor: "white",
-    zIndex: 20,
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 8,
-    overflow: "hidden",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
   },
-  overlayHeader: {
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    marginBottom: 8,
   },
-  overlayTitle: {
-    fontWeight: "bold",
+  headerText: {
     fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  viewAllButton: {
+    padding: 4,
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+  },
+  categoryItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: "#f5f5f5",
+    marginRight: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  selectedItem: {
+    backgroundColor: "#333",
+    borderColor: "#222",
+  },
+  defaultItem: {
+    borderColor: "#d0d0d0",
+  },
+  categoryText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  selectedText: {
+    color: "white",
+    fontWeight: "500",
+  },
+  skeletonRow: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+  },
+  skeletonItem: {
+    width: 80,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: screenWidth * 0.9,
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 16,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    paddingBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
     color: "#333",
   },
   closeButton: {
-    padding: 4,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  overlayScroll: {
-    flex: 1,
+  closeButtonText: {
+    fontSize: 20,
+    color: "#333",
+    fontWeight: "bold",
   },
-  overlayChipContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    padding: 8,
-  },
-  loadingIcon: {
-    position: "absolute",
-    right: 56,
-    top: 16,
+  modalListContainer: {
+    paddingBottom: 16,
   },
 })
+
+export default SubCategoriesExbandableFilter

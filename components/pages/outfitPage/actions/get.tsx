@@ -1,3 +1,4 @@
+///components/pages/outfitPage/actions/get.tsx
 import { Image, Text, View, StyleSheet, Dimensions, FlatList } from "react-native"
 import { router } from "expo-router"
 import databaseService, { type OutfitWithImage } from "@/services/database/db"
@@ -139,20 +140,7 @@ export default function GetOutfit({
 
 
       {/* Horizontal outfit list */}
-      <View style={styles.outfitListContainer}>
-        <FlatList
-          data={outfits}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <View style={[styles.outfitThumbnailContainer, currentIndex === index ? styles.selectedThumbnail : null]}>
-              <Image source={{ uri: item.imageUrl }} style={styles.outfitThumbnail} resizeMode="cover" />
-            </View>
-          )}
-          keyExtractor={(item) => item.$id}
-          contentContainerStyle={styles.outfitListContent}
-        />
-      </View>
+
 
       {/* Info grid */}
       <View style={styles.infoGrid}>
@@ -274,3 +262,20 @@ const styles = StyleSheet.create({
     right: 16,
   },
 })
+
+{
+  /* <View style={styles.outfitListContainer}>
+        <FlatList
+          data={outfits}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item, index }) => (
+            <View style={[styles.outfitThumbnailContainer, currentIndex === index ? styles.selectedThumbnail : null]}>
+              <Image source={{ uri: item.imageUrl }} style={styles.outfitThumbnail} resizeMode="cover" />
+            </View>
+          )}
+          keyExtractor={(item) => item.$id}
+          contentContainerStyle={styles.outfitListContent}
+        />
+      </View> */
+}
