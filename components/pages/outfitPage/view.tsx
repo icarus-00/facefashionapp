@@ -72,7 +72,7 @@ export default function OutFitPageComp({
   const [isSelecting, setIsSelecting] = useState<boolean>(selecting)
 
   // Get store methods
-  const { outfitItems, addOutfitItem, removeOutfitItem, clearOutfitItems } = useStore()
+  const { outfitItems, addOutfitItem, removeOutfitItem } = useStore()
 
   // Animation refs to track if animations have run
   const animationsRun = useRef(false)
@@ -118,10 +118,15 @@ export default function OutFitPageComp({
     setIsSelecting(selecting)
   }, [selecting])
 
-  // Update bottom sheet visibility when modal is shown/hidden
+  // Update bottom sheet visibility and selection mode when modal is shown/hidden
   useEffect(() => {
-    setBottomSheetVisible(modalProps.visible)
-  }, [modalProps.visible])
+    setBottomSheetVisible(outfitItems.length > 0)
+    
+    // Enable selection mode if there are items in the cart
+    if (outfitItems.length > 0 && !isSelecting) {
+      setIsSelecting(true)
+    }
+  }, [outfitItems, isSelecting])
 
   // Use useCallback to prevent recreation of this function on every render
   const fetchData = useCallback(async (): Promise<void> => {
@@ -215,7 +220,7 @@ export default function OutFitPageComp({
         removeOutfitItem("full") // Assuming all outfits are "full" category
       } else {
         // Add to selection
-        addOutfitItem(outfit.fileID, "full", outfit.imageUrl)
+        addOutfitItem(outfit.fileID, "full", outfit.imageUrl, outfit.name, outfit.brand, outfit.size, outfit.material, outfit.garmentType, outfit.attireTheme)
       }
     },
     [isOutfitSelected, addOutfitItem, removeOutfitItem],
@@ -232,20 +237,15 @@ export default function OutFitPageComp({
         <HStack className="justify-between items-center mb-3">
           <Text className="text-2xl font-bold text-gray-800">Outfits Gallery</Text>
 
-          {/* Add/Close button */}
+          {/* Add button */}
           <Animated.View entering={ZoomIn.delay(600).duration(300)}>
             <TouchableOpacity
               className="h-10 w-10 bg-primary-500 rounded-full justify-center items-center"
               onPress={() => {
-                if (isSelecting) {
-                  setIsSelecting(false)
-                  clearOutfitItems()
-                } else {
-                  router.push({ pathname: "/(app)/(auth)/outfit/create" })
-                }
+                router.push({ pathname: "/(app)/(auth)/outfit/create" })
               }}
             >
-              <Text className="text-white mb-1 font-medium text-2xl">{isSelecting ? "×" : "+"}</Text>
+              <Text className="text-white mb-1 font-medium text-2xl">+</Text>
             </TouchableOpacity>
           </Animated.View>
         </HStack>
@@ -275,7 +275,7 @@ export default function OutFitPageComp({
         </HStack>
       </Animated.View>
     )
-  }, [headerAnimStyle, isSelecting, activeFilter, router, clearOutfitItems])
+  }, [headerAnimStyle, activeFilter, router])
 
   // Generate placeholder data with proper typing
   const getPlaceholderData = useCallback((): OutfitItem[] => {

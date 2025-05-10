@@ -126,4 +126,5 @@ const styles = StyleSheet.create({
   },
 })
 
+OutfitCard.displayName = 'OutfitCard';
 export default OutfitCard

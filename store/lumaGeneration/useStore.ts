@@ -12,10 +12,23 @@ type OutfitItem = {
   imageID: string;
   category: OutfitCategory;
   imageUrl: string;
+  outfitName: string;
+  brand: string;
+  size: string;
+  material: string;
+  garmentType: string;
+  attireTheme: string;
 };
 type ActorItem = {
   imageID: string;
   imageUrl: string;
+  actorName: string;
+  age: number;
+  width: number;
+  height: number;
+  bio: string;
+  gender: string;
+  genre: string;
 };
 type Data = {
   actorImageID: string;
@@ -32,7 +45,13 @@ type Actions = {
   addOutfitItem: (
     imageID: string,
     category: OutfitCategory,
-    imageUrl: string
+    imageUrl: string,
+    outfitName: string,
+    brand: string,
+    size: string,
+    material: string,
+    garmentType: string,
+    attireTheme: string
   ) => void;
   removeOutfitItem: (category: OutfitCategory) => void;
   clearOutfitItems: () => void;
@@ -41,7 +60,7 @@ type Actions = {
   hasFullOutfit: () => boolean;
   updateActorImageUrl: (imageUrl: string) => void;
   setOutfitImageUrls: (urls: string[]) => void;
-  updateActorItems: (imageID: string, imageUrl: string) => void;
+  updateActorItems: (imageID: string, imageUrl: string, actorName: string, age: number, width: number, height: number, bio: string, gender: string, genre: string) => void;
   removeActorItems: () => void;
 };
 
@@ -54,7 +73,7 @@ const useStore = create<Data & Actions>()(
       userId: "",
       length: 0,
       outfitImageUrls: [],
-      actorItems: { imageID: "", imageUrl: "" },
+      actorItems: { imageID: "", imageUrl: "", actorName: "", age: 0, width: 0, height: 0, bio: "", gender: "", genre: ""},
 
       initializeUserId: (id) => {
         set({ userId: id });
@@ -62,20 +81,20 @@ const useStore = create<Data & Actions>()(
 
       updateActorImageID: (imageID, imageUrl) =>
         set({ actorImageID: imageID, actorImageUrl: imageUrl }),
-      updateActorItems: (imageID, imageUrl) => {
+      updateActorItems: (imageID, imageUrl, actorName, age, width, height, bio, gender, genre) => {
         console.log(imageUrl);
-        set({ actorItems: { imageID: imageID, imageUrl: imageUrl } })
+        set({ actorItems: { imageID: imageID, imageUrl: imageUrl, actorName, age, width, height, bio, gender, genre } })
       },
       removeActorItems: () =>
-        set({ actorItems: { imageID: "", imageUrl: "" } }),
+        set({ actorItems: { imageID: "", imageUrl: "", actorName: "", age: 0, width: 0, height: 0, bio: "", gender: "", genre: "" } }),
 
-      addOutfitItem: (imageID, category, imageUrl) => {
+      addOutfitItem: (imageID, category, imageUrl, outfitName, brand, size, material, garmentType, attireTheme) => {
         const { outfitItems } = get();
 
         // If adding a full outfit, clear all other items
         if (category === "full") {
           set({
-            outfitItems: [{ imageID, category, imageUrl }],
+            outfitItems: [{ imageID, category, imageUrl, outfitName, brand, size, material, garmentType, attireTheme}],
           });
           return;
         }
@@ -91,7 +110,7 @@ const useStore = create<Data & Actions>()(
         );
 
         // Add the new item
-        updatedItems.push({ imageID, category, imageUrl });
+        updatedItems.push({ imageID, category, imageUrl, outfitName, brand, size, material, garmentType, attireTheme });
 
         set({ outfitItems: updatedItems });
       },

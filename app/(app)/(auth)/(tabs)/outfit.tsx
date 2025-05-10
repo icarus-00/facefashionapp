@@ -9,6 +9,8 @@ import SelectedItemsModal from "@/components/atoms/selectedItemsModal"
 import OutFitPageComp from "@/components/pages/outfitPage/view"
 import useStore from "@/store/lumaGeneration/useStore"
 import { generateImage } from "@/services/generation/gen"
+
+
 export default function Outfit() {
   const { getLength, outfitItems, actorItems } = useStore()
   const router = useRouter()

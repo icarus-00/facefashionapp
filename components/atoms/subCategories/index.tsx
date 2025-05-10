@@ -278,4 +278,6 @@ const styles = StyleSheet.create({
   },
 })
 
+SubCategoriesExbandableFilter.displayName = "SubCategoriesExbandableFilter"
+
 export default SubCategoriesExbandableFilter

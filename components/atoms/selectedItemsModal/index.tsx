@@ -72,9 +72,10 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
         elevation: 10,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
+        // marginBottom: 40,
       }}
     >
-      <BottomSheetScrollView contentContainerStyle={{ padding: 16 }}>
+      <BottomSheetScrollView contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
         {/* Title */}
         <Text className="text-xl font-bold text-center mb-4 text-black">
           Selected Items
@@ -86,24 +87,64 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
 
           <View>
             {actorItems && actorItems.imageUrl ? (
-              <View className="relative">
-                <Image
-                  source={{ uri: actorItems.imageUrl }}
-                  className="w-full aspect-square rounded-2xl"
-                  resizeMode="cover"
-                />
-                <TouchableOpacity
-                  className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
-                  onPress={handleRemoveActor}
-                >
-                  <Ionicons
-                    name="close-circle"
-                    size={24}
-                    color="black"
+              <View className="bg-white rounded-xl overflow-hidden border border-gray-200 mb-4">
+                <View className="relative">
+                  <Image
+                    source={{ uri: actorItems.imageUrl }}
+                    className="w-full aspect-square"
+                    resizeMode="cover"
                   />
-                </TouchableOpacity>
-
-
+                  <TouchableOpacity
+                    className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
+                    onPress={handleRemoveActor}
+                  >
+                    <Ionicons
+                      name="close-circle"
+                      size={24}
+                      color="black"
+                    />
+                  </TouchableOpacity>
+                </View>
+                
+                {/* Actor Details */}
+                <View className="p-4">
+                  {actorItems.actorName && (
+                    <Text className="text-lg font-bold text-black mb-2">{actorItems.actorName}</Text>
+                  )}
+                  
+                  <View className="space-y-2">
+                    {actorItems.age > 0 && (
+                      <HStack className="justify-between">
+                        <Text className="text-gray-600">Age:</Text>
+                        <Text className="text-black font-medium">{actorItems.age}</Text>
+                      </HStack>
+                    )}
+                    {actorItems.gender && (
+                      <HStack className="justify-between">
+                        <Text className="text-gray-600">Gender:</Text>
+                        <Text className="text-black font-medium">{actorItems.gender}</Text>
+                      </HStack>
+                    )}
+                    {actorItems.genre && (
+                      <HStack className="justify-between">
+                        <Text className="text-gray-600">Genre:</Text>
+                        <Text className="text-black font-medium">{actorItems.genre}</Text>
+                      </HStack>
+                    )}
+                    {(actorItems.height > 0 || actorItems.width > 0) && (
+                      <HStack className="justify-between">
+                        <Text className="text-gray-600">Size:</Text>
+                        <Text className="text-black font-medium">{actorItems.height > 0 ? `${actorItems.height}cm` : ""}{actorItems.width > 0 ? ` x ${actorItems.width}cm` : ""}</Text>
+                      </HStack>
+                    )}
+                    {actorItems.bio && (
+                      <View className="mb-1">
+                        <Text className="text-gray-600 mb-1">Bio:</Text>
+                        <Text className="text-black">{actorItems.bio}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
               </View>
             ) : (
               <View
@@ -130,24 +171,65 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
           // Full outfit display
           <View className="relative mb-6">
             {fullItem ? (
-              <View className="relative">
-                <View className="rounded-2xl overflow-hidden border border-gray-300">
-                  <Image
-                    source={{ uri: fullItem.imageUrl }}
-                    className="w-full aspect-video"
-                    resizeMode="cover"
-                  />
-                </View>
-                <TouchableOpacity
-                  className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
-                  onPress={() => handleRemoveItem("full")}
-                >
-                  <Ionicons
-                    name="close-circle"
-                    size={24}
-                    color="black"
-                  />
-                </TouchableOpacity>
+              <View className="bg-white rounded-xl overflow-hidden border border-gray-200 mb-4">
+                <HStack>
+                  <View className="relative w-1/3">
+                    <Image
+                      source={{ uri: fullItem.imageUrl }}
+                      className="h-36"
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity
+                      className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
+                      onPress={() => handleRemoveItem("full")}
+                    >
+                      <Ionicons
+                        name="close-circle"
+                        size={20}
+                        color="black"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <View className="p-4 flex-1">
+                    {fullItem.outfitName && (
+                      <Text className="text-lg font-bold text-black mb-2">{fullItem.outfitName}</Text>
+                    )}
+                    
+                    <View className="space-y-2 mt-2">
+                      {fullItem.brand && (
+                        <HStack className="justify-between">
+                          <Text className="text-gray-600">Brand:</Text>
+                          <Text className="text-black font-medium">{fullItem.brand}</Text>
+                        </HStack>
+                      )}
+                      {fullItem.size && (
+                        <HStack className="justify-between">
+                          <Text className="text-gray-600">Size:</Text>
+                          <Text className="text-black font-medium">{fullItem.size}</Text>
+                        </HStack>
+                      )}
+                      {fullItem.material && (
+                        <HStack className="justify-between">
+                          <Text className="text-gray-600">Material:</Text>
+                          <Text className="text-black font-medium">{fullItem.material}</Text>
+                        </HStack>
+                      )}
+                      {fullItem.garmentType && (
+                        <HStack className="justify-between">
+                          <Text className="text-gray-600">Type:</Text>
+                          <Text className="text-black font-medium">{fullItem.garmentType}</Text>
+                        </HStack>
+                      )}
+                      {fullItem.attireTheme && (
+                        <HStack className="justify-between">
+                          <Text className="text-gray-600">Theme:</Text>
+                          <Text className="text-black font-medium">{fullItem.attireTheme}</Text>
+                        </HStack>
+                      )}
+                    </View>
+                  </View>
+                </HStack>
               </View>
             ) : (
               <View
@@ -170,21 +252,37 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
             <View className="relative">
               <Text className="text-sm font-medium mb-1 text-gray-600">Top</Text>
               {topItem ? (
-                <View className="relative">
-                  <View className="rounded-xl overflow-hidden border border-gray-300">
+                <View className="bg-white rounded-xl overflow-hidden border border-gray-200 mb-2">
+                  <HStack>
                     <Image
                       source={{ uri: topItem.imageUrl }}
-                      className="w-full h-32"
+                      className="w-1/3 h-32"
                       resizeMode="cover"
                     />
-                  </View>
+                    <View className="p-3 flex-1">
+                      {topItem.outfitName && (
+                        <Text className="text-base font-bold text-black mb-1" numberOfLines={1}>{topItem.outfitName}</Text>
+                      )}
+                      <View className="space-y-1">
+                        {topItem.brand && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Brand: <Text className="font-medium text-black">{topItem.brand}</Text></Text>
+                        )}
+                        {topItem.size && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Size: <Text className="font-medium text-black">{topItem.size}</Text></Text>
+                        )}
+                        {topItem.material && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Material: <Text className="font-medium text-black">{topItem.material}</Text></Text>
+                        )}
+                      </View>
+                    </View>
+                  </HStack>
                   <TouchableOpacity
                     className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
                     onPress={() => handleRemoveItem("top")}
                   >
                     <Ionicons
                       name="close-circle"
-                      size={24}
+                      size={20}
                       color="black"
                     />
                   </TouchableOpacity>
@@ -213,21 +311,37 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
             <View className="relative">
               <Text className="text-sm font-medium mb-1 text-gray-600">Bottom</Text>
               {bottomItem ? (
-                <View className="relative">
-                  <View className="rounded-xl overflow-hidden border border-gray-300">
+                <View className="bg-white rounded-xl overflow-hidden border border-gray-200 mb-2">
+                  <HStack>
                     <Image
                       source={{ uri: bottomItem.imageUrl }}
-                      className="w-full h-32"
+                      className="w-1/3 h-32"
                       resizeMode="cover"
                     />
-                  </View>
+                    <View className="p-3 flex-1">
+                      {bottomItem.outfitName && (
+                        <Text className="text-base font-bold text-black mb-1" numberOfLines={1}>{bottomItem.outfitName}</Text>
+                      )}
+                      <View className="space-y-1">
+                        {bottomItem.brand && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Brand: <Text className="font-medium text-black">{bottomItem.brand}</Text></Text>
+                        )}
+                        {bottomItem.size && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Size: <Text className="font-medium text-black">{bottomItem.size}</Text></Text>
+                        )}
+                        {bottomItem.material && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Material: <Text className="font-medium text-black">{bottomItem.material}</Text></Text>
+                        )}
+                      </View>
+                    </View>
+                  </HStack>
                   <TouchableOpacity
                     className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
                     onPress={() => handleRemoveItem("bottom")}
                   >
                     <Ionicons
                       name="close-circle"
-                      size={24}
+                      size={20}
                       color="black"
                     />
                   </TouchableOpacity>
@@ -258,21 +372,37 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
             <View className="relative">
               <Text className="text-sm font-medium mb-1 text-gray-600">Accessory</Text>
               {accessoryItem ? (
-                <View className="relative">
-                  <View className="rounded-xl overflow-hidden border border-gray-300">
+                <View className="bg-white rounded-xl overflow-hidden border border-gray-200 mb-2">
+                  <HStack>
                     <Image
                       source={{ uri: accessoryItem.imageUrl }}
-                      className="w-full h-32"
+                      className="w-1/3 h-32"
                       resizeMode="cover"
                     />
-                  </View>
+                    <View className="p-3 flex-1">
+                      {accessoryItem.outfitName && (
+                        <Text className="text-base font-bold text-black mb-1" numberOfLines={1}>{accessoryItem.outfitName}</Text>
+                      )}
+                      <View className="space-y-1">
+                        {accessoryItem.brand && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Brand: <Text className="font-medium text-black">{accessoryItem.brand}</Text></Text>
+                        )}
+                        {accessoryItem.size && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Size: <Text className="font-medium text-black">{accessoryItem.size}</Text></Text>
+                        )}
+                        {accessoryItem.material && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Material: <Text className="font-medium text-black">{accessoryItem.material}</Text></Text>
+                        )}
+                      </View>
+                    </View>
+                  </HStack>
                   <TouchableOpacity
                     className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
                     onPress={() => handleRemoveItem("accessory")}
                   >
                     <Ionicons
                       name="close-circle"
-                      size={24}
+                      size={20}
                       color="black"
                     />
                   </TouchableOpacity>
@@ -301,8 +431,8 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
           </VStack>
         )}
 
-        {/* Action button */}
-
+        {/* Additional space for bottom navigation */}
+        <View style={{ height: 20 }} />
       </BottomSheetScrollView>
     </BottomSheet>
 
