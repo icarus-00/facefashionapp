@@ -36,10 +36,10 @@ interface OtpCreds {
 type UserContextType = {
   current: Models.User<Models.Preferences> | null; //check if there's a user
   isLoading: boolean;
-  login: (creds: emailpasswordCreds | OtpCreds, otp?: boolean) => Promise<void>;
+  login: (creds: emailpasswordCreds | OtpCreds, otp?: boolean) => Promise<void | Models.Token>;
   logout: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
-  verifyOtp: (email: string, token: string, type: string | "email") => Promise<void>;
+  verifyOtp: (email: string, token: string, type: string | "email", userId: string) => Promise<void>;
   Toast: (message: string) => void;
 };
 
@@ -68,11 +68,13 @@ export default function UserProvider({
   async function login(
     creds: emailpasswordCreds | OtpCreds,
     otp: boolean = false
-  ): Promise<void> {
+  ): Promise<void | Models.Token> {
     try {
       if (otp) {
         const { email, redirectUrl } = creds as OtpCreds;
-        await account.createEmailToken(ID.unique(), email);
+        const token = await account.createEmailToken(ID.unique(), email);
+        return token;
+
         //await client.auth.signInWithOtp({email:email })
       }
       else {
@@ -95,9 +97,11 @@ export default function UserProvider({
       throw error;
     }
   }
-  async function verifyOtp(email: string, token: string, type: string): Promise<void> {
+  async function verifyOtp(email: string, token: string, type: string, userId: string): Promise<void> {
     try {
-      //      const result = await account.createSession;
+      const result = await account.createSession(userId, token);
+      console.log("otp data" + token + userId);
+      console.log(result);
       const userDetails = await account.get()
       console.log("user details acquired");
       initializeUserId(userDetails.$id!);
@@ -121,7 +125,7 @@ export default function UserProvider({
 
       initializeUserId("");
       setUser(null);
-      //router.replace("/(app)");
+      router.replace("/(app)");
       ToastGlue("Logged out");
     } catch (error) {
       console.error("Logout error:", error);

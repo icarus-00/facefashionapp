@@ -14,6 +14,7 @@ import { Text } from "@/components/ui/text";
 import { Input, InputField } from "@/components/ui/input";
 import { router, useRouter } from "expo-router";
 import LoginPage from "@/components/pages/loginPage/loginPage";
+import { Models } from "react-native-appwrite";
 
 
 export default function LoginScreen() {
@@ -27,6 +28,10 @@ export default function LoginScreen() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [token, setToken] = useState("");
+  const [otpUserId, setOtpUserId] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
+  const [otpToken, setOtpToken] = useState("");
+
   const redirectTo = "test"
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -48,7 +53,10 @@ export default function LoginScreen() {
     setError("");
     try {
       console.log("sending otp")
-      const loginT = await login({ email, redirectUrl: redirectTo }, true);
+      const loginT = await login({ email, redirectUrl: redirectTo }, true) as Models.Token;
+      setOtpUserId(loginT.userId);
+      console.log(loginT.userId)
+      console.log(loginT.secret)
       console.log("otp sent")
       console.log(loginT)
     } catch (error: any) {
@@ -61,7 +69,10 @@ export default function LoginScreen() {
   const handleOtpSubmit = async () => {
     setIsLoading(true);
     try {
-      await verifyOtp(email, token, "email");
+      console.log("verifying otp")
+      console.log(otpUserId)
+      console.log(token)
+      await verifyOtp(email, token, "email", otpUserId);
     } catch (error: any) {
       setError(error.message);
       console.error("Login error:", error);

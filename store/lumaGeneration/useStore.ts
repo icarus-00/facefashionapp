@@ -73,7 +73,7 @@ const useStore = create<Data & Actions>()(
       userId: "",
       length: 0,
       outfitImageUrls: [],
-      actorItems: { imageID: "", imageUrl: "", actorName: "", age: 0, width: 0, height: 0, bio: "", gender: "", genre: ""},
+      actorItems: { imageID: "", imageUrl: "", actorName: "", age: 0, width: 0, height: 0, bio: "", gender: "", genre: "" },
 
       initializeUserId: (id) => {
         set({ userId: id });
@@ -94,7 +94,7 @@ const useStore = create<Data & Actions>()(
         // If adding a full outfit, clear all other items
         if (category === "full") {
           set({
-            outfitItems: [{ imageID, category, imageUrl, outfitName, brand, size, material, garmentType, attireTheme}],
+            outfitItems: [{ imageID, category, imageUrl, outfitName, brand, size, material, garmentType, attireTheme }],
           });
           return;
         }
