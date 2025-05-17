@@ -13,7 +13,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Card } from "@/components/ui/card";
 import { icons } from "@/constants/Icons";
 import { images } from "@/constants/images";
-import CollectionComponent from "@/components/CollectionCards";
 import { router } from "expo-router";
 import Animated, {
   useSharedValue,
@@ -29,7 +28,7 @@ import Animated, {
   SlideInRight
 } from "react-native-reanimated";
 
-const headerImage = require("@/assets/images/home/image copy(1).png");
+const headerImage = require("@/assets/images/home/image copy(1).jpg");
 const secondModelImage = require("@/assets/images/home/second-model.jpg");
 const { width } = Dimensions.get("window");
 
@@ -50,7 +49,7 @@ const dropdownData = [
     id: '1',
     icon: icons.person,
     title: '1. Choose Your Actor',
-    description: 'Browse our curated gallery of actor images and select the one that embodies your creative vision. With detailed profiles and carousel previews, finding the perfect face for your style story has never been easier.'
+    description: 'Browse a gallery of actor images and pick the one that brings your creative vision to life. With detailed profiles, finding the perfect face for your style story has never been easier.'
   },
   {
     id: '2',
@@ -62,7 +61,7 @@ const dropdownData = [
     id: '3',
     icon: icons.dresser,
     title: '3. Generate Your Look',
-    description: 'Leverage our cutting-edge AI to bring your concept to life. See your chosen actor wearing the selected outfit in realistic images, and explore multiple angles to perfect your look before making a decision.'
+    description: 'Leverage our cutting-edge AI to bring your concept to life. See your chosen actor styled in the selected outfit through stunning, realistic images. Perfect your look before making a decision.'
   }
 ];
 
@@ -203,7 +202,7 @@ export default function Home() {
         >
           <View className="flex-row items-center">
             <Image source={item.icon} className="w-6 h-6 mr-3" tintColor="black" />
-            <Text className="text-black font-semibold">{item.title}</Text>
+            <Text className="text-black font-bold">{item.title}</Text>
           </View>
           <Text className="text-black">{isExpanded ? '▲' : '▼'}</Text>
         </TouchableOpacity>
@@ -283,7 +282,7 @@ export default function Home() {
         </Center>
 
         {/* Add Spacing */}
-        <View className="h-10">
+        <View className="h-20">
         </View>
 
         {/* Features Section */}
@@ -302,7 +301,7 @@ export default function Home() {
             </Box>
 
             {/* Categories */}
-            <HStack space="md" className=" justify-between mb-4">
+            <HStack space="md" className=" justify-between">
               {categories.map((category, index) => (
                 <AnimatedPressable
                   key={category.id}
@@ -313,14 +312,19 @@ export default function Home() {
                   <View className="items-center">
                     <Image
                       source={categories[index].icon}
-                      style={{ width: 80, height: 80 }}
+                      style={{ width: 100, height: 90 }}
                       resizeMode="contain"
                     />
-                    <Text className="text-black text-center font-bold text-xs">{category.name}</Text>
+                    <Text className="text-black text-center font-bold text-md">{category.name}</Text>
                   </View>
                 </AnimatedPressable>
               ))}
             </HStack>
+
+
+            {/* Add Spacing */}
+            <View className="h-14">
+        </View>
 
             <View className="flex-1 justify-center items-center">
               <View className="w-full">
@@ -328,13 +332,28 @@ export default function Home() {
                   Creating a profile{"\n"} has never been easier
                 </Text>
                 <Text className="text-gray-600 text-center">
-                  upload your image, pick the perfect outfit,{"\n"}setting, add your finishing touches.
+                Upload your image, build the perfect outfit,{"\n"} then describe your setting. Done!
                 </Text>
               </View>
             </View>
 
-            {/* Collection Cards*/}
-            <CollectionComponent />
+            <View className="flex-1 justify-center align-center flex-row gap-7 items-center my-5">
+                <Image source={images.download} className="w-[80px] h-[80px] rounded-full"></Image>
+                <Image source={images.SweaterPoloLines} className="w-[80px] h-[80px] rounded-full"></Image>
+                <Image source={images.pantalon} className="w-[80px] h-[80px] rounded-full"></Image>
+            </View>
+
+              <View className="w-full h-[620px] rounded-xl flex-1 overflow-hidden">
+                    <Image
+                      source={images.s4}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                      }}
+
+                      resizeMode="cover"
+                    />
+                  </View>
 
             {/* Trending Styles - Horizontal Scrolling */}
             <AnimatedBox entering={FadeIn.delay(1200).duration(800)}>

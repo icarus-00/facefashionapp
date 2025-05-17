@@ -78,7 +78,7 @@ export default function Outfit() {
   }, [selecting, scaleAnim, rotateAnim, shakeAnim, pulseAnim])
 
   const handleForwardPress = async () => {
-    // Navigate to the next screen or perform action with selected items
+    // If selecting items and we have outfits selected, proceed to generation
     if (selecting && outfitItems.length > 0) {
       console.log("Selected items:", actorItems.imageID)
       await generateImage({
@@ -87,6 +87,10 @@ export default function Outfit() {
         prompt: "Generate an image combining the actor and outfit items"
       })
       router.push("/(app)/(auth)/(tabs)/generations")
+    } 
+    // If not selecting (showing plus button), navigate to actor gallery
+    else if (!selecting) {
+      router.push("/(app)/(auth)/(tabs)/actor")
     }
   }
 
@@ -119,7 +123,7 @@ export default function Outfit() {
           style={[styles.forwardButton, selecting ? styles.activeButton : styles.inactiveButton]}
           onPress={handleForwardPress}
           android_ripple={{ color: "rgba(255,255,255,0.2)", radius: 28 }}
-          disabled={!selecting || outfitItems.length === 0}
+          disabled={selecting && outfitItems.length === 0}
         >
 
           <Ionicons name={selecting ? "arrow-forward" : "add"} size={24} color="white" />

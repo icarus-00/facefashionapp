@@ -3,6 +3,7 @@ import { View, StyleSheet, Dimensions, TouchableOpacity, Platform, Text } from "
 import { Image } from "expo-image"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CheckIcon } from "@/components/ui/icon"
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width: screenWidth } = Dimensions.get("screen")
 const numColumns = 2
@@ -47,19 +48,33 @@ const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting
 
       />
 
-      {/* Selection indicator */}
-      {selecting && selected && (
+      {/* Selection indicator - Always show when selected */}
+      {selected && (
         <View style={styles.selectedIndicator}>
           <CheckIcon color="white" />
         </View>
       )}
 
+
       {/* Outfit name label */}
-      <View style={styles.labelContainer}>
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.8)']}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 60,
+          justifyContent: 'flex-end',
+          paddingHorizontal: 10,
+          paddingBottom: 8
+        }}
+      >
         <Text style={styles.label} numberOfLines={1} ellipsizeMode="tail">
           {item.outfitName}
-        </Text>
-      </View>
+        </Text>                  
+      </LinearGradient>
+
     </TouchableOpacity>
   )
 })
@@ -121,7 +136,7 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "white",
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: "500",
   },
 })

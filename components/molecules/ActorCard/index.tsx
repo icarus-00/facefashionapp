@@ -56,7 +56,7 @@ const ActorCard: React.FC<ActorCardProps> = ({
   const { width: screenWidth } = Dimensions.get('screen');
   
   // Default dimensions if not provided
-  const cardWidth = width || (screenWidth - 24) / 2;
+  const cardWidth = width || (screenWidth - 10) / 2;
   const cardHeight = height || cardWidth * 1.5;
   
   // Animation values

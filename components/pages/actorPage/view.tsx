@@ -84,6 +84,7 @@ export default function ActorPageComp(): React.JSX.Element {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [activeGenderFilter, setActiveGenderFilter] = useState<string>("all");
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -203,7 +204,7 @@ export default function ActorPageComp(): React.JSX.Element {
       >
         <Box
           className="bg-background-50 rounded-xl overflow-hidden"
-          style={{ width: itemWidth, height: itemHeight }}
+          style={{ width: 180, height: itemHeight }}
         >
           <View style={{ width: "100%", height: "100%" }}>
             {renderActorImage()}
@@ -236,11 +237,44 @@ export default function ActorPageComp(): React.JSX.Element {
   }
 
   const TabBar = (): React.JSX.Element => {
-    const [selectedTab, setSelectedTab] = useState<string>("All");
-
+    // Use the activeFilter directly for selectedTab to ensure they stay in sync
+    // Convert "all" to "All" for display
+    const selectedTab = activeFilter === "all" ? "All" : activeFilter;
+    
+    // Define a consistent mapping between tab labels and filter values
+    const genderMappings: { [key: string]: string } = {
+      "All": "all",
+      "Males": "male",
+      "Females": "female"
+    };
+    
+    // Reverse mapping from filter values to tab labels
+    const getTabLabelFromFilter = (filter: string): string => {
+      if (filter === "all") return "All";
+      if (filter === "male") return "Males";
+      if (filter === "female") return "Females";
+      return "All";
+    };
+    
+    // Use the activeGenderFilter to determine the selected tab
+    const selectedGenderTab = getTabLabelFromFilter(activeGenderFilter);
+    
+    // Gender tab selection and filter state are now in sync
+    
     const handleTabPress = (tab: string): void => {
-      setSelectedTab(tab);
-      setActiveFilter(tab.toLowerCase());
+      // Only need to set the filter value, selectedTab will update automatically
+      // since it's derived from activeFilter
+      const filterValue = tab === "All" ? "all" : tab;
+      setActiveFilter(filterValue);
+    };
+    
+    const handleGenderTabPress = (tab: string): void => {
+      // Use the genderMappings to get the correct filter value
+      // Get the filter value from the mapping or default to 'all'
+      const filterValue = genderMappings[tab] || "all";
+      
+      // Update the gender filter, which will automatically update the selected tab
+      setActiveGenderFilter(filterValue);
     };
 
     return (
@@ -264,16 +298,25 @@ export default function ActorPageComp(): React.JSX.Element {
           </Animated.View>
         </HStack>
 
-        <HStack space="md" className="overflow-visible">
+        {/* Genre tabs */}
+        <HStack space="md" className="overflow-visible mb-3">
           <ScrollFlatList
-            data={["All", "Popular", "Top Rated", "Upcoming", "Recent"]}
+            data={[
+              "All", 
+              "Action", 
+              "Comedic", 
+              "Dramatic", 
+              "Thrilling", 
+              "Adventurous", 
+              "generic"
+            ]}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingRight: 20 }}
             renderItem={({ item }: { item: string }) => (
               <TouchableOpacity
                 onPress={() => handleTabPress(item)}
-                className={`py-2 px-4 mr-2 rounded-full ${selectedTab === item ? "bg-primary-500" : "bg-gray-100"
+                className={`py-2 px-4 mr-2 rounded-full ${selectedTab === item ? "bg-black" : "bg-gray-100"
                   }`}
               >
                 <Text
@@ -287,17 +330,47 @@ export default function ActorPageComp(): React.JSX.Element {
             keyExtractor={(item) => item}
           />
         </HStack>
+
+        {/* Gender filter tabs */}
+        <HStack space="md" className="overflow-visible">
+          <ScrollFlatList
+            data={["M / F", "Males", "Females"]} 
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 20 }}
+            extraData={activeGenderFilter} 
+            renderItem={({ item }: { item: string }) => (
+              <TouchableOpacity
+                onPress={() => handleGenderTabPress(item)}
+                className={`py-2 px-4 mr-2 rounded-full ${selectedGenderTab === item ? "bg-black" : "bg-gray-200"
+                  }`}
+              >
+                <Text
+                  className={`font-medium ${selectedGenderTab === item ? "text-white" : "text-gray-700"
+                    }`}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item}
+          />
+        </HStack>
+
+
       </AnimatedView>
     );
-  };
+  }
 
-  // Filter options for FilterBar
+  // Genre filter options for FilterBar
   const filterOptions: FilterOption[] = [
     { id: "all", label: "All" },
-    { id: "popular", label: "Popular", icon: "star" },
-    { id: "top_rated", label: "Top Rated", icon: "trophy" },
-    { id: "upcoming", label: "Upcoming", icon: "calendar" },
-    { id: "recent", label: "Recent", icon: "clock-o" },
+    { id: "action", label: "Action" },
+    { id: "comedic", label: "Comedic" },
+    { id: "dramatic", label: "Dramatic" },
+    { id: "thrilling", label: "Thrilling" },
+    { id: "adventurous", label: "Adventurous" },
+    { id: "generic", label: "Generic" },
   ];
 
   // Generate placeholder data with proper typing
@@ -310,12 +383,42 @@ export default function ActorPageComp(): React.JSX.Element {
 
   // Apply active filter to the data
   const filterActors = useCallback((data: ActorWithImage[]) => {
-    if (activeFilter === "all") return data;
-
-    // In a real app, you would implement actual filtering logic here
-    // For now, we'll just return the data as is
-    return data;
-  }, [activeFilter]);
+    let filteredData = data;
+    
+    // Apply genre filter
+    if (activeFilter !== "all") {
+      // Filter actors by selected genre
+      filteredData = filteredData.filter(actor => {
+        if (!actor.genre) return false;
+        
+        // Exact match comparison - the genre in the database must match exactly with the selected filter
+        // This is important since Appwrite uses enum validation for the genre field
+        return actor.genre === activeFilter;
+      });
+    }
+    
+    // Apply gender filter
+    if (activeGenderFilter !== "all") {
+      // Filter by gender
+      filteredData = filteredData.filter(actor => {
+        // This assumes there's a gender field in the actor data
+        const gender = actor.gender?.toLowerCase() || '';
+        
+        // Compare based on gender filter value
+        switch (activeGenderFilter) {
+          case "male":
+            return gender === "male";
+          case "female":
+            return gender === "female";
+          // Removed "kids" option as requested
+          default:
+            return true;
+        }
+      });
+    }
+    
+    return filteredData;
+  }, [activeFilter, activeGenderFilter]);
 
   const displayData: ActorItem[] = loading ? getPlaceholderData() : filterActors(actors);
 
@@ -338,12 +441,12 @@ export default function ActorPageComp(): React.JSX.Element {
           numColumns={numColumns}
           contentContainerStyle={{
 
-            paddingHorizontal: spacing / 2,
+            paddingRight: 10,
           }}
           renderItem={({ item, index }) => (
             <Animated.View
               entering={FadeIn.delay(index * 100).duration(300)}
-              style={{ margin: spacing }}
+              style={{ marginHorizontal: 10, marginVertical: 7 }}
               className="flex justify-center items-center"
             >
               <ActorCardComponent item={item} loading={loading} index={index} />

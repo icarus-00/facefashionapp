@@ -12,6 +12,8 @@ interface Actor extends Models.Document {
   height: number;
   weight: number;
   bio: string;
+  gender: string;
+  genre: string;
   // Add other actor properties as needed
 }
 
@@ -93,6 +95,8 @@ class DatabaseService {
           height: actor.height,
           weight: actor.weight,
           bio: actor.bio,
+          gender: actor.gender,
+          genre: actor.genre, // Include the genre field 
         }))
       );
 
@@ -130,6 +134,8 @@ class DatabaseService {
         height: response.height,
         weight: response.weight,
         bio: response.bio,
+        gender: response.gender,
+        genre: response.genre,
       };
       return result;
     } catch (error) {
@@ -140,7 +146,15 @@ class DatabaseService {
 
   async addActor<T>(
     actorname: string,
-    file: { name: string; type: string; size: number; uri: string }
+    file: { name: string; type: string; size: number; uri: string },
+    additionalDetails?: {
+      age?: number;
+      height?: number;
+      weight?: number;
+      bio?: string;
+      gender?: string;
+      genre?: string;
+    }
   ): Promise<Models.Document> {
     try {
       console.log("adding");
@@ -148,11 +162,25 @@ class DatabaseService {
       const createdFile = await storageService.createFile(file);
       console.log(createdFile);
       const fileID = createdFile;
+      
+      // Prepare actor data with required fields
+      const actorData: any = { actorName: actorname, fileID: fileID };
+      
+      // Add optional fields if provided
+      if (additionalDetails) {
+        if (additionalDetails.age) actorData.age = additionalDetails.age;
+        if (additionalDetails.height) actorData.height = additionalDetails.height;
+        if (additionalDetails.weight) actorData.weight = additionalDetails.weight;
+        if (additionalDetails.bio) actorData.bio = additionalDetails.bio;
+        if (additionalDetails.gender) actorData.gender = additionalDetails.gender;
+        if (additionalDetails.genre) actorData.genre = additionalDetails.genre;
+      }
+      
       const response = await this.database.createDocument(
         this.databaseId,
         this.collectionId,
         "unique()",
-        { actorName: actorname, fileID: fileID }
+        actorData
       );
       return response;
     } catch (error) {
@@ -164,25 +192,76 @@ class DatabaseService {
     documentId: string,
     actorname: string,
     fileid?: string,
-    file?: { name: string; type: string; size: number; uri: string }
+    file?: { name: string; type: string; size: number; uri: string },
+    additionalDetails?: {
+      age?: number | string;
+      height?: number | string;
+      weight?: number | string;
+      bio?: string;
+      gender?: string;
+      genre?: string;
+    }
   ): Promise<void> {
     try {
+      console.log("Editing actor with ID:", documentId);
+      
+      // First, get the current document to understand what fields are available
+      const currentActor = await this.database.getDocument(
+        this.databaseId,
+        this.collectionId,
+        documentId
+      );
+      
+      // Start with just the name since that definitely exists
+      const actorData: any = { actorName: actorname };
+      
+      // Only include additional fields if they already exist in the document
+      if (additionalDetails) {
+        if ('gender' in currentActor && additionalDetails.gender) {
+          actorData.gender = additionalDetails.gender;
+        }
+        
+        if ('genre' in currentActor && additionalDetails.genre) {
+          actorData.genre = additionalDetails.genre;
+        }
+        
+        // Only include these if they exist in schema
+        if ('bio' in currentActor && additionalDetails.bio) {
+          actorData.bio = additionalDetails.bio;
+        }
+        
+        if ('age' in currentActor && additionalDetails.age) {
+          actorData.age = Number(additionalDetails.age) || 0;
+        }
+        
+        // Add height field if it exists in the database schema
+        if ('height' in currentActor && additionalDetails.height) {
+          actorData.height = Number(additionalDetails.height) || 0;
+        }
+        
+        // Add weight field if it exists in the database schema
+        if ('weight' in currentActor && additionalDetails.weight) {
+          actorData.weight = Number(additionalDetails.weight) || 0;
+        }
+      }
+      
+      // Update file if needed
       if (file) {
         const updatedFile = await storageService.updateFile(fileid!, file);
-        const response = await this.database.updateDocument(
-          this.databaseId,
-          this.collectionId,
-          documentId,
-          { actorName: actorname, fileID: updatedFile }
-        );
-      } else {
-        const response = await this.database.updateDocument(
-          this.databaseId,
-          this.collectionId,
-          documentId,
-          { actorName: actorname }
-        );
+        actorData.fileID = updatedFile;
       }
+      
+      console.log("Updating actor with fields:", actorData);
+      
+      // Update the document with allowed fields
+      const response = await this.database.updateDocument(
+        this.databaseId,
+        this.collectionId,
+        documentId,
+        actorData
+      );
+      
+      console.log("Actor updated successfully");
     } catch (error) {
       console.error("Error editing actor:", error);
       throw error;

@@ -131,17 +131,17 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                         <Text className="text-black font-medium">{actorItems.genre}</Text>
                       </HStack>
                     )}
-                    {(actorItems.height > 0 || actorItems.width > 0) && (
+                    {(actorItems.height > 0 ) && (
                       <HStack className="justify-between">
-                        <Text className="text-gray-600">Size:</Text>
-                        <Text className="text-black font-medium">{actorItems.height > 0 ? `${actorItems.height}cm` : ""}{actorItems.width > 0 ? ` x ${actorItems.width}cm` : ""}</Text>
+                        <Text className="text-gray-600">Height:</Text>
+                        <Text className="text-black font-medium">{actorItems.height > 0 ? `${actorItems.height}cm` : ""}</Text>
                       </HStack>
                     )}
-                    {actorItems.bio && (
-                      <View className="mb-1">
-                        <Text className="text-gray-600 mb-1">Bio:</Text>
-                        <Text className="text-black">{actorItems.bio}</Text>
-                      </View>
+                    {(actorItems.weight > 0 ) && (
+                      <HStack className="justify-between">
+                        <Text className="text-gray-600">Size:</Text>
+                        <Text className="text-black font-medium">{actorItems.weight > 0 ? `${actorItems.weight}kg` : ""}</Text>
+                      </HStack>
                     )}
                   </View>
                 </View>
@@ -273,6 +273,9 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                         {topItem.material && (
                           <Text className="text-xs text-gray-600" numberOfLines={1}>Material: <Text className="font-medium text-black">{topItem.material}</Text></Text>
                         )}
+                        {topItem.attireTheme && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Theme: <Text className="font-medium text-black">{topItem.attireTheme}</Text></Text>
+                        )}
                       </View>
                     </View>
                   </HStack>
@@ -301,7 +304,7 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                       size={24}
                       color="#999999"
                     />
-                    <Text className="text-gray-500">No top selected</Text>
+                    <Text className="text-gray-500 ml-2">No top selected</Text>
                   </HStack>
                 </View>
               )}
@@ -309,7 +312,7 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
 
             {/* Bottom item */}
             <View className="relative">
-              <Text className="text-sm font-medium mb-1 text-gray-600">Bottom</Text>
+              <Text className="text-sm font-medium mb-1 text-gray-600 mt-2">Bottom</Text>
               {bottomItem ? (
                 <View className="bg-white rounded-xl overflow-hidden border border-gray-200 mb-2">
                   <HStack>
@@ -331,6 +334,9 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                         )}
                         {bottomItem.material && (
                           <Text className="text-xs text-gray-600" numberOfLines={1}>Material: <Text className="font-medium text-black">{bottomItem.material}</Text></Text>
+                        )}
+                        {bottomItem.attireTheme && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Theme: <Text className="font-medium text-black">{bottomItem.attireTheme}</Text></Text>
                         )}
                       </View>
                     </View>
@@ -360,7 +366,7 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                       size={24}
                       color="#999999"
                     />
-                    <Text className="text-gray-500">
+                    <Text className="text-gray-500 ml-2">
                       No bottom selected
                     </Text>
                   </HStack>
@@ -370,7 +376,7 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
 
             {/* Accessory item */}
             <View className="relative">
-              <Text className="text-sm font-medium mb-1 text-gray-600">Accessory</Text>
+              <Text className="text-sm font-medium mb-1 text-gray-600 mt-2">Accessory</Text>
               {accessoryItem ? (
                 <View className="bg-white rounded-xl overflow-hidden border border-gray-200 mb-2">
                   <HStack>
@@ -392,6 +398,9 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                         )}
                         {accessoryItem.material && (
                           <Text className="text-xs text-gray-600" numberOfLines={1}>Material: <Text className="font-medium text-black">{accessoryItem.material}</Text></Text>
+                        )}
+                        {accessoryItem.attireTheme && (
+                          <Text className="text-xs text-gray-600" numberOfLines={1}>Theme: <Text className="font-medium text-black">{accessoryItem.attireTheme}</Text></Text>
                         )}
                       </View>
                     </View>
@@ -421,7 +430,7 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                       size={24}
                       color="#999999"
                     />
-                    <Text className="text-gray-500">
+                    <Text className="text-gray-500 ml-2">
                       No accessory selected
                     </Text>
                   </HStack>

@@ -177,7 +177,7 @@ const OutfitScreen = () => {
             <Pressable onPress={() => router.back()} style={styles.backButton} testID="back-button">
               <MaterialIcons name="arrow-back" size={24} color="#333" />
             </Pressable>
-            <Text style={styles.headerTitle}>New Outfit</Text>
+            <Text style={styles.headerTitle}>Add item</Text>
           </View>
 
           <ScrollView
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontWeight: "500",
     marginBottom: 4,
-    color: "#374151",
+    color: "#000000",
     fontSize: 14,
   },
   input: {
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   selectedChip: {
-    backgroundColor: "#333333",
+    backgroundColor: "#000000",
     borderColor: "#333333",
   },
   chipText: {
@@ -529,17 +529,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
   },
   closeSuggestionsText: {
-    color: "#333",
+    color: "#000000",
     fontWeight: "500",
   },
   buttonContainer: {
     alignItems: "center",
-    marginVertical: 24,
+    marginBottom: 10,
   },
   submitButton: {
-    backgroundColor: "#333333",
+    backgroundColor: "#000000",
     borderRadius: 100,
     paddingVertical: 20,
+    minWidth: 200,
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
