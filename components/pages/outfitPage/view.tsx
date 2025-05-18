@@ -36,6 +36,7 @@ import Animated, {
   FadeIn,
   ZoomIn,
   cancelAnimation,
+  Extrapolate,
 } from "react-native-reanimated"
 
 // Define types for our data
@@ -83,6 +84,11 @@ export default function OutFitPageComp({
   // Animation values
   const headerOpacity = useSharedValue(0)
   const cardScale = useSharedValue(0.95)
+  
+  // Scroll position tracking for filter visibility
+  const scrollY = useSharedValue(0)
+  const lastScrollY = useSharedValue(0)
+  const filterVisible = useSharedValue(1) // 1 = visible, 0 = hidden
 
   // Run entrance animations only once on initial mount
   useEffect(() => {
@@ -112,6 +118,38 @@ export default function OutFitPageComp({
       transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }],
     }
   }, [])
+  
+  // Filter visibility animation
+  const filterAnimStyle = useAnimatedStyle(() => {
+    return {
+      opacity: filterVisible.value,
+      transform: [
+        { translateY: interpolate(filterVisible.value, [0, 1], [-50, 0], Extrapolate.CLAMP) }
+      ],
+      // Remove height interpolation to allow natural height
+      maxHeight: interpolate(filterVisible.value, [0, 1], [0, 100], Extrapolate.CLAMP),
+      overflow: 'hidden',
+      marginBottom: interpolate(filterVisible.value, [0, 1], [0, 10], Extrapolate.CLAMP)
+    }
+  }, [])
+  
+  // Manual scroll handler function to avoid compatibility issues
+  const handleScroll = useCallback((event: any) => {
+    const currentScrollY = event.nativeEvent?.contentOffset?.y || 0
+    
+    // Determine scroll direction
+    if (currentScrollY > lastScrollY.value + 10) {
+      // Scrolling down - hide filter
+      filterVisible.value = withTiming(0, { duration: 300 })
+    } else if (currentScrollY < lastScrollY.value - 10) {
+      // Scrolling up - show filter
+      filterVisible.value = withTiming(1, { duration: 300 })
+    }
+    
+    // Update scroll position
+    scrollY.value = currentScrollY
+    lastScrollY.value = currentScrollY
+  }, [filterVisible, scrollY, lastScrollY])
 
   // Initialize selection mode from props
   useEffect(() => {
@@ -171,7 +209,7 @@ export default function OutFitPageComp({
           case "bottoms":
             return garmentType.includes("bottom") || garmentType.includes("pant") || garmentType.includes("skirt")
           case "accessories":
-            return garmentType.includes("accessory") || garmentType.includes("hat") || garmentType.includes("jewelry")
+            return garmentType.includes("accessory") || garmentType.includes("accessories") || garmentType.includes("hat") || garmentType.includes("jewelry")
           default:
             return true
         }
@@ -212,18 +250,55 @@ export default function OutFitPageComp({
     [outfitItems],
   )
 
+  // Determine the appropriate outfit category based on garment type
+  const getOutfitCategory = useCallback((garmentType: string): "full" | "top" | "bottom" | "accessory" => {
+    const typeLower = (garmentType || "").toLowerCase();
+    
+    if (typeLower.includes('full') || typeLower.includes('dress') || typeLower.includes('suit')) {
+      return 'full';
+    } else if (typeLower.includes('top') || typeLower.includes('shirt') || typeLower.includes('blouse')) {
+      return 'top';
+    } else if (typeLower.includes('bottom') || typeLower.includes('pant') || typeLower.includes('skirt')) {
+      return 'bottom';
+    } else if (typeLower.includes('accessory') || typeLower.includes('accessories') || typeLower.includes('hat') || typeLower.includes('jewelry')) {
+      return 'accessory';
+    }
+    
+    // Default case - if we can't determine, use the filtered category
+    if (activeFilter.toLowerCase() === 'full') return 'full';
+    if (activeFilter.toLowerCase() === 'tops') return 'top';
+    if (activeFilter.toLowerCase() === 'bottoms') return 'bottom';
+    if (activeFilter.toLowerCase() === 'accessories') return 'accessory';
+    
+    // Fallback to full if we still can't determine
+    return 'full';
+  }, [activeFilter]);
+
   // Toggle outfit selection
   const toggleOutfitSelection = useCallback(
     (outfit: OutfitWithImage) => {
+      // Determine the proper category based on garment type
+      const category = getOutfitCategory(outfit.garmentType);
+      
       if (isOutfitSelected(outfit.$id)) {
         // Remove from selection
-        removeOutfitItem("full") // Assuming all outfits are "full" category
+        removeOutfitItem(category) 
       } else {
-        // Add to selection
-        addOutfitItem(outfit.fileID, "full", outfit.imageUrl, outfit.name, outfit.brand, outfit.size, outfit.material, outfit.garmentType, outfit.attireTheme)
+        // Add to selection with the correct category
+        addOutfitItem(
+          outfit.fileID, 
+          category, 
+          outfit.imageUrl, 
+          outfit.outfitName, 
+          outfit.brand, 
+          outfit.size, 
+          outfit.material, 
+          outfit.garmentType, 
+          outfit.attireTheme
+        )
       }
     },
-    [isOutfitSelected, addOutfitItem, removeOutfitItem],
+    [isOutfitSelected, addOutfitItem, removeOutfitItem, getOutfitCategory],
   )
 
   // Memoize the TabBar component to prevent unnecessary re-renders
@@ -332,8 +407,8 @@ export default function OutFitPageComp({
         {/* Header with tabs */}
         {TabBar}
 
-        {/* SubCategories filter */}
-        <View style={styles.subCategoriesContainer}>
+        {/* SubCategories filter with animated visibility */}
+        <Animated.View style={[styles.subCategoriesContainer, filterAnimStyle]}>
           <SubCategoriesExbandableFilter
             loading={loading}
             themes={attireTheme}
@@ -341,7 +416,7 @@ export default function OutFitPageComp({
             multiSelect={false}
             onChange={(themes) => setSelectedSubFilter(Array.isArray(themes) ? themes[0] : themes)}
           />
-        </View>
+        </Animated.View>
 
         {loading && !refreshing ? (
           <View style={styles.loadingContainer}>
@@ -351,7 +426,7 @@ export default function OutFitPageComp({
           <FlashList
             extraData={[outfitItems, isSelecting]} // Make sure list re-renders when selection changes
             data={displayData}
-            estimatedItemSize={itemHeight}
+            estimatedItemSize={254} // Set recommended value to avoid warning
             numColumns={numColumns}
             contentContainerStyle={{
               paddingHorizontal: spacing,
@@ -374,6 +449,7 @@ export default function OutFitPageComp({
             showsVerticalScrollIndicator={false}
             refreshing={refreshing}
             onRefresh={handleRefresh}
+            onScroll={handleScroll}
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center py-20">
                 <Text className="text-gray-500 text-lg">No outfits found</Text>

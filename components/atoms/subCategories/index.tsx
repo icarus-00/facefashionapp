@@ -270,6 +270,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#333",
     fontWeight: "bold",
+    marginBottom: 2,
   },
   modalListContainer: {
     paddingBottom: 16,

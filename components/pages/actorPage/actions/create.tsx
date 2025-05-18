@@ -39,7 +39,19 @@ const ActorScreen = () => {
   const [age, setAge] = useState("");
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+  const [gender, setGender] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState<string>("");
   const [additionalInfo, setAdditionalInfo] = useState("");
+  
+  // Available genres - exact match for Appwrite validation
+  const genreOptions = [
+    "Action",
+    "Comedic",
+    "Dramatic",
+    "Thrilling",
+    "Adventurous",
+    "Generic"
+  ];
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
@@ -122,6 +134,17 @@ const ActorScreen = () => {
     }
   };
 
+  // Set the selected genre (single select)
+  const selectGenre = (genre: string) => {
+    // If already selected, deselect it
+    if (selectedGenre === genre) {
+      setSelectedGenre("");
+    } else {
+      // Otherwise select the new genre
+      setSelectedGenre(genre);
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async () => {
     // Animation for button press
@@ -130,12 +153,47 @@ const ActorScreen = () => {
       withSpring(1, { damping: 4, stiffness: 300 })
     );
 
+    // Validate age input
+    if (age) {
+      const ageValue = parseInt(age);
+      if (isNaN(ageValue) || ageValue < 1 || ageValue > 99) {
+        alert("Age must be a number between 1 and 99");
+        return;
+      }
+    }
+    
+    // Validate height input
+    if (height) {
+      const heightValue = parseInt(height);
+      if (isNaN(heightValue) || heightValue < 50 || heightValue > 250) {
+        alert("Height must be a number between 50 and 250 cm");
+        return;
+      }
+    }
+    
+    // Validate weight input
+    if (weight) {
+      const weightValue = parseInt(weight);
+      if (isNaN(weightValue) || weightValue < 20 || weightValue > 200) {
+        alert("Weight must be a number between 20 and 200 kg");
+        return;
+      }
+    }
+
     try {
       if (asset) {
         const file = await prepareNativeFile(asset!)!;
         console.log("uploading");
         if (file) {
-          await databaseService.addActor(name, file);
+          // Pass all fields to the database service
+          await databaseService.addActor(name, file, {
+            bio: additionalInfo || undefined,
+            age: age ? parseInt(age) : undefined,
+            height: height ? parseInt(height) : undefined,
+            weight: weight ? parseInt(weight) : undefined,
+            gender: gender || undefined,
+            genre: selectedGenre || undefined
+          });
         } else {
           throw new Error("File preparation failed");
         }
@@ -271,7 +329,54 @@ const ActorScreen = () => {
           </View>
         </Animated.View>
 
+        <Animated.View entering={SlideInRight.delay(400).duration(500)}>
+          <View style={styles.formField}>
+            <Text style={styles.fieldLabel}>Gender</Text>
+            <View style={styles.genderContainer}>
+              <TouchableOpacity 
+                style={[styles.genderButton, gender === 'male' && styles.genderButtonSelected]}
+                onPress={() => setGender('male')}
+              >
+                <Text style={[styles.genderButtonText, gender === 'male' && styles.genderButtonTextSelected]}>Male</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.genderButton, gender === 'female' && styles.genderButtonSelected]}
+                onPress={() => setGender('female')}
+              >
+                <Text style={[styles.genderButtonText, gender === 'female' && styles.genderButtonTextSelected]}>Female</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Animated.View>
+
         <Animated.View entering={SlideInRight.delay(700).duration(500)}>
+          <View style={styles.formField}>
+            <Text style={styles.fieldLabel}>Genre</Text>
+            <View style={styles.genreContainer}>
+              {genreOptions.map((genre) => (
+                <TouchableOpacity
+                  key={genre}
+                  style={[
+                    styles.genreButton,
+                    selectedGenre === genre && styles.genreButtonSelected
+                  ]}
+                  onPress={() => selectGenre(genre)}
+                >
+                  <Text 
+                    style={[
+                      styles.genreButtonText,
+                      selectedGenre === genre && styles.genreButtonTextSelected
+                    ]}
+                  >
+                    {genre}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={SlideInRight.delay(800).duration(500)}>
           <View style={styles.formField}>
             <Text style={styles.fieldLabel}>Additional Information</Text>
             <TextInput
@@ -309,6 +414,67 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  genderButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    marginHorizontal: 4,
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  genderButtonSelected: {
+    backgroundColor: '#000000',
+    borderColor: '#000000',
+  },
+  genderButtonText: {
+    fontSize: 16,
+    color: '#4B5563',
+    fontWeight: '500',
+  },
+  genderButtonTextSelected: {
+    color: '#FFFFFF',
+  },
+  genreContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginTop: 8,
+    gap: 8,
+  },
+  genreButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    backgroundColor: '#F5F5F5',
+    marginBottom: 8,
+  },
+  genreButtonSelected: {
+    backgroundColor: '#000000',
+    borderColor: '#000000',
+  },
+  genreButtonText: {
+    fontSize: 14,
+    color: '#4B5563',
+    fontWeight: '500',
+  },
+  genreButtonTextSelected: {
+    color: '#FFFFFF',
+  },
+  genreHelperText: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
   },
   header: {
     flexDirection: "row",
@@ -424,14 +590,14 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: "center",
-    marginVertical: 32,
+    marginBottom: 26,
   },
   submitButton: {
-    backgroundColor: "#6D28D9",
+    backgroundColor: "#000000",
     borderRadius: 30,
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 32,
-    shadowColor: "#6D28D9",
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -443,6 +609,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#FFFFFF",
+    marginHorizontal: "auto"
   },
 });
 

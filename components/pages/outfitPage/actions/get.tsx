@@ -1,11 +1,11 @@
 ///components/pages/outfitPage/actions/get.tsx
-import { Image, Text, View, StyleSheet, Dimensions, FlatList } from "react-native"
-import { router } from "expo-router"
+import { Image, Text, View, StyleSheet, Dimensions, FlatList, Modal, TouchableOpacity } from "react-native"
+import { router, useFocusEffect } from "expo-router"
 import databaseService, { type OutfitWithImage } from "@/services/database/db"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Center } from "@/components/ui/center"
 import { Spinner } from "@/components/ui/spinner"
-import { Feather } from "@expo/vector-icons"
+import { Feather, AntDesign } from "@expo/vector-icons"
 import { SpeedDial } from "@rneui/themed"
 import { Colors } from "@/constants/Colors"
 import {
@@ -16,6 +16,16 @@ import {
   PopoverContent,
 } from "@/components/ui/popover"
 import { Pressable } from "react-native-gesture-handler"
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  FadeIn,
+} from "react-native-reanimated"
+import { LinearGradient } from "expo-linear-gradient"
+import { VStack } from "@/components/ui/vstack"
+import { HStack } from "@/components/ui/hstack"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
 
@@ -92,6 +102,7 @@ export default function GetOutfit({
   const [outfit, setOutfit] = useState<OutfitWithImage>()
   const [loading, setLoading] = useState(true)
   const [fabOpen, setFabOpen] = useState(false)
+  const [fullImageVisible, setFullImageVisible] = useState(false)
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -132,20 +143,60 @@ export default function GetOutfit({
   }
 
   return (
+    <View className="flex-1 shadow-xl shadow-black">
     <View style={styles.container}>
+      {/* Fullscreen Image Modal */}
+      <Modal
+        visible={fullImageVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFullImageVisible(false)}
+      >
+        <View style={styles.fullImageModalContainer}>
+          <TouchableOpacity
+            style={styles.fullImageCloseButton}
+            onPress={() => setFullImageVisible(false)}
+            activeOpacity={0.7}
+          >
+            <AntDesign name="close" size={24} color="white" />
+          </TouchableOpacity>
+          
+          {outfit?.imageUrl && (
+            <Image
+              source={{ uri: outfit.imageUrl }}
+              style={styles.fullSizeImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
+
       {/* Main image */}
       <View style={styles.imageContainer}>
+        {/* View full image button */}
+        {outfit?.imageUrl && (
+          <TouchableOpacity
+            style={styles.fullImageButton}
+            activeOpacity={0.7}
+            onPress={() => setFullImageVisible(true)}
+          >
+            <View style={styles.fullImageButtonInner}>
+              <Feather name="maximize" size={22} color="white" />
+              <Text style={styles.fullImageButtonText}>Full image</Text>
+            </View>
+          </TouchableOpacity>
+        )}
         <Image source={{ uri: outfit?.imageUrl }} style={styles.image} resizeMode="cover" />
       </View>
-
-
-      {/* Horizontal outfit list */}
 
 
       {/* Info grid */}
       <View style={styles.infoGrid}>
         <View style={styles.infoRow}>
           <InfoItem label="Item Name" value={outfit?.outfitName || ""} />
+        </View>
+
+        <View style={styles.infoRow}>
           <InfoItem label="Brand" value={outfit?.brand || ""} />
         </View>
 
@@ -190,13 +241,61 @@ export default function GetOutfit({
         />
       </SpeedDial>
     </View>
+  </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
+    shadowColor: "black",
+    shadowOffset: { width: 10, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+  },
+  fullImageModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImageCloseButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullSizeImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH * 1.2,
+  },
+  fullImageButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 10,
+    padding: 5,
+  },
+  fullImageButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 8,
+    padding: 8,
+  },
+  fullImageButtonText: {
+    color: 'white',
+    fontSize: 12,
+    marginLeft: 5,
+    fontWeight: '500',
   },
   imageContainer: {
     width: "100%",
@@ -210,6 +309,7 @@ const styles = StyleSheet.create({
   outfitListContainer: {
     paddingVertical: 15,
     backgroundColor: "#fff",
+    
   },
   outfitListContent: {
     paddingHorizontal: 15,
@@ -226,6 +326,11 @@ const styles = StyleSheet.create({
   selectedThumbnail: {
     borderWidth: 2,
     borderColor: "black",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
   },
   outfitThumbnail: {
     width: "100%",

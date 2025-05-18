@@ -1,9 +1,9 @@
-import { Image, Text, View, Pressable, Dimensions, TouchableOpacity, StyleSheet } from "react-native";
-import { router } from "expo-router";
+import { Image, Text, View, Dimensions, TouchableOpacity, StyleSheet, Modal, GestureResponderEvent } from "react-native";
+import { router, useFocusEffect } from "expo-router";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import databaseService, { ActorWithImage } from "@/services/database/db";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -22,6 +22,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Carousel from 'react-native-reanimated-carousel';
 import { LinearGradient } from "expo-linear-gradient";
+import { BR } from "@expo/html-elements";
 
 const { width, height } = Dimensions.get('window');
 const AnimatedScrollView = Animated.createAnimatedComponent(Animated.ScrollView);
@@ -41,8 +42,10 @@ export default function GetActor({
 }) {
   const [actor, setActor] = useState<ActorWithImage>();
   const [loading, setLoading] = useState(true);
+  const [fullImageVisible, setFullImageVisible] = useState(false);
   const { userId, updateActorItems } = useStore();
   const [activeSlide, setActiveSlide] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0); // Add a refresh key state to force re-render
 
   // Button scale animations
   const buttonScale = useSharedValue(1);
@@ -57,10 +60,20 @@ export default function GetActor({
     }, 100);
   };
 
+  
+
   // Button animation styles
   const buttonAnimStyle = useAnimatedStyle(() => {
     return {
       transform: [{ scale: buttonScale.value }]
+    };
+  });
+  
+  // Full image view button scale
+  const viewImageScale = useSharedValue(1);
+  const viewImageAnimStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: viewImageScale.value }]
     };
   });
 
@@ -81,22 +94,40 @@ export default function GetActor({
     if (onClose) onClose();
   }, [onClose]);
 
-  useEffect(() => {
-    const fetchData = async (): Promise<void> => {
-      setLoading(true);
-      try {
-        if (paramid) {
-          const data = await databaseService.getActor(paramid);
-          setActor(data);
-        }
-      } catch (error) {
-        console.error("Error fetching actor: ", error);
-      } finally {
-        setLoading(false);
+  // Create a fetchData function that can be reused
+  const fetchData = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      if (paramid) {
+        const data = await databaseService.getActor(paramid);
+        setActor(data);
+        console.log("Actor data refreshed:", data.actorName);
       }
-    };
-    fetchData();
+    } catch (error) {
+      console.error("Error fetching actor: ", error);
+    } finally {
+      setLoading(false);
+    }
   }, [paramid]);
+
+  // Initial load effect
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+  
+  // This effect runs every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Increment the refresh key to trigger a re-render
+      setRefreshKey(prev => prev + 1);
+      // Refresh the actor data when the screen comes back into focus
+      fetchData();
+      
+      return () => {
+        // Cleanup if needed
+      };
+    }, [fetchData])
+  );
 
   const handleDelete = async () => {
     animateButton(deleteScale);
@@ -141,8 +172,46 @@ export default function GetActor({
     return <LoadingSpinner />;
   }
 
+  // Function to prevent all gestures except within the scrollview
+  const preventDrag = (event: GestureResponderEvent) => {
+    // Prevent default gesture behavior
+    return true;
+  };
+
   return (
-    <View style={styles.container}>
+    <View 
+      style={styles.container} 
+      onStartShouldSetResponder={preventDrag}
+      onMoveShouldSetResponder={preventDrag}
+      onResponderTerminationRequest={() => false}
+      onResponderReject={() => {}}>
+      {/* Fullscreen Image Modal */}
+      <Modal
+        visible={fullImageVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFullImageVisible(false)}
+        statusBarTranslucent={true}
+      >
+        <View style={styles.fullImageModalContainer}>
+          <TouchableOpacity
+            style={styles.fullImageCloseButton}
+            onPress={() => setFullImageVisible(false)}
+            activeOpacity={0.7}
+          >
+            <AntDesign name="close" size={24} color="white" />
+          </TouchableOpacity>
+          
+          {actor?.imageUrl && (
+            <Image
+              source={{ uri: actor.imageUrl }}
+              style={styles.fullSizeImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
+      
       {/* Close button */}
       <TouchableOpacity
         style={styles.closeButton}
@@ -153,109 +222,174 @@ export default function GetActor({
         <AntDesign name="close" size={20} color="black" />
       </TouchableOpacity>
 
-      <View style={styles.contentContainer}>
-        {/* Actor image section */}
-        <View style={styles.imageContainer}>
-          {actor?.imageUrl ? (
-            <Image
-              source={{ uri: actor.imageUrl }}
-              style={styles.actorImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.noImageContainer}>
-              <Text style={styles.noImageText}>No image available</Text>
-            </View>
-          )}
+        <View 
+          style={styles.contentContainer} 
+          onStartShouldSetResponder={preventDrag}
+          onMoveShouldSetResponder={preventDrag}
+          onResponderTerminationRequest={() => false}>
+          {/* Actor image section */}
+          <View style={styles.imageContainer}>
+            {/* View full image button */}
+            {actor?.imageUrl && (
+              <TouchableOpacity
+                style={styles.fullImageButton}
+                activeOpacity={0.7}
+                onPress={() => {
+                  animateButton(viewImageScale);
+                  setFullImageVisible(true);
+                }}
+              >
+                <Animated.View style={[viewImageAnimStyle, styles.fullImageButtonInner]}>
+                  <Feather name="maximize" size={22} color="white" />
+                  <Text style={styles.fullImageButtonText}>Full image</Text>
+                </Animated.View>
+              </TouchableOpacity>
+            )}
+            
+            {actor?.imageUrl ? (
+              <Image
+                source={{ uri: actor.imageUrl }}
+                style={styles.actorImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.noImageContainer}>
+                <Text style={styles.noImageText}>No image available</Text>
+              </View>
+            )}
 
-          {/* Name overlay with gradient */}
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)']}
-            style={styles.nameOverlay}
-          >
-            <Animated.Text
-              entering={FadeIn.delay(300).duration(500)}
-              style={styles.actorName}
+            {/* Name overlay with gradient */}
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)']}
+              style={styles.nameOverlay}
             >
-              {actor?.actorName}
-            </Animated.Text>
-          </LinearGradient>
-        </View>
+              <Animated.Text
+                entering={FadeIn.delay(300).duration(500)}
+                style={styles.actorName}
+              >
+                {actor?.actorName}
+              </Animated.Text>
+            </LinearGradient>
+          </View>
 
-        {/* Details section - Make scrollable */}
-        <View style={styles.detailsWrapper}>
+        {/* Details section - scrollable */}
+          <View style={styles.detailsWrapper}>
           <AnimatedScrollView
-            entering={FadeIn.duration(300)}
-            style={styles.detailsContainer}
-            showsVerticalScrollIndicator={true}
-            bounces={true}
-            contentContainerStyle={styles.scrollContent}
-          >
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>About</Text>
-              <Text style={styles.aboutText}>
-                {actor?.description || "No biography available for this actor."}
-              </Text>
-            </View>
+              entering={FadeIn.duration(300)}
+              style={styles.detailsContainer}
+              showsVerticalScrollIndicator={true}
+              scrollEnabled={true}
+              scrollEventThrottle={16}
+              horizontal={false}
+              bounces={true}
+              contentContainerStyle={styles.scrollContent}
+              overScrollMode="always"
+              nestedScrollEnabled={true}
+              // Ensure scrollview is the only part that responds to touch
+              onStartShouldSetResponder={() => true}
+              onStartShouldSetResponderCapture={() => true}
+              onMoveShouldSetResponder={() => true}
+              onMoveShouldSetResponderCapture={() => true}
+              onResponderTerminationRequest={() => false}
+              // Allow scrolling only within this component
+              onResponderGrant={(e) => {
+                // Prevent the event from bubbling up
+                e.stopPropagation();
+              }}
+            >
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Bio</Text>
+                <Text style={styles.aboutText}>
+                  {actor?.bio || "No biography available for this actor."}
+                </Text>
+              </View>
 
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Details</Text>
-              <View style={styles.detailsBox}>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>ID</Text>
-                  <Text style={styles.detailValue}>
-                    {actor?.$id?.substring(0, 8) + "..." || "N/A"}
-                  </Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Age</Text>
-                  <Text style={styles.detailValue}>
-                    {actor?.age || 'Not specified'}
-                  </Text>
+              <View style={styles.sectionContainer}>
+                {/* <Text style={styles.sectionTitle}>Details</Text> */}
+                <View style={styles.detailsBox}>
+                  <View style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>ID</Text>
+                    <Text style={styles.detailValue}>
+                      {actor?.$id?.substring(0, 8) + "..." || "N/A"}
+                    </Text>
+                  </View>
+                  <View className="flex-row mt-2">
+                  <View style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Age</Text>
+                    <Text style={styles.detailValue}>
+                      {actor?.age || 'Not specified'}
+                    </Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Gender</Text>
+                    <Text style={styles.detailValue}>
+                      {actor?.gender || 'Not specified'}
+                    </Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Height</Text>
+                    <Text style={styles.detailValue}>
+                      {actor?.height ? `${actor.height} cm` : 'Not specified'}
+                    </Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Weight</Text>
+                    <Text style={styles.detailValue}>
+                      {actor?.weight ? `${actor.weight} kg` : 'Not specified'}
+                    </Text>
+                  </View>
+                  </View>
+                  
+                    <View style={styles.genreSection}>
+                      <Text style={styles.detailLabel}>Genre</Text>
+                      <View style={styles.genreContainer}>
+                        <View style={styles.genreTag}>
+                          <Text style={styles.genreTagText}>{actor?.genre}</Text>
+                        </View>
+                      </View>
+                    </View>
                 </View>
               </View>
-            </View>
 
-            <View style={styles.buttonRow}>
-              <Animated.View style={[styles.buttonWrapper, editAnimStyle]}>
+              <View style={styles.buttonRow}>
+                <Animated.View style={[styles.buttonWrapper, editAnimStyle]}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.editButton]}
+                    onPress={handleEdit}
+                    activeOpacity={0.8}
+                  >
+                    <HStack space="md" style={{ alignItems: 'center' }}>
+                      <Feather name="edit-2" size={16} color="white" />
+                      <Text style={styles.buttonText}>Edit</Text>
+                    </HStack>
+                  </TouchableOpacity>
+                </Animated.View>
+
+                <Animated.View style={[styles.buttonWrapper, deleteAnimStyle]}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.deleteButton]}
+                    onPress={handleDelete}
+                    activeOpacity={0.8}
+                  >
+                    <HStack space="md" style={{ alignItems: 'center' }}>
+                      <Feather name="trash-2" size={16} color="white" />
+                      <Text style={styles.buttonText}>Delete</Text>
+                    </HStack>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+
+              <Animated.View style={[styles.dressUpWrapper, buttonAnimStyle]}>
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.editButton]}
-                  onPress={handleEdit}
-                  activeOpacity={0.8}
+                  style={styles.dressUpButton}
+                  onPress={handleDressUp}
+                  activeOpacity={0.7}
                 >
-                  <HStack space="md" style={{ alignItems: 'center' }}>
-                    <Feather name="edit-2" size={16} color="white" />
-                    <Text style={styles.buttonText}>Edit</Text>
+                  <HStack space="md" style={{ alignItems: 'center', justifyContent: 'center'}}>
+                    <Text style={styles.dressUpText}>Dress Up!</Text>
                   </HStack>
                 </TouchableOpacity>
               </Animated.View>
-
-              <Animated.View style={[styles.buttonWrapper, deleteAnimStyle]}>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.deleteButton]}
-                  onPress={handleDelete}
-                  activeOpacity={0.8}
-                >
-                  <HStack space="md" style={{ alignItems: 'center' }}>
-                    <Feather name="trash-2" size={16} color="white" />
-                    <Text style={styles.buttonText}>Delete</Text>
-                  </HStack>
-                </TouchableOpacity>
-              </Animated.View>
-            </View>
-
-            <Animated.View style={[styles.dressUpWrapper, buttonAnimStyle]}>
-              <TouchableOpacity
-                style={styles.dressUpButton}
-                onPress={handleDressUp}
-                activeOpacity={0.7}
-              >
-                <HStack space="md" style={{ alignItems: 'center', justifyContent: 'center' }}>
-                  <Feather name="shopping-bag" size={20} color="white" />
-                  <Text style={styles.dressUpText}>Dress Up This Actor</Text>
-                </HStack>
-              </TouchableOpacity>
-            </Animated.View>
           </AnimatedScrollView>
         </View>
       </View>
@@ -269,15 +403,60 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.8)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    marginTop: 40,
+  },
+  fullImageModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImageCloseButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullSizeImage: {
+    width: width,
+    height: height * 0.8,
+  },
+  fullImageButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 10,
+    padding: 5,
+  },
+  fullImageButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 8,
+    padding: 8,
+  },
+  fullImageButtonText: {
+    color: 'white',
+    fontSize: 12,
+    marginLeft: 5,
+    fontWeight: '500',
   },
 
   closeButton: {
     position: 'absolute',
-    top: 50,
+    top: 20,
     right: 20,
     zIndex: 10,
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
+    borderBlockColor: 'black',
+    // borderWidth: 2,
     borderRadius: 18,
     backgroundColor: 'white',
     alignItems: 'center',
@@ -296,7 +475,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   imageContainer: {
-    height: '50%',
+    height: '43%',
     width: '100%',
     position: 'relative',
     overflow: 'hidden',
@@ -347,6 +526,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 5,
+    // Ensure this section captures all touch events
+    zIndex: 1,
   },
   detailsContainer: {
     flex: 1,
@@ -362,8 +543,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
+    marginBottom: 8,
     fontWeight: 'bold',
-    marginBottom: 12,
     color: '#333',
   },
   aboutText: {
@@ -371,8 +552,33 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#555',
   },
-  detailsBox: {
+  genreSection: {
+    marginTop: 16,
+  },
+  genreContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    gap: 8,
+  },
+  genreTag: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#000',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  genreTagText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  detailsBox: {
+    flexDirection: 'column',
+    flexWrap: 'wrap',
+    columnGap: 16,
     backgroundColor: '#f7f7f7',
     padding: 16,
     borderRadius: 12,
@@ -393,12 +599,11 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
-    marginTop: 16,
+    marginBottom: 15,
   },
   buttonWrapper: {
     flex: 1,
-    marginHorizontal: 4,
+    alignItems: 'center',
   },
   actionButton: {
     padding: 12,
@@ -407,10 +612,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   editButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: "#d1d5db",
+    borderRadius: 10,
+    width: "80%",
   },
   deleteButton: {
     backgroundColor: '#e74c3c',
+    borderRadius: 10,
+    width: "80%",
   },
   buttonText: {
     color: 'white',
@@ -419,18 +628,19 @@ const styles = StyleSheet.create({
   },
   dressUpWrapper: {
     width: '100%',
-    marginBottom: 24,
+    alignItems: 'center',
   },
   dressUpButton: {
     backgroundColor: 'black',
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 20,
+    borderRadius: 32,
+    width: "70%",
     alignItems: 'center',
     justifyContent: 'center',
   },
   dressUpText: {
     color: 'white',
     fontWeight: '600',
-    fontSize: 17,
+    fontSize: 16,
   },
 });

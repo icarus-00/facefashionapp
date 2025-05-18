@@ -138,19 +138,40 @@ const ActorScreen = ({ id }: { id: string }) => {
     );
 
     try {
+      // Prepare additional details for the actor
+      const additionalDetails = {
+        age: age,
+        height: height,
+        weight: weight,
+        bio: additionalInfo,
+        gender: actor?.gender,
+        genre: actor?.genre
+      };
+
       if (asset) {
         const file = await prepareNativeFile(asset);
         if (file && actor?.$id) {
+          console.log("Updating actor with image and details:", name, additionalDetails);
           const response = await databaseService.editActor(
             actor.$id,
             name,
             actor.fileID,
-            file
+            file,
+            additionalDetails
           );
+          // Navigate back after successful update
           router.back();
         }
       } else if (actor?.$id) {
-        const response = await databaseService.editActor(actor.$id, name);
+        console.log("Updating actor details only:", name, additionalDetails);
+        const response = await databaseService.editActor(
+          actor.$id,
+          name,
+          actor.fileID,
+          undefined,
+          additionalDetails
+        );
+        // Navigate back after successful update
         router.back();
       }
     } catch (error) {
@@ -162,9 +183,18 @@ const ActorScreen = ({ id }: { id: string }) => {
   const fetchData = useCallback(async (): Promise<void> => {
     try {
       const data = await databaseService.getActor(id as string);
+      console.log("Loaded actor data:", data);
       setActor(data);
+      
+      // Set basic info
       setName(data.actorName || "");
       setImage(data.imageUrl || "");
+      
+      // Set additional fields if they exist
+      if (data.height) setHeight(String(data.height));
+      if (data.weight) setWeight(String(data.weight));
+      if (data.bio) setAdditionalInfo(data.bio);
+      if (data.age) setAge(String(data.age));
     } catch (error) {
       console.error("Error fetching actor: ", error);
     } finally {
@@ -461,10 +491,10 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: "center",
-    marginVertical: 32,
+    marginBottom: 26,
   },
   submitButton: {
-    backgroundColor: "#6D28D9",
+    backgroundColor: "#000000",
     borderRadius: 30,
     paddingVertical: 16,
     paddingHorizontal: 32,

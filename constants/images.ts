@@ -13,6 +13,16 @@ const m1 = require("@/assets/images/home/m1.png");
 const m2 = require("@/assets/images/home/m2.png");
 const m3 = require("@/assets/images/home/m3.png");
 const m4 = require("@/assets/images/home/m4.png");
+const suzy = require("@/assets/images/home/suzy.png");
+const nada = require("@/assets/images/home/nada.jpg");
+const download = require("@/assets/images/home/download.jpeg");
+const pantalon = require("@/assets/images/home/pantalon.jpeg");
+const SweaterPoloLines = require("@/assets/images/home/SweaterPoloLines.png");
+const s1 = require("@/assets/images/home/s1.png");
+const s2 = require("@/assets/images/home/s2.png");
+const s3 = require("@/assets/images/home/s3.png");
+const s4 = require("@/assets/images/home/s4.png");
+
 export const images = {
   bg,
   highlight,
@@ -29,4 +39,13 @@ export const images = {
   m2,
   m3,
   m4,
+  suzy,
+  nada,
+  download,
+  pantalon,
+  SweaterPoloLines,
+  s1,
+  s2,
+  s3,
+  s4,
 };
