@@ -11,6 +11,7 @@ import { EvilIcons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import databaseService, { generationsWithImage } from "@/services/database/db";
 import { router } from "expo-router";
+import { Colors } from "@/constants/Colors";
 
 // Define constants for layout
 const { width: screenWidth } = Dimensions.get("window");
@@ -68,7 +69,7 @@ const GenerationCard = ({
       }}
       onPress={() =>
         router.push({
-          pathname: "/(auth)/generations/get",
+          pathname: "/(app)/(auth)/generations/get",
           params: { id: item.$id },
         })
       }
@@ -158,7 +159,7 @@ const TabSelector = ({
           variant={activeTab === tab.id ? "solid" : "outline"}
           style={{
             marginRight: 8,
-            backgroundColor: activeTab === tab.id ? "#3b82f6" : "transparent",
+            backgroundColor: activeTab === tab.id ? Colors.light.primary[500] : "transparent",
             borderColor: activeTab === tab.id ? "#3b82f6" : "#d1d5db",
           }}
           onPress={() => setActiveTab(tab.id)}
@@ -266,6 +267,7 @@ export default function GeneratePage(): React.JSX.Element {
         }
         numColumns={numColumns}
         contentContainerStyle={{ padding: spacing / 2 }}
+
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={handleRefresh}

@@ -1,5 +1,4 @@
-"use client"
-
+//app/(app)/(auth)/(tabs)/outfit.tsx
 import { useState, useEffect, useRef } from "react"
 import { Pressable, StyleSheet, Animated, Easing } from "react-native"
 import SafeAreaView from "@/components/atoms/safeview/safeview"
@@ -80,13 +79,8 @@ export default function Outfit() {
   const handleForwardPress = async () => {
     // Navigate to the next screen or perform action with selected items
     if (selecting && outfitItems.length > 0) {
-      console.log("Selected items:", actorItems.imageID)
-      await generateImage({
-        actorRef: actorItems.imageID,
-        outfitRefs: outfitItems.map((item) => item.imageID),
-        prompt: "Generate an image combining the actor and outfit items"
-      })
-      router.push("/(app)/(auth)/(tabs)/generations")
+
+      router.push("/(app)/(auth)/(tabs)/(generation)/chat")
     }
   }
 

@@ -1,3 +1,4 @@
+//app/(app)/(auth)/generations/get.tsx
 import GetGeneration from "@/components/pages/generatePage/actions/get";
 import { useLocalSearchParams } from "expo-router";
 
