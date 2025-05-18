@@ -14,7 +14,9 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
-  Modal,
+  Image,
+  ActivityIndicator,
+  Platform,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -23,19 +25,16 @@ import Animated, {
   withSequence,
   withDelay,
   Easing,
-  interpolate,
-  Extrapolate,
-  runOnJS,
   withSpring,
+  FadeIn,
+  ZoomIn,
+  interpolateColor,
 } from "react-native-reanimated";
 import { useState, useEffect, useRef } from "react";
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetModalProvider,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from "@gorhom/bottom-sheet";
 import { OtpInput } from "react-native-otp-entry";
+
+const RwLogo = require("@/assets/images/rwlogo.png");
 
 export default function LoginPage({
   setEmail,
@@ -51,7 +50,7 @@ export default function LoginPage({
   handleSubmit,
   handleOtpRequest,
   setToken,
-  handleOTPSubmit = (otp) => console.log("OTP submitted:", otp), // Optional OTP handler
+  handleOTPSubmit = (otp) => { },
 }: {
   setToken: (value: string) => void;
   setEmail: (value: string) => void;
@@ -72,11 +71,13 @@ export default function LoginPage({
   const [otpLoading, setOtpLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
-  const [isOtpModalVisible, setIsOtpModalVisible] = useState(false);
   const [otp, setOtp] = useState("");
-  const [otpTimer, setOtpTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [canResend, setCanResend] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [logoLoaded, setLogoLoaded] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   // Animation config
   const animConfig = {
@@ -90,12 +91,15 @@ export default function LoginPage({
   const passwordHeight = useSharedValue(0);
   const buttonScale = useSharedValue(1);
   const secondaryButtonScale = useSharedValue(1);
-  const headerBoxHeight = useSharedValue(200);
-  const logoTextSize = useSharedValue(32);
+  const headerBoxHeight = useSharedValue(240); // Increased for larger logo
+  const logoTextSize = useSharedValue(22); // Adjusted text size
   const forgotPasswordOpacity = useSharedValue(0);
+  const logoOpacity = useSharedValue(0);
+  const logoScale = useSharedValue(0.8);
+  const errorMessageOpacity = useSharedValue(0);
+  const errorBackgroundColor = useSharedValue(0);
+  const taglineOpacity = useSharedValue(0);
 
-  //refs
-  const BottomSheetModalRef = useRef<BottomSheetModal>(null);
   // Form validation
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -154,6 +158,33 @@ export default function LoginPage({
     };
   }, []);
 
+  // Logo animation on mount
+  useEffect(() => {
+    logoOpacity.value = withTiming(1, { duration: 800 });
+    logoScale.value = withTiming(1, {
+      duration: 800,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1)
+    });
+    taglineOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
+  }, [logoLoaded]);
+
+  // Error message handling
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+      errorMessageOpacity.value = withTiming(1, { duration: 300 });
+      errorBackgroundColor.value = withTiming(1, { duration: 300 });
+
+      // Auto-hide error after 5 seconds
+      const timeout = setTimeout(() => {
+        errorMessageOpacity.value = withTiming(0, { duration: 300 });
+        setError("");
+      }, 5000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [error]);
+
   // Button animations
   const animateButtonPress = () => {
     buttonScale.value = withSequence(
@@ -170,8 +201,9 @@ export default function LoginPage({
 
   const animateToStep2 = () => {
     // Header animation
-    headerBoxHeight.value = withTiming(120, animConfig);
-    logoTextSize.value = withTiming(24, animConfig);
+    headerBoxHeight.value = withTiming(140, animConfig);
+    logoTextSize.value = withTiming(16, animConfig);
+    taglineOpacity.value = withTiming(0, { duration: 200 });
 
     // Password field appearance
     passwordOpacity.value = withTiming(1, animConfig);
@@ -184,8 +216,9 @@ export default function LoginPage({
 
   const animateToStep1 = () => {
     // Header expansion
-    headerBoxHeight.value = withTiming(200, animConfig);
-    logoTextSize.value = withTiming(32, animConfig);
+    headerBoxHeight.value = withTiming(240, animConfig);
+    logoTextSize.value = withTiming(22, animConfig);
+    taglineOpacity.value = withDelay(200, withTiming(1, animConfig));
 
     // Hide password field
     forgotPasswordOpacity.value = withTiming(0, { duration: 200 });
@@ -207,7 +240,7 @@ export default function LoginPage({
       if (validatePassword(password)) {
         animateButtonPress();
         setLoading(true);
-        // Simulate API call
+        // Call API
         setTimeout(() => {
           handleSubmit();
           setLoading(false);
@@ -217,41 +250,82 @@ export default function LoginPage({
   };
 
   const handleOtpPress = async () => {
-    await handleOtpRequest();
     animateSecondButtonPress();
 
     if (validateEmail(email)) {
-      BottomSheetModalRef.current?.present();
-      setOtpLoading(true);
+      // If timer has expired or hasn't started yet, send new OTP
+      if (otpTimer <= 0) {
+        setOtpLoading(true);
 
-      // Simulate sending OTP
-      setTimeout(() => {
-        setOtpLoading(false);
-        setIsOtpModalVisible(true);
-        startOtpTimer();
-      }, 1500);
+        try {
+          await handleOtpRequest();
+
+          // After successful OTP request, start timer
+          startOtpTimer();
+          setOtpLoading(false);
+
+          // Show the OTP modal with animation
+          bottomSheetModalRef.current?.present();
+        } catch (err) {
+          setOtpLoading(false);
+          setError(`Failed to send OTP: ${err instanceof Error ? err.message : 'Unknown error'}`);
+
+          // Shake animation for error
+          buttonScale.value = withSequence(
+            withTiming(1.03, { duration: 100 }),
+            withTiming(0.97, { duration: 100 }),
+            withTiming(1.03, { duration: 100 }),
+            withTiming(0.97, { duration: 100 }),
+            withTiming(1, { duration: 100 })
+          );
+          return;
+        }
+      } else {
+        // Timer still running, just show the OTP modal
+        bottomSheetModalRef.current?.present();
+      }
+    } else {
+      // Email validation failed - add shake animation
+      secondaryButtonScale.value = withSequence(
+        withTiming(1.03, { duration: 100 }),
+        withTiming(0.97, { duration: 100 }),
+        withTiming(1.03, { duration: 100 }),
+        withTiming(0.97, { duration: 100 }),
+        withTiming(1, { duration: 100 })
+      );
     }
   };
 
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     if (canResend) {
       setOtpLoading(true);
-      // Simulate resending OTP
-      setTimeout(() => {
-        setOtpLoading(false);
+
+      try {
+        await handleOtpRequest();
         startOtpTimer();
-      }, 1500);
+        setOtpLoading(false);
+
+        // Success animation
+        buttonScale.value = withSequence(
+          withTiming(1.05, { duration: 150 }),
+          withTiming(1, { duration: 150 })
+        );
+      } catch (err) {
+        setOtpLoading(false);
+        setError(`Failed to resend OTP: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
     }
   };
 
   const handleOtpSubmitPress = () => {
     if (otp.length === 6) {
       setOtpLoading(true);
-      // Simulate OTP verification
+
+      // Process OTP verification
       setTimeout(() => {
         handleOTPSubmit(otp);
         setOtpLoading(false);
-        setIsOtpModalVisible(false);
+        bottomSheetModalRef.current?.dismiss();
       }, 1500);
     }
   };
@@ -293,19 +367,54 @@ export default function LoginPage({
     return {
       height: headerBoxHeight.value,
       justifyContent: "center",
+      alignItems: "center",
     };
   });
 
   const logoTextStyle = useAnimatedStyle(() => {
     return {
       fontSize: logoTextSize.value,
+      fontWeight: "bold",
+      color: "white",
+      textAlign: "center",
+      width: "100%",
+    };
+  });
+
+  const taglineStyle = useAnimatedStyle(() => {
+    return {
+      opacity: taglineOpacity.value,
+      marginTop: 5,
+    };
+  });
+
+  const logoContainerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: logoOpacity.value,
+      transform: [{ scale: logoScale.value }],
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+    };
+  });
+
+  const errorContainerStyle = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      errorBackgroundColor.value,
+      [0, 1],
+      ['rgba(255,59,48,0)', 'rgba(255,59,48,0.1)']
+    );
+
+    return {
+      opacity: errorMessageOpacity.value,
+      backgroundColor,
     };
   });
 
   return (
     <>
       <KeyboardAvoidingView
-        behavior={"padding"}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
@@ -314,23 +423,48 @@ export default function LoginPage({
               className="w-full items-center bg-black"
               style={headerBoxStyle}
             >
-              <Animated.Text
-                style={[
-                  {
-                    color: "white",
-                    fontWeight: "bold",
-                    width: "100%",
-                    textAlign: "center",
-                  },
-                  logoTextStyle,
-                ]}
-              >
-                RenderWear
-              </Animated.Text>
+              <Animated.View style={logoContainerStyle}>
+                <View className="items-center justify-center">
+                  <Image
+                    source={RwLogo}
+                    style={{ width: 120, height: 120, tintColor: 'white' }}
+                    resizeMode="contain"
+                    onLoad={() => setLogoLoaded(true)}
+                  />
+                  <Animated.Text style={logoTextStyle}>
+                    RenderWear
+                  </Animated.Text>
+                  <Animated.Text
+                    style={[
+                      taglineStyle,
+                      { color: "#CCCCCC", fontSize: 14, textAlign: "center" }
+                    ]}
+                  >
+                    Experience fashion in a whole new dimension
+                  </Animated.Text>
+                </View>
+              </Animated.View>
             </Animated.View>
 
             <View className="flex-1 justify-between rounded-t-3xl bg-white">
-              <View className="px-5 pt-6 ">
+              {/* Error message */}
+              {errorMessage && (
+                <Animated.View
+                  entering={FadeIn.duration(300)}
+                  style={[{
+                    marginHorizontal: 20,
+                    marginTop: 12,
+                    padding: 12,
+                    borderRadius: 8,
+                    borderLeftWidth: 4,
+                    borderLeftColor: "#FF3B30",
+                  }, errorContainerStyle]}
+                >
+                  <Text style={{ color: "#FF3B30" }}>{errorMessage}</Text>
+                </Animated.View>
+              )}
+
+              <View className="px-5 pt-6">
                 {/* Email Input */}
                 <Input
                   value={email}
@@ -434,23 +568,22 @@ export default function LoginPage({
                     onPress={handleContinue}
                     disabled={loading}
                   >
-                    <ButtonText>
-                      {step === 1 ? "Continue" : "Log In"}
-                    </ButtonText>
-                    {loading && (
-                      <Ionicons
-                        name="reload"
-                        size={20}
-                        color="white"
-                        className="ml-2"
-                      />
-                    )}
-                    <Ionicons
-                      name={step === 1 ? "arrow-forward" : "log-in"}
-                      size={20}
-                      color="white"
-                      className="ml-2"
-                    />
+                    <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+                      <ButtonText>
+                        {step === 1 ? "Continue" : "Log In"}
+                      </ButtonText>
+                    </View>
+                    <View style={{ position: 'absolute', right: 16 }}>
+                      {loading ? (
+                        <ButtonSpinner animating={true} size={20} color="white" />
+                      ) : (
+                        <Ionicons
+                          name={step === 1 ? "arrow-forward" : "log-in"}
+                          size={20}
+                          color="white"
+                        />
+                      )}
+                    </View>
                   </Button>
                 </Animated.View>
 
@@ -463,14 +596,20 @@ export default function LoginPage({
                       onPress={handleOtpPress}
                       disabled={otpLoading}
                     >
-                      <ButtonText>Login with OTP</ButtonText>
-
-                      <ThirdPartyButtonIcon
-                        icon={Ionicons}
-                        name="key"
-                        size={24}
-                        color="white"
-                      />
+                      <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+                        <ButtonText>
+                          {otpTimer > 0
+                            ? `Login with OTP (${otpTimer}s)`
+                            : "Login with OTP"}
+                        </ButtonText>
+                      </View>
+                      <View style={{ position: 'absolute', right: 16 }}>
+                        {otpLoading ? (
+                          <ButtonSpinner animating={true} size={20} color="white" />
+                        ) : (
+                          <Ionicons name="key" size={20} color="white" />
+                        )}
+                      </View>
                     </Button>
                   ) : (
                     <Button
@@ -478,14 +617,12 @@ export default function LoginPage({
                       action="secondary"
                       onPress={handleBackPress}
                     >
-                      <ButtonText className="text-white">
-                        <Ionicons
-                          name="arrow-back"
-                          size={20}
-                          className="mr-2"
-                        />{" "}
-                        Back
-                      </ButtonText>
+                      <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+                        <ButtonText className="text-white">Back</ButtonText>
+                      </View>
+                      <View style={{ position: 'absolute', right: 16 }}>
+                        <Ionicons name="arrow-back" size={20} color="white" />
+                      </View>
                     </Button>
                   )}
                 </Animated.View>
@@ -493,11 +630,11 @@ export default function LoginPage({
             </View>
           </View>
         </ScrollView>
-
-        {/* OTP Bottom Sheet */}
       </KeyboardAvoidingView>
+
+      {/* OTP Bottom Sheet */}
       <BottomSheetModalProvider>
-        <BottomSheetModal snapPoints={["70%"]} ref={BottomSheetModalRef}>
+        <BottomSheetModal snapPoints={["70%"]} ref={bottomSheetModalRef}>
           <BottomSheetView
             style={{
               flex: 1,
@@ -508,7 +645,7 @@ export default function LoginPage({
             }}
           >
             <View className="bg-white rounded-t-3xl pt-8 pb-8 px-4 relative">
-              <View className="w-full items-center justify-center flex-row  ">
+              <View className="w-full items-center justify-center flex-row">
                 <View className="bg-white h-16 w-16 rounded-full flex items-center justify-center shadow-md">
                   <Ionicons name="shield-checkmark" size={28} color="#000" />
                 </View>
@@ -534,10 +671,8 @@ export default function LoginPage({
                     type="numeric"
                     secureTextEntry={false}
                     focusStickBlinkingDuration={500}
-                    onFocus={() => console.log("Focused")}
-                    onBlur={() => console.log("Blurred")}
                     onTextChange={(text) => { setToken(text); setOtp(text); }}
-                    onFilled={(text) => console.log(`OTP is ${text}`)}
+                    onFilled={(text) => { }}
                     textInputProps={{
                       accessibilityLabel: "One-Time Password",
                     }}
@@ -573,22 +708,16 @@ export default function LoginPage({
                   onPress={handleOtpSubmitPress}
                   disabled={otp.length !== 6 || otpLoading}
                 >
-                  <ButtonText>Verify OTP</ButtonText>
-                  {otpLoading && (
-                    <Ionicons
-                      name="reload"
-                      size={20}
-                      color="white"
-                      className="ml-2"
-                    />
-                  )}
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={20}
-                    color="white"
-                    className="ml-2"
-                  />
-                  <ButtonSpinner animating={true} size={20} color="white" />
+                  <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+                    <ButtonText>Verify OTP</ButtonText>
+                  </View>
+                  <View style={{ position: 'absolute', right: 16 }}>
+                    {otpLoading ? (
+                      <ButtonSpinner animating={true} size={20} color="white" />
+                    ) : (
+                      <Ionicons name="checkmark-circle" size={20} color="white" />
+                    )}
+                  </View>
                 </Button>
               </View>
             </View>

@@ -43,7 +43,7 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: Colors["light"].primary[500],
           width: width - 20,
-          height:  70,
+          height: 70,
           alignContent: "center",
           paddingHorizontal: 20,
           borderWidth: 1,
@@ -90,7 +90,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="generations"
+        name="(generation)"
         options={{
           title: "generator",
           tabBarIcon: ({ color }) => (
@@ -111,7 +111,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      
+
     </Tabs>
   );
 }

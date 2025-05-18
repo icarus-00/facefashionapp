@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useCallback, useMemo, memo } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, Dimensions } from "react-native"
 import { Skeleton } from "@/components/ui/skeleton"

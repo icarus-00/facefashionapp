@@ -1,3 +1,5 @@
+//app/(app)/(auth)/(tabs)/generations.tsx
+
 import { StyleSheet, Image, Platform, Text } from "react-native";
 
 import { Collapsible } from "@/components/Collapsible";

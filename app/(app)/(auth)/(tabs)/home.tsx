@@ -223,6 +223,7 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         bounces={false}
+
       >
         {/* Hero Section with Animated Image */}
         <Animated.View style={heroAnimStyle} className="w-full">
@@ -230,6 +231,7 @@ export default function Home() {
             source={headerImage}
             className="w-full aspect-[3/4]"
             resizeMode="cover"
+
           >
             <LinearGradient
               colors={["rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)", "rgba(255, 255, 255, 1)"]}
