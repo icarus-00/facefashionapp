@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import {
@@ -23,10 +22,11 @@ export default function ChatScreen() {
     const [prompt, setPrompt] = useState("")
     const [isGenerating, setIsGenerating] = useState(false)
     const router = useRouter()
-    const { outfitItems, actorItems, getLength } = useStore()
+    const { outfitItems, actorItems, getLength, clearOutfitItems, removeActorItems } = useStore()
 
     const totalItems = getLength()
-    const hasActor = actorItems && Object.keys(actorItems).length > 0
+    const hasActor = actorItems?.imageUrl && actorItems?.actorName
+
     const hasOutfits = outfitItems && outfitItems.length > 0
 
     const handleGenerate = async () => {
@@ -45,12 +45,13 @@ export default function ChatScreen() {
         try {
             setIsGenerating(true)
 
-            await generateImage({
+            generateImage({
                 actorRef: actorItems.imageID,
                 outfitRefs: outfitItems.map((item) => item.imageID),
                 prompt: prompt.trim(),
             })
-
+            clearOutfitItems()
+            removeActorItems()
             // Navigate to generations page after successful generation
             router.push("/(app)/(auth)/(tabs)/(generation)/generations")
 
@@ -91,7 +92,7 @@ export default function ChatScreen() {
                 <Text style={styles.headerSubtitle}>{totalItems} items selected</Text>
             </View>
 
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+            <ScrollView bounces={false} style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
                 {/* Actor Section */}
                 {hasActor && (
                     <View style={styles.section}>
@@ -117,7 +118,7 @@ export default function ChatScreen() {
                 {/* Outfit Items Section */}
                 {hasOutfits && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Outfit Items</Text>
+
                         <View style={styles.outfitGrid}>
                             {outfitItems.map((item, index) => (
                                 <View key={item.imageID || index} style={styles.outfitItem}>
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 16,
-        paddingBottom: 100,
+
     },
     section: {
         marginBottom: 24,

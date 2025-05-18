@@ -32,7 +32,7 @@ import ActorCard from "@/components/molecules/ActorCard";
 const { width: screenWidth } = Dimensions.get("screen");
 const numColumns = 2;
 const spacing = 12;
-const itemWidth = (screenWidth - spacing * (numColumns + 3)) / numColumns;
+const itemWidth = (screenWidth - spacing * (numColumns + 2)) / numColumns;
 const itemHeight = itemWidth * 1.5;
 
 // Define default image
@@ -66,12 +66,13 @@ const ModalComponent = ({
       accessible
       animationIn="slideInUp"
       animationOut="slideOutDown"
-      swipeThreshold={50}
+
       isVisible={visible}
       onBackButtonPress={onPress}
-      swipeDirection={"down"}
-      onSwipeComplete={onPress}
+
+      propagateSwipe
     >
+
       <GetActor paramid={id} onClose={onPress} />
     </Modal>
   );
@@ -189,7 +190,7 @@ export default function ActorPageComp(): React.JSX.Element {
 
     return (
       <AnimatedPressable
-        style={[cardAnimStyle]}
+        style={[cardAnimStyle, { width: itemWidth, height: itemHeight }]}
         className="overflow-hidden rounded-xl shadow-lg elevation-3"
         onPress={() => {
           if (!("isPlaceholder" in item)) {
@@ -240,14 +241,14 @@ export default function ActorPageComp(): React.JSX.Element {
     // Use the activeFilter directly for selectedTab to ensure they stay in sync
     // Convert "all" to "All" for display
     const selectedTab = activeFilter === "all" ? "All" : activeFilter;
-    
+
     // Define a consistent mapping between tab labels and filter values
     const genderMappings: { [key: string]: string } = {
       "All": "all",
       "Males": "male",
       "Females": "female"
     };
-    
+
     // Reverse mapping from filter values to tab labels
     const getTabLabelFromFilter = (filter: string): string => {
       if (filter === "all") return "All";
@@ -255,24 +256,24 @@ export default function ActorPageComp(): React.JSX.Element {
       if (filter === "female") return "Females";
       return "All";
     };
-    
+
     // Use the activeGenderFilter to determine the selected tab
     const selectedGenderTab = getTabLabelFromFilter(activeGenderFilter);
-    
+
     // Gender tab selection and filter state are now in sync
-    
+
     const handleTabPress = (tab: string): void => {
       // Only need to set the filter value, selectedTab will update automatically
       // since it's derived from activeFilter
       const filterValue = tab === "All" ? "all" : tab;
       setActiveFilter(filterValue);
     };
-    
+
     const handleGenderTabPress = (tab: string): void => {
       // Use the genderMappings to get the correct filter value
       // Get the filter value from the mapping or default to 'all'
       const filterValue = genderMappings[tab] || "all";
-      
+
       // Update the gender filter, which will automatically update the selected tab
       setActiveGenderFilter(filterValue);
     };
@@ -302,12 +303,12 @@ export default function ActorPageComp(): React.JSX.Element {
         <HStack space="md" className="overflow-visible mb-3">
           <ScrollFlatList
             data={[
-              "All", 
-              "Action", 
-              "Comedic", 
-              "Dramatic", 
-              "Thrilling", 
-              "Adventurous", 
+              "All",
+              "Action",
+              "Comedic",
+              "Dramatic",
+              "Thrilling",
+              "Adventurous",
               "generic"
             ]}
             horizontal
@@ -334,11 +335,11 @@ export default function ActorPageComp(): React.JSX.Element {
         {/* Gender filter tabs */}
         <HStack space="md" className="overflow-visible">
           <ScrollFlatList
-            data={["M / F", "Males", "Females"]} 
+            data={["M / F", "Males", "Females"]}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingRight: 20 }}
-            extraData={activeGenderFilter} 
+            extraData={activeGenderFilter}
             renderItem={({ item }: { item: string }) => (
               <TouchableOpacity
                 onPress={() => handleGenderTabPress(item)}
@@ -384,26 +385,26 @@ export default function ActorPageComp(): React.JSX.Element {
   // Apply active filter to the data
   const filterActors = useCallback((data: ActorWithImage[]) => {
     let filteredData = data;
-    
+
     // Apply genre filter
     if (activeFilter !== "all") {
       // Filter actors by selected genre
       filteredData = filteredData.filter(actor => {
         if (!actor.genre) return false;
-        
+
         // Exact match comparison - the genre in the database must match exactly with the selected filter
         // This is important since Appwrite uses enum validation for the genre field
         return actor.genre === activeFilter;
       });
     }
-    
+
     // Apply gender filter
     if (activeGenderFilter !== "all") {
       // Filter by gender
       filteredData = filteredData.filter(actor => {
         // This assumes there's a gender field in the actor data
         const gender = actor.gender?.toLowerCase() || '';
-        
+
         // Compare based on gender filter value
         switch (activeGenderFilter) {
           case "male":
@@ -416,7 +417,7 @@ export default function ActorPageComp(): React.JSX.Element {
         }
       });
     }
-    
+
     return filteredData;
   }, [activeFilter, activeGenderFilter]);
 
@@ -429,14 +430,11 @@ export default function ActorPageComp(): React.JSX.Element {
 
   return (
     <View className="flex-1 bg-white">
-      {
-        visible &&
-        <View className="flex-1  w-full bottom-0 top-0 left-0 right-0 justify-center items-center absloute">
-          <ModalComponent id={modalId} visible={visible} onPress={handleClose} />
-        </View>}
+
       <VStack className="flex-1">
         <TabBar />
-        <FlashList
+        <FlatList
+
           data={displayData}
           numColumns={numColumns}
           contentContainerStyle={{
@@ -476,6 +474,14 @@ export default function ActorPageComp(): React.JSX.Element {
           ListFooterComponent={<View style={{ height: 80 }} />}
         />
       </VStack>
+
+      {
+        visible &&
+        <View className="absolute bottom-0 top-0 right-0 left-0 w-full h-full justify-center items-center">
+
+          <ModalComponent id={modalId} visible={visible} onPress={handleClose} />
+        </View>
+      }
     </View>
   );
 }

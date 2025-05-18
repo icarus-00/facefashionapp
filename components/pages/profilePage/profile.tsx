@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Skeleton } from "@rneui/base";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dimensions,
   TouchableOpacity,
@@ -14,130 +14,258 @@ import {
   Text,
   Image,
 } from "react-native";
-import {  Avatars } from "react-native-appwrite";
+import { Avatars } from "react-native-appwrite";
 import { Dialog } from "@rneui/themed";
 import { Menu, MenuItem, MenuItemLabel } from "@/components/ui/menu";
 import { ScrollView } from "react-native-gesture-handler";
 import { useUser } from "@/context/authcontext";
-import { client as sClient } from "@/utils/config/supabase";
+import databaseService, { ActorWithImage, OutfitWithImage, generationsWithImage } from "@/services/database/db";
+
 const { width } = Dimensions.get("window");
+const numColumns = 3;
+const spacing = 8;
+const itemWidth = (width - spacing * (numColumns + 1)) / numColumns;
+
 const ProfilePage = () => {
   const router = useRouter();
   const { logout } = useUser();
-  const [activeTab, setActiveTab] = useState<"actors" | "items" | "history">(
-    "actors"
-  );
+  const [activeTab, setActiveTab] = useState<"actors" | "items" | "history">("actors");
   const [userDetails, setUserDetails] = useState<{
     name: string;
     email: string;
     url: string;
   }>();
 
+  // State for actual data
+  const [actors, setActors] = useState<ActorWithImage[]>([]);
+  const [outfits, setOutfits] = useState<OutfitWithImage[]>([]);
+  const [generations, setGenerations] = useState<generationsWithImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const getPlaceholderData = (): any[] => {
-    return Array.from({ length: 6 }, (_, index) => ({
-      id: index,
-      isPlaceholder: true,
-    }));
-  };
-  const displaydata: any = getPlaceholderData();
-  const { width } = Dimensions.get("window");
+  // Fetch user profile data
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const avatar = new Avatars(client as any);
+      const userAccount = await account.get();
+      const url = avatar.getInitials(userAccount.name).toString();
 
-  // Load user data from AsyncStorage
-  useEffect(() => {
-    const loadUserData = async () => {};
-
-    loadUserData();
+      setUserDetails({
+        name: userAccount.name,
+        email: userAccount.email,
+        url: url,
+      });
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
   }, []);
+
+  // Fetch actors data
+  const fetchActors = useCallback(async () => {
+    try {
+      const data = await databaseService.listActors();
+      setActors(data);
+    } catch (error) {
+      console.error("Error fetching actors:", error);
+    }
+  }, []);
+
+  // Fetch outfits data
+  const fetchOutfits = useCallback(async () => {
+    try {
+      const data = await databaseService.ListOutfits();
+      setOutfits(data);
+    } catch (error) {
+      console.error("Error fetching outfits:", error);
+    }
+  }, []);
+
+  // Fetch generations data
+  const fetchGenerations = useCallback(async () => {
+    try {
+      const data = await databaseService.listGenerations();
+      setGenerations(data);
+    } catch (error) {
+      console.error("Error fetching generations:", error);
+    }
+  }, []);
+
+  // Load all data
+  const loadAllData = useCallback(async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchUserProfile(),
+        fetchActors(),
+        fetchOutfits(),
+        fetchGenerations()
+      ]);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [fetchUserProfile, fetchActors, fetchOutfits, fetchGenerations]);
+
+  // Initial data loading
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadAllData();
+  };
+
   const handleLogout = async () => {
     await logout();
   };
+
+  // Navigate to actor detail
+  const navigateToActor = (actor: ActorWithImage) => {
+    console.log("Navigating to actor detail:", actor);
+  };
+
+  // Navigate to outfit detail
+  const navigateToOutfit = (outfit: OutfitWithImage) => {
+    console.log("Navigating to outfit detail:", outfit);
+  };
+
+  // Navigate to generation detail
+  const navigateToGeneration = (generation: generationsWithImage) => {
+    router.push({
+      pathname: "/(app)/(auth)/(tabs)/(generation)/generations",
+      params: { id: generation.$id }
+    });
+  };
+
   // Render a model/actor card
-  const renderActorItem = ({ item }: { item: any }) => (
+  const renderActorItem = ({ item }: { item: ActorWithImage }) => (
     <TouchableOpacity
-      className=" overflow-hidden rounded-lg w-full h-full aspect-square p-2"
-      onPress={() => {
-        /* Navigate to clothing detail */
+      className="overflow-hidden rounded-lg"
+      style={{
+        width: itemWidth,
+        height: itemWidth * 1.5,
+        margin: spacing / 2
       }}
+      onPress={() => navigateToActor(item)}
     >
-      <Skeleton style={{ width: "100%", height: "100%" }} />
+      {loading ? (
+        <Skeleton style={{ width: "100%", height: "100%", borderRadius: 8 }} />
+      ) : (
+        <>
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={{ width: "100%", height: "100%", borderRadius: 8 }}
+            resizeMode="cover"
+          />
+          <View className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
+            <Text className="text-white text-sm font-medium" numberOfLines={1}>
+              {item.actorName}
+            </Text>
+          </View>
+        </>
+      )}
     </TouchableOpacity>
   );
 
   // Render a clothing item card
-  const renderClothingItem = ({ item }: { item: any }) => (
+  const renderClothingItem = ({ item }: { item: OutfitWithImage }) => (
     <TouchableOpacity
-      className=" overflow-hidden rounded-lg  aspect-square p-2"
-      onPress={() => {
-        /* Navigate to clothing detail */
+      className="overflow-hidden rounded-lg"
+      style={{
+        width: itemWidth,
+        height: itemWidth * 1.2,
+        margin: spacing / 2
       }}
+      onPress={() => navigateToOutfit(item)}
     >
-      <Skeleton className="w-full aspect-square rounded-md" />
+      {loading ? (
+        <Skeleton style={{ width: "100%", height: "100%", borderRadius: 8 }} />
+      ) : (
+        <>
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={{ width: "100%", height: "100%", borderRadius: 8 }}
+            resizeMode="cover"
+          />
+          <View className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
+            <Text className="text-white text-sm font-medium" numberOfLines={1}>
+              {item.outfitName}
+            </Text>
+          </View>
+        </>
+      )}
     </TouchableOpacity>
   );
 
   // Render a history item card
-  const renderHistoryItem = ({ item }: { item: any }) => (
+  const renderHistoryItem = ({ item }: { item: generationsWithImage }) => (
     <TouchableOpacity
-      className=" overflow-hidden rounded-lg  aspect-square p-2"
-      onPress={() => {
-        /* Navigate to history detail */
+      className="overflow-hidden rounded-lg"
+      style={{
+        width: itemWidth,
+        height: itemWidth * 1.2,
+        margin: spacing / 2
       }}
+      onPress={() => navigateToGeneration(item)}
     >
-      <Skeleton className="w-full aspect-square rounded-md" />
+      {loading || item.state === "generating" ? (
+        <Skeleton style={{ width: "100%", height: "100%", borderRadius: 8 }} />
+      ) : (
+        <>
+          <Image
+            source={{ uri: item.generationImageUrl }}
+            style={{ width: "100%", height: "100%", borderRadius: 8 }}
+            resizeMode="cover"
+          />
+          <View className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
+            <Text className="text-white text-sm font-medium" numberOfLines={1}>
+              {item.state === "completed" ? "Completed" : "Failed"}
+            </Text>
+          </View>
+        </>
+      )}
     </TouchableOpacity>
   );
 
-  const result = async () => {
-    console.log("start");
-    const avatar = new Avatars(client);
-    const url = avatar
-      .getInitials(
-        await account.get().then((response) => {
-          console.log(response);
-          return response.name;
-        })
-      )
-      .toString();
-    const name = (await account.get()).name;
-    const email = (await account.get()).email;
-    return { name: name, email: email, url: url };
-  };
-
-  useEffect(() => {
-    setLoading(true);
-    result()
-      .then(({ name, email, url }) => setUserDetails({ name, email, url: url }))
-      .finally(() => setLoading(false));
-  }, []);
-
-  console.log(userDetails);
-
   return (
-    <ScrollView>
+    <View className="h-full bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* Profile Header */}
-      <View className="items-center flex-1 pt-4 pb-2 px-4 border-b border-gray-200">
+      <View className="items-center pt-4 pb-2 px-4 border-b border-gray-200">
         <View className="relative">
-          <Image
-            source={{ uri: userDetails?.url }}
-            className="w-24 h-24 rounded-full"
-          />
+          {loading ? (
+            <Skeleton width={96} height={96} circle />
+          ) : (
+            <Image
+              source={{ uri: userDetails?.url }}
+              className="w-24 h-24 rounded-full"
+            />
+          )}
           <TouchableOpacity className="absolute bottom-0 right-0 bg-cyan-500 w-8 h-8 rounded-full items-center justify-center">
             <Text className="text-white text-xl">+</Text>
           </TouchableOpacity>
         </View>
         <View className="w-full flex items-center justify-center">
-          <Text className="text-xl font-bold mt-2 w-full text-center">
-            {userDetails?.name}
-          </Text>
-          <Text className="text-sm font-bold text-secondary-500 mt-2 w-full text-center">
-            {userDetails?.email}
-          </Text>
+          {loading ? (
+            <>
+              <Skeleton width={150} height={24} style={{ marginTop: 8 }} />
+              <Skeleton width={200} height={16} style={{ marginTop: 8 }} />
+            </>
+          ) : (
+            <>
+              <Text className="text-xl font-bold mt-2 w-full text-center">
+                {userDetails?.name}
+              </Text>
+              <Text className="text-sm font-bold text-secondary-500 mt-2 w-full text-center">
+                {userDetails?.email}
+              </Text>
+            </>
+          )}
         </View>
-        {/* Stats Row */}
 
         {/* Edit Profile Button */}
         <View className="flex-row mt-4 w-full">
@@ -179,9 +307,7 @@ const ProfilePage = () => {
       {/* Tab Navigation */}
       <View className="flex-row border-b border-gray-200">
         <TouchableOpacity
-          className={`flex-1 items-center py-3 ${
-            activeTab === "actors" ? "border-b-2 border-black" : ""
-          }`}
+          className={`flex-1 items-center py-3 ${activeTab === "actors" ? "border-b-2 border-black" : ""}`}
           onPress={() => setActiveTab("actors")}
         >
           <Text className={activeTab === "actors" ? "font-bold" : ""}>
@@ -190,9 +316,7 @@ const ProfilePage = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          className={`flex-1 items-center py-3 ${
-            activeTab === "items" ? "border-b-2 border-black" : ""
-          }`}
+          className={`flex-1 items-center py-3 ${activeTab === "items" ? "border-b-2 border-black" : ""}`}
           onPress={() => setActiveTab("items")}
         >
           <Text className={activeTab === "items" ? "font-bold" : ""}>
@@ -201,9 +325,7 @@ const ProfilePage = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          className={`flex-1 items-center py-3 ${
-            activeTab === "history" ? "border-b-2 border-black" : ""
-          }`}
+          className={`flex-1 items-center py-3 ${activeTab === "history" ? "border-b-2 border-black" : ""}`}
           onPress={() => setActiveTab("history")}
         >
           <Text className={activeTab === "history" ? "font-bold" : ""}>
@@ -214,68 +336,86 @@ const ProfilePage = () => {
 
       {/* Content Area */}
       <View className="flex-1 w-full">
-        {activeTab === "actors" &&
-          (displaydata.length > 0 ? (
+        {activeTab === "actors" && (
+          actors.length > 0 ? (
             <FlashList
-              data={displaydata}
+              data={actors}
               renderItem={renderActorItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.$id}
               numColumns={3}
-              contentContainerStyle={{ padding: 2 }}
-              estimatedItemSize={width / 3}
+              estimatedItemSize={itemWidth * 1.5}
+              contentContainerStyle={{ padding: spacing / 2 }}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
             />
           ) : (
             <View className="flex-1 items-center justify-center">
               <Text className="text-gray-500">No actors added yet</Text>
-              <TouchableOpacity className="mt-4 bg-primary py-2 px-4 rounded-lg">
+              <TouchableOpacity
+                className="mt-4 bg-primary py-2 px-4 rounded-lg"
+                onPress={() => router.push("/(app)/(auth)/actor/create")}
+              >
                 <Text className="text-white font-medium">Add Actors</Text>
               </TouchableOpacity>
             </View>
-          ))}
+          )
+        )}
 
-        {activeTab === "items" &&
-          (displaydata.length > 0 ? (
+        {activeTab === "items" && (
+          outfits.length > 0 ? (
             <FlashList
-              data={displaydata}
+              data={outfits}
               renderItem={renderClothingItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.$id}
               numColumns={3}
-              estimatedItemSize={width / 3}
-              contentContainerStyle={{ padding: 2 }}
+              estimatedItemSize={itemWidth * 1.2}
+              contentContainerStyle={{ padding: spacing / 2 }}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
             />
           ) : (
             <View className="flex-1 items-center justify-center">
               <Text className="text-gray-500">No clothing items added yet</Text>
-              <TouchableOpacity className="mt-4 bg-primary py-2 px-4 rounded-lg">
+              <TouchableOpacity
+                className="mt-4 bg-primary py-2 px-4 rounded-lg"
+                onPress={() => router.push("/(app)/(auth)/outfit/create")}
+              >
                 <Text className="text-white font-medium">
                   Add Clothing Items
                 </Text>
               </TouchableOpacity>
             </View>
-          ))}
+          )
+        )}
 
-        {activeTab === "history" &&
-          (displaydata.length > 0 ? (
+        {activeTab === "history" && (
+          generations.length > 0 ? (
             <FlashList
-              data={displaydata}
+              data={generations}
               renderItem={renderHistoryItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.$id}
               numColumns={3}
-              contentContainerStyle={{ padding: 2 }}
-              estimatedItemSize={width / 3}
+              estimatedItemSize={itemWidth * 1.2}
+              contentContainerStyle={{ padding: spacing / 2 }}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
             />
           ) : (
             <View className="flex-1 items-center justify-center">
               <Text className="text-gray-500">No generation history yet</Text>
-              <TouchableOpacity className="mt-4 bg-primary py-2 px-4 rounded-lg">
+              <TouchableOpacity
+                className="mt-4 bg-primary py-2 px-4 rounded-lg"
+                onPress={() => router.push("/(app)/(auth)/(tabs)/(generation)/chat")}
+              >
                 <Text className="text-white font-medium">
                   Create Generation
                 </Text>
               </TouchableOpacity>
             </View>
-          ))}
+          )
+        )}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

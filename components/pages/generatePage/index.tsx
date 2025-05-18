@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Dimensions, View, Pressable } from "react-native";
+import { Dimensions, View, Pressable, FlatList } from "react-native";
 import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "react-native";
@@ -137,46 +137,65 @@ const TabSelector = ({
   motionCount: number;
   imageCount: number;
 }): React.JSX.Element => {
-  const tabs = [
-    { id: "all", label: "All", count: imageCount },
-    { id: "motion", label: "Motion", count: motionCount },
-  ];
+  // Memoize tabs array to prevent unnecessary recreations
+  const tabs = React.useMemo(
+    () => [
+      { id: "all", label: "All", count: imageCount },
+      { id: "motion", label: "Motion", count: motionCount },
+    ],
+    [imageCount, motionCount]
+  );
+
+  // Memoize the container style to prevent recreation on each render
+  const containerStyle = React.useMemo(
+    () => ({
+      flexDirection: "row" as const,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: "white",
+      borderBottomWidth: 1,
+      borderBottomColor: "#eaeaea",
+    }),
+    []
+  );
 
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: "white",
-        borderBottomWidth: 1,
-        borderBottomColor: "#eaeaea",
-      }}
-    >
-      {tabs.map((tab) => (
-        <Button
-          key={tab.id}
-          variant={activeTab === tab.id ? "solid" : "outline"}
-          style={{
+    <View style={containerStyle}>
+      {tabs.map((tab) => {
+        // Memoize button style for each tab
+        const buttonStyle = React.useMemo(
+          () => ({
             marginRight: 8,
             backgroundColor: activeTab === tab.id ? Colors.light.primary[500] : "transparent",
             borderColor: activeTab === tab.id ? "#3b82f6" : "#d1d5db",
-          }}
-          onPress={() => setActiveTab(tab.id)}
-        >
-          <ButtonText
-            style={{
-              color: activeTab === tab.id ? "white" : "#4b5563",
-            }}
+          }),
+          [activeTab, tab.id]
+        );
+
+        // Memoize text style for each tab
+        const textStyle = React.useMemo(
+          () => ({
+            color: activeTab === tab.id ? "white" : "#4b5563",
+          }),
+          [activeTab, tab.id]
+        );
+
+        return (
+          <Button
+            key={tab.id}
+            variant={activeTab === tab.id ? "solid" : "outline"}
+            style={buttonStyle}
+            onPress={() => setActiveTab(tab.id)}
           >
-            {tab.label} ({tab.count})
-          </ButtonText>
-        </Button>
-      ))}
+            <ButtonText style={textStyle}>
+              {tab.label} ({tab.count})
+            </ButtonText>
+          </Button>
+        );
+      })}
     </View>
   );
 };
-
 export default function GeneratePage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [loading, setLoading] = useState<boolean>(true);
@@ -256,9 +275,9 @@ export default function GeneratePage(): React.JSX.Element {
         motionCount={motionCount}
         imageCount={imageCount}
       />
-      <FlashList
+      <FlatList
         data={displayData}
-        estimatedItemSize={itemHeight}
+
         renderItem={({ item }) => (
           <GenerationCard item={item} loading={loading} />
         )}

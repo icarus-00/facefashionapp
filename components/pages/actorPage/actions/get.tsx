@@ -1,4 +1,4 @@
-import { Image, Text, View, Dimensions, TouchableOpacity, StyleSheet, Modal, GestureResponderEvent } from "react-native";
+import { Image, Text, View, Dimensions, TouchableOpacity, StyleSheet, Modal, GestureResponderEvent, Pressable } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
@@ -23,6 +23,7 @@ import Animated, {
 import Carousel from 'react-native-reanimated-carousel';
 import { LinearGradient } from "expo-linear-gradient";
 import { BR } from "@expo/html-elements";
+
 
 const { width, height } = Dimensions.get('window');
 const AnimatedScrollView = Animated.createAnimatedComponent(Animated.ScrollView);
@@ -60,7 +61,7 @@ export default function GetActor({
     }, 100);
   };
 
-  
+
 
   // Button animation styles
   const buttonAnimStyle = useAnimatedStyle(() => {
@@ -68,7 +69,7 @@ export default function GetActor({
       transform: [{ scale: buttonScale.value }]
     };
   });
-  
+
   // Full image view button scale
   const viewImageScale = useSharedValue(1);
   const viewImageAnimStyle = useAnimatedStyle(() => {
@@ -114,7 +115,7 @@ export default function GetActor({
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-  
+
   // This effect runs every time the screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -122,7 +123,7 @@ export default function GetActor({
       setRefreshKey(prev => prev + 1);
       // Refresh the actor data when the screen comes back into focus
       fetchData();
-      
+
       return () => {
         // Cleanup if needed
       };
@@ -179,12 +180,14 @@ export default function GetActor({
   };
 
   return (
-    <View 
-      style={styles.container} 
-      onStartShouldSetResponder={preventDrag}
-      onMoveShouldSetResponder={preventDrag}
-      onResponderTerminationRequest={() => false}
-      onResponderReject={() => {}}>
+    <View
+      style={styles.container}
+    //onStartShouldSetResponder={preventDrag}
+    //onMoveShouldSetResponder={preventDrag}
+    //onResponderTerminationRequest={() => false}
+    //onResponderReject={() => { }}
+    >
+
       {/* Fullscreen Image Modal */}
       <Modal
         visible={fullImageVisible}
@@ -201,7 +204,7 @@ export default function GetActor({
           >
             <AntDesign name="close" size={24} color="white" />
           </TouchableOpacity>
-          
+
           {actor?.imageUrl && (
             <Image
               source={{ uri: actor.imageUrl }}
@@ -211,109 +214,100 @@ export default function GetActor({
           )}
         </View>
       </Modal>
-      
+
       {/* Close button */}
-      <TouchableOpacity
+      <Pressable
         style={styles.closeButton}
-        onPress={handleClose}
-        activeOpacity={0.7}
+        onPress={() => handleClose()}
+
         hitSlop={{ top: 15, right: 15, bottom: 15, left: 15 }}
       >
         <AntDesign name="close" size={20} color="black" />
-      </TouchableOpacity>
+      </Pressable>
 
-        <View 
-          style={styles.contentContainer} 
-          onStartShouldSetResponder={preventDrag}
-          onMoveShouldSetResponder={preventDrag}
-          onResponderTerminationRequest={() => false}>
-          {/* Actor image section */}
-          <View style={styles.imageContainer}>
-            {/* View full image button */}
-            {actor?.imageUrl && (
-              <TouchableOpacity
-                style={styles.fullImageButton}
-                activeOpacity={0.7}
-                onPress={() => {
-                  animateButton(viewImageScale);
-                  setFullImageVisible(true);
-                }}
-              >
-                <Animated.View style={[viewImageAnimStyle, styles.fullImageButtonInner]}>
-                  <Feather name="maximize" size={22} color="white" />
-                  <Text style={styles.fullImageButtonText}>Full image</Text>
-                </Animated.View>
-              </TouchableOpacity>
-            )}
-            
-            {actor?.imageUrl ? (
-              <Image
-                source={{ uri: actor.imageUrl }}
-                style={styles.actorImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.noImageContainer}>
-                <Text style={styles.noImageText}>No image available</Text>
-              </View>
-            )}
+      <View
+        style={styles.contentContainer}
+      // Remove all responder props here
+      >
+        {/* Actor image section */}
+        <View style={styles.imageContainer}>
+          {/* View full image button */}
+          {actor?.imageUrl && (
+            <Pressable
+              style={styles.fullImageButton}
 
-            {/* Name overlay with gradient */}
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)']}
-              style={styles.nameOverlay}
-            >
-              <Animated.Text
-                entering={FadeIn.delay(300).duration(500)}
-                style={styles.actorName}
-              >
-                {actor?.actorName}
-              </Animated.Text>
-            </LinearGradient>
-          </View>
+              onPress={() => {
 
-        {/* Details section - scrollable */}
-          <View style={styles.detailsWrapper}>
-          <AnimatedScrollView
-              entering={FadeIn.duration(300)}
-              style={styles.detailsContainer}
-              showsVerticalScrollIndicator={true}
-              scrollEnabled={true}
-              scrollEventThrottle={16}
-              horizontal={false}
-              bounces={true}
-              contentContainerStyle={styles.scrollContent}
-              overScrollMode="always"
-              nestedScrollEnabled={true}
-              // Ensure scrollview is the only part that responds to touch
-              onStartShouldSetResponder={() => true}
-              onStartShouldSetResponderCapture={() => true}
-              onMoveShouldSetResponder={() => true}
-              onMoveShouldSetResponderCapture={() => true}
-              onResponderTerminationRequest={() => false}
-              // Allow scrolling only within this component
-              onResponderGrant={(e) => {
-                // Prevent the event from bubbling up
-                e.stopPropagation();
+                console.log("Full image button pressed");
+                setFullImageVisible(true);
+                animateButton(viewImageScale);
               }}
             >
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Bio</Text>
-                <Text style={styles.aboutText}>
-                  {actor?.bio || "No biography available for this actor."}
-                </Text>
-              </View>
+              <Animated.View style={[viewImageAnimStyle, styles.fullImageButtonInner]}>
+                <Feather name="maximize" size={22} color="white" />
+                <Text style={styles.fullImageButtonText}>Full image</Text>
+              </Animated.View>
+            </Pressable>
+          )}
 
-              <View style={styles.sectionContainer}>
-                {/* <Text style={styles.sectionTitle}>Details</Text> */}
-                <View style={styles.detailsBox}>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>ID</Text>
-                    <Text style={styles.detailValue}>
-                      {actor?.$id?.substring(0, 8) + "..." || "N/A"}
-                    </Text>
-                  </View>
-                  <View className="flex-row mt-2">
+          {actor?.imageUrl ? (
+            <Image
+              source={{ uri: actor.imageUrl }}
+              style={styles.actorImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.noImageContainer}>
+              <Text style={styles.noImageText}>No image available</Text>
+            </View>
+          )}
+
+          {/* Name overlay with gradient */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)']}
+            style={styles.nameOverlay}
+          >
+            <Animated.Text
+              entering={FadeIn.delay(300).duration(500)}
+              style={styles.actorName}
+            >
+              {actor?.actorName}
+            </Animated.Text>
+          </LinearGradient>
+        </View>
+
+        {/* Details section - scrollable */}
+        <View style={styles.detailsWrapper}>
+          <AnimatedScrollView
+            entering={FadeIn.duration(300)}
+            style={styles.detailsContainer}
+            showsVerticalScrollIndicator={true}
+            scrollEnabled={true}
+            scrollEventThrottle={16}
+            horizontal={false}
+            bounces={true}
+            contentContainerStyle={styles.scrollContent}
+            overScrollMode="always"
+            nestedScrollEnabled={true}
+          // Remove all responder props here
+          >
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Bio</Text>
+              <Text style={styles.aboutText}>
+                {actor?.bio || "No biography available for this actor."}
+              </Text>
+            </View>
+
+            <View style={styles.sectionContainer}>
+              {/* <Text style={styles.sectionTitle}>Details</Text> */}
+              <View style={styles.detailsBox}>
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>ID</Text>
+                  <Text style={styles.detailValue}>
+                    {actor?.$id?.substring(0, 8) + "..." || "N/A"}
+                  </Text>
+                </View>
+                <View className="flex-row mt-2">
                   <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>Age</Text>
                     <Text style={styles.detailValue}>
@@ -338,58 +332,58 @@ export default function GetActor({
                       {actor?.weight ? `${actor.weight} kg` : 'Not specified'}
                     </Text>
                   </View>
-                  </View>
-                  
-                    <View style={styles.genreSection}>
-                      <Text style={styles.detailLabel}>Genre</Text>
-                      <View style={styles.genreContainer}>
-                        <View style={styles.genreTag}>
-                          <Text style={styles.genreTagText}>{actor?.genre}</Text>
-                        </View>
-                      </View>
+                </View>
+
+                <View style={styles.genreSection}>
+                  <Text style={styles.detailLabel}>Genre</Text>
+                  <View style={styles.genreContainer}>
+                    <View style={styles.genreTag}>
+                      <Text style={styles.genreTagText}>{actor?.genre}</Text>
                     </View>
+                  </View>
                 </View>
               </View>
+            </View>
 
-              <View style={styles.buttonRow}>
-                <Animated.View style={[styles.buttonWrapper, editAnimStyle]}>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.editButton]}
-                    onPress={handleEdit}
-                    activeOpacity={0.8}
-                  >
-                    <HStack space="md" style={{ alignItems: 'center' }}>
-                      <Feather name="edit-2" size={16} color="white" />
-                      <Text style={styles.buttonText}>Edit</Text>
-                    </HStack>
-                  </TouchableOpacity>
-                </Animated.View>
+            <View style={styles.buttonRow}>
+              <Animated.View style={[styles.buttonWrapper, editAnimStyle]}>
+                <Pressable
+                  style={[styles.actionButton, styles.editButton]}
+                  onPress={handleEdit}
 
-                <Animated.View style={[styles.buttonWrapper, deleteAnimStyle]}>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.deleteButton]}
-                    onPress={handleDelete}
-                    activeOpacity={0.8}
-                  >
-                    <HStack space="md" style={{ alignItems: 'center' }}>
-                      <Feather name="trash-2" size={16} color="white" />
-                      <Text style={styles.buttonText}>Delete</Text>
-                    </HStack>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
-
-              <Animated.View style={[styles.dressUpWrapper, buttonAnimStyle]}>
-                <TouchableOpacity
-                  style={styles.dressUpButton}
-                  onPress={handleDressUp}
-                  activeOpacity={0.7}
                 >
-                  <HStack space="md" style={{ alignItems: 'center', justifyContent: 'center'}}>
-                    <Text style={styles.dressUpText}>Dress Up!</Text>
+                  <HStack space="md" style={{ alignItems: 'center' }}>
+                    <Feather name="edit-2" size={16} color="white" />
+                    <Text style={styles.buttonText}>Edit</Text>
+                  </HStack>
+                </Pressable>
+              </Animated.View>
+
+              <Animated.View style={[styles.buttonWrapper, deleteAnimStyle]}>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.deleteButton]}
+                  onPress={handleDelete}
+                  activeOpacity={0.8}
+                >
+                  <HStack space="md" style={{ alignItems: 'center' }}>
+                    <Feather name="trash-2" size={16} color="white" />
+                    <Text style={styles.buttonText}>Delete</Text>
                   </HStack>
                 </TouchableOpacity>
               </Animated.View>
+            </View>
+
+            <Animated.View style={[styles.dressUpWrapper, buttonAnimStyle]}>
+              <TouchableOpacity
+                style={styles.dressUpButton}
+                onPress={handleDressUp}
+                activeOpacity={0.7}
+              >
+                <HStack space="md" style={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={styles.dressUpText}>Dress Up!</Text>
+                </HStack>
+              </TouchableOpacity>
+            </Animated.View>
           </AnimatedScrollView>
         </View>
       </View>

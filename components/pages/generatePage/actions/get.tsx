@@ -362,7 +362,7 @@ export default function GetGeneration({ id }: { id: string }) {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => console.log("Delete confirmed for generation ID:", id),
+          onPress: () => { databaseService.deleteGeneration(generationsData?.$id!, generationsData?.generatedFileId!).then(router.back) },
         },
       ]
     );
@@ -504,15 +504,15 @@ export default function GetGeneration({ id }: { id: string }) {
             }
             contentContainerStyle={{ paddingBottom: 20 }}
           />
-
-          <ButtonGroup
-            currentIndex={currentIndex}
-            onImagePress={navigateToImage}
-            onVideoPress={navigateToVideo}
-            videoType={getVideoType()}
-            onDescriptionPress={handleDescriptionPress}
-            onDeletePress={handleDeletePress}
-          />
+          {(generationsData?.state == "failed" || "completed") && (
+            <ButtonGroup
+              currentIndex={currentIndex}
+              onImagePress={navigateToImage}
+              onVideoPress={navigateToVideo}
+              videoType={getVideoType()}
+              onDescriptionPress={handleDescriptionPress}
+              onDeletePress={handleDeletePress}
+            />)}
         </View>
       )}
     </SafeAreaView>
