@@ -11,7 +11,7 @@
         "test": "jest --watchAll",
         "lint": "expo lint",
         "devc": "npm install --global @expo/ngrok@ && expo start -c --tunnel -g ",
-        "dev": " expo start -c --tunnel -g "
+        "dev": " expo start"
     },
     "jest": {
         "preset": "jest-expo"
