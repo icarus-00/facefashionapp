@@ -10,7 +10,8 @@
         "web": "expo start --web",
         "test": "jest --watchAll",
         "lint": "expo lint",
-        "devc": "npm install --global @expo/ngrok@ && expo start -c --tunnel -g "
+        "devc": "npm install --global @expo/ngrok@ && expo start -c --tunnel -g ",
+        "dev": " expo start -c --tunnel -g "
     },
     "jest": {
         "preset": "jest-expo"
