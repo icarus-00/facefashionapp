@@ -181,6 +181,7 @@ const useStore = create<Data & Actions>()(
 
       removeOutfitItem: (category) => {
         const { outfitItems } = get();
+        // Always create a new array reference
         set({
           outfitItems: outfitItems.filter((item) => item.category !== category),
         });

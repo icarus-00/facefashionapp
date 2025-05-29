@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Dimensions, View, Pressable } from "react-native";
+import { Dimensions, View, Pressable, ViewStyle, ActivityIndicator } from "react-native";
 import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { FlashList } from "@shopify/flash-list";
-import { Image, Text } from "react-native";
+import { Image as RNImage } from "react-native";
+import { Text } from "react-native";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button, ButtonText } from "@/components/ui/button";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -20,6 +21,9 @@ const numColumns = 2;
 const spacing = 8;
 const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
 const itemHeight = itemWidth * (16 / 9);
+
+// Calculate estimated item size for FlashList
+const estimatedItemSize = itemHeight + spacing;
 
 // Extended type to include placeholder state
 type GenerationItem =
@@ -104,14 +108,22 @@ const GenerationCard = React.memo(
           })
         }
       >
-        <Image
-          source={{
-            uri: item.generationImageUrl,
-          }}
-          style={{ width: "100%", height: "100%" }}
-          resizeMode="cover"
-          onError={() => setImageError(true)}
-        />
+        {imageError ? (
+          <View style={{ width: "100%", height: "100%", backgroundColor: "#eee", justifyContent: "center", alignItems: "center" }}>
+            <MaterialIcons name="broken-image" size={40} color="#ccc" />
+          </View>
+        ) : (
+          <RNImage
+            source={{ uri: item.generationImageUrl }}
+            style={{ width: "100%", height: "100%" }}
+            resizeMode="cover"
+            onError={() => setImageError(true)}
+            // @ts-ignore: quality is supported on iOS/Android
+            quality={0.5}
+            // @ts-ignore: progressiveRenderingEnabled is iOS/Android only
+            progressiveRenderingEnabled={true}
+          />
+        )}
 
         {/* Motion indicator */}
         {hasMotion && (
@@ -311,6 +323,32 @@ export default function GeneratePage(): React.JSX.Element {
     [generationsData]
   );
 
+  // Memoized renderItem and keyExtractor for FlashList performance
+  const renderGenerationItem = useCallback(
+    ({ item }: { item: GenerationItem }) => (
+      <GenerationCard item={item} loading={loading} />
+    ), [loading]
+  );
+
+  const generationKeyExtractor = useCallback(
+    (item: GenerationItem) =>
+      "isPlaceholder" in item ? `placeholder-${item.id}` : item.$id,
+    []
+  );
+
+  // Move ListEmptyComponent style out to avoid inline object recreation
+  const emptyComponentStyle = useMemo(
+    () =>
+    ({
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+      height: 200,
+    } as ViewStyle),
+    []
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <OrbsBackground />
@@ -322,28 +360,18 @@ export default function GeneratePage(): React.JSX.Element {
       />
       <FlashList
         data={displayData}
-        renderItem={({ item }) => (
-          <GenerationCard item={item} loading={loading} />
-        )}
-        keyExtractor={(item) =>
-          "isPlaceholder" in item ? `placeholder-${item.id}` : item.$id
-        }
+        renderItem={renderGenerationItem}
+        keyExtractor={generationKeyExtractor}
         numColumns={numColumns}
         contentContainerStyle={{ padding: spacing / 2 }}
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={handleRefresh}
-        estimatedItemSize={itemHeight + spacing}
+        estimatedItemSize={estimatedItemSize}
+        removeClippedSubviews={false}
+        scrollEventThrottle={16}
         ListEmptyComponent={
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              padding: 20,
-              height: 200,
-            }}
-          >
+          <View style={emptyComponentStyle}>
             <Text style={{ color: "#6b7280" }}>
               {activeType === "motion"
                 ? "No motion generations found"
@@ -352,6 +380,21 @@ export default function GeneratePage(): React.JSX.Element {
           </View>
         }
       />
+      {refreshing && (
+        <View style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "rgba(255,255,255,0.3)",
+          zIndex: 100,
+        }}>
+          <ActivityIndicator size="large" color={Colors.light.primary[500]} />
+        </View>
+      )}
     </View>
   );
 }

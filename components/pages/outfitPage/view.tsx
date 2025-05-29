@@ -82,7 +82,7 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
         translateY: interpolate(
           filterVisible.value,
           [0, 1],
-          [-50, 0],
+          [-60, 0], // Move further up when hidden for more space
           Extrapolate.CLAMP
         ),
       },
@@ -90,7 +90,7 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
     height: interpolate(
       filterVisible.value,
       [0, 1],
-      [0, 50],
+      [0, 80], // Increase max height for filter bar
       Extrapolate.CLAMP
     ),
   }))
@@ -145,15 +145,13 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
 
   // Data fetching
   const fetchData = useCallback(async () => {
-    // Remove the guard that blocks initial fetch
     setLoading(true)
     try {
       const data = await databaseService.ListOutfits()
       const themes = useAttireStore.getState().themes
-
       setAttireTheme(themes || [])
       setOutfits(data || [])
-      applyFilters(data || [], activeFilter, selectedSubFilter)
+      // Don't call applyFilters here; let the effect handle it
     } catch (error) {
       console.error("Error fetching outfits: ", error)
       setOutfits([])
@@ -162,7 +160,7 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
       setLoading(false)
       setRefreshing(false)
     }
-  }, [activeFilter, selectedSubFilter])
+  }, [])
 
   // Filter logic
   const applyFilters = useCallback((data: OutfitWithImage[], category: string, subCategory?: string) => {
@@ -198,22 +196,30 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
   }, [])
 
   // Effects
+  // Fetch data only on mount or manual refresh
   useEffect(() => {
     fetchData()
-  }, [fetchData])
+  }, [])
 
+  // Apply filters when filter/subfilter/outfits change
   useEffect(() => {
     if (outfits.length > 0) {
       applyFilters(outfits, activeFilter, selectedSubFilter)
+    } else {
+      setFilteredOutfits([])
     }
   }, [activeFilter, selectedSubFilter, outfits, applyFilters])
 
   useEffect(() => {
-    setBottomSheetVisible(outfitItems.length > 0)
-    if (outfitItems.length > 0 && !isSelecting) {
+    // Enable selection mode if an actor is selected
+    console.log('actorItems:', actorItems)
+    console.log('actorItems.imageID:', actorItems.imageID, 'isSelecting:', !!actorItems && !!actorItems.imageID)
+    if (!!actorItems && !!actorItems.imageID) {
       setIsSelecting(true)
+    } else {
+      setIsSelecting(false)
     }
-  }, [outfitItems, isSelecting])
+  }, [actorItems])
 
   // Handlers
   const handleRefresh = useCallback(() => {
@@ -285,14 +291,14 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
             <TouchableOpacity
               onPress={() => setActiveFilter(item.toLowerCase())}
               className={`py-2 px-4 mr-2 rounded-full ${activeFilter.toLowerCase() === item.toLowerCase()
-                  ? "bg-primary-500"
-                  : "bg-gray-100"
+                ? "bg-primary-500"
+                : "bg-gray-100"
                 }`}
             >
               <Text
                 className={`font-medium ${activeFilter.toLowerCase() === item.toLowerCase()
-                    ? "text-white"
-                    : "text-gray-700"
+                  ? "text-white"
+                  : "text-gray-700"
                   }`}
               >
                 {item}
@@ -327,6 +333,7 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
             }
           }}
           selecting={isSelecting}
+
           actorSelected={!!actorItems && !!actorItems.imageID}
         />
       </Animated.View>
@@ -338,7 +345,6 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
     <ThemedView style={styles.container}>
       <VStack className="flex-1">
         {TabBar}
-
         <Animated.View style={[styles.subCategoriesContainer, filterAnimStyle]}>
           <SubCategoriesExbandableFilter
             loading={loading}
@@ -382,6 +388,11 @@ export default function OutFitPageComp({ selecting = false }: { selecting?: bool
               </View>
             }
             ListFooterComponent={<View style={{ height: 80 }} />}
+            extraData={{
+              outfitItems,
+              isSelecting,
+              actorItems,
+            }}
           />
         )}
 

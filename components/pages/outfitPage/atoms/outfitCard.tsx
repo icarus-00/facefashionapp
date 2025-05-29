@@ -3,11 +3,11 @@ import { View, StyleSheet, Dimensions, TouchableOpacity, Platform, Text } from "
 import { Image } from "expo-image"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CheckIcon } from "@/components/ui/icon"
-import { LinearGradient } from "expo-linear-gradient";
+import { LinearGradient } from "expo-linear-gradient"
 
 const { width: screenWidth } = Dimensions.get("screen")
 const numColumns = 2
-const spacing = Platform.OS === "android" ? 10 : 7 // Increased spacing for Android
+const spacing = Platform.OS === "android" ? 10 : 7
 const itemWidth = (screenWidth - spacing * (numColumns + 3)) / numColumns
 const itemHeight = itemWidth * 1.5
 
@@ -19,13 +19,12 @@ interface OutfitCardProps {
   onLongPress: () => void
   selecting: boolean
   selected: boolean
-  actorSelected: boolean // <-- add this prop
+  actorSelected: boolean
 }
 
-const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting, selected, actorSelected }: OutfitCardProps) => {
+const OutfitCard = ({ item, loading, index, onPress, onLongPress, selecting, selected, actorSelected }: OutfitCardProps) => {
   // Check if the item is a placeholder
   const isPlaceholder = "isPlaceholder" in item
-  console.log(selecting)
 
   if (loading || isPlaceholder) {
     return (
@@ -35,17 +34,20 @@ const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting
     )
   }
 
+  // Use the selected prop directly from parent
+  const isSelected = selected
+
   // Checkbox: show if in selection mode
-  const showCheckbox = selecting;
+  const showCheckbox = selecting
 
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onPress={onPress}
+      onPress={selecting ? onLongPress : onPress} // Switch behavior based on selection mode
       onLongPress={selecting ? onLongPress : undefined}
       style={[
         styles.card,
-        selected && styles.selectedCard,
+        isSelected && styles.selectedCard,
         Platform.OS === "android" && styles.androidCard,
       ]}
       disabled={false}
@@ -57,19 +59,13 @@ const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting
         transition={300}
       />
 
-      {/* Custom Checkbox (bottom left) */}
+      {/* Selection indicator - Show in selection mode */}
       {showCheckbox && (
-        <View style={styles.checkboxContainer}>
-          <View style={styles.checkboxOuter}>
-            {selected ? <View style={styles.checkboxInner} /> : null}
-          </View>
-        </View>
-      )}
-
-      {/* Selection indicator - Always show when selected (top right) */}
-      {selected && (
-        <View style={styles.selectedIndicator}>
-          <CheckIcon color="white" />
+        <View style={[
+          styles.selectedIndicator,
+          isSelected ? styles.selectedIndicatorSelected : styles.selectedIndicatorUnselected
+        ]}>
+          {isSelected && <CheckIcon color="white\" width={16} height={16} />}
         </View>
       )}
 
@@ -84,7 +80,10 @@ const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting
       </LinearGradient>
     </TouchableOpacity>
   )
-})
+}
+
+// Removed the custom memo comparison to let React handle rerenders naturally
+export default memo(OutfitCard)
 
 const styles = StyleSheet.create({
   card: {
@@ -106,7 +105,6 @@ const styles = StyleSheet.create({
     }),
   },
   androidCard: {
-    // Android-specific adjustments
     marginBottom: 4,
   },
   selectedCard: {
@@ -126,34 +124,21 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 8,
     right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#6D28D9",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-  },
-  checkboxContainer: {
-    position: "absolute",
-    bottom: 10,
-    left: 10,
-    zIndex: 10,
-  },
-  checkboxOuter: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    zIndex: 20,
     borderWidth: 2,
-    borderColor: "#fff",
-    backgroundColor: "rgba(255,255,255,0.9)",
-    justifyContent: "center",
-    alignItems: "center",
   },
-  checkboxInner: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#111",
+  selectedIndicatorUnselected: {
+    backgroundColor: "rgba(255, 255, 255, 0.8)", // Semi-transparent white
+    borderColor: "rgba(0, 0, 0, 0.3)", // Faded black border
+  },
+  selectedIndicatorSelected: {
+    backgroundColor: "#000", // Solid black when selected
+    borderColor: "#000",
   },
   gradientLabel: {
     position: 'absolute',
@@ -171,6 +156,3 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 })
-
-OutfitCard.displayName = 'OutfitCard';
-export default OutfitCard
