@@ -43,7 +43,7 @@ const OutfitCard = ({ item, loading, index, onPress, onLongPress, selecting, sel
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onPress={selecting ? onLongPress : onPress} // Switch behavior based on selection mode
+      onPress={onPress}
       onLongPress={selecting ? onLongPress : undefined}
       style={[
         styles.card,

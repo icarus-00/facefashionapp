@@ -36,8 +36,15 @@ class StorageService {
     );
   }
 
-  getfileview(fileId: string): string {
-    return this.storage.getFileView(this.bucketId, fileId).toString();
+  getfileview(fileId: string, quality: number = 10): string {
+    return this.storage.getFilePreview(
+      this.bucketId,
+      fileId,
+      undefined,
+      undefined,
+      undefined,
+      quality
+    ).toString();
   }
 
   listFiles(): Promise<Models.FileList> {

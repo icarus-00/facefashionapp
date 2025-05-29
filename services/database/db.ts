@@ -460,7 +460,7 @@ class DatabaseService {
           videoGeneration: generation.videoGeneration,
           generationImageUrl:
             generation.state === "completed"
-              ? await storageService.getfileview(generation.generatedFileID)
+              ? await storageService.getfileview(generation.generatedFileID , 10)
               : "",
           cachedActorImageUrl: "",
           cachedOutfitImageUrls: [],

@@ -118,9 +118,9 @@ const GenerationCard = React.memo(
             style={{ width: "100%", height: "100%" }}
             resizeMode="cover"
             onError={() => setImageError(true)}
-            // @ts-ignore: quality is supported on iOS/Android
-            quality={0.5}
-            // @ts-ignore: progressiveRenderingEnabled is iOS/Android only
+
+
+
             progressiveRenderingEnabled={true}
           />
         )}
