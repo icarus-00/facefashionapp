@@ -1,24 +1,24 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Dimensions, View, Pressable, FlatList } from "react-native";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Dimensions, View, Pressable } from "react-native";
 import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "react-native";
-import { Text } from "react-native";
+import { Image, Text } from "react-native";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button, ButtonText } from "@/components/ui/button";
-
-import { EvilIcons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import databaseService, { generationsWithImage } from "@/services/database/db";
+import mockDatabaseService from "@/services/database/mockDb";
 import { router } from "expo-router";
 import { Colors } from "@/constants/Colors";
+import { useUser } from "@/context/authcontext";
+import OrbsBackground from "@/components/ui/OrbsBackground";
+import { EvilIcons } from "@expo/vector-icons";
 
-// Define constants for layout
+// Layout constants
 const { width: screenWidth } = Dimensions.get("window");
 const numColumns = 2;
 const spacing = 8;
 const itemWidth = (screenWidth - spacing * (numColumns + 1)) / numColumns;
-// 9:16 aspect ratio for image
 const itemHeight = itemWidth * (16 / 9);
 
 // Extended type to include placeholder state
@@ -26,119 +26,172 @@ type GenerationItem =
   | (generationsWithImage & { has_Motion?: boolean })
   | { id: number; isPlaceholder: true };
 
-// Generation Card Component
-const GenerationCard = ({
-  item,
-  loading = false,
-}: {
-  item: GenerationItem;
-  loading?: boolean;
-}): React.JSX.Element => {
-  const [imageError, setImageError] = useState(false);
-  const isPlaceholder = "isPlaceholder" in item;
+// Generation Card Component (memoized for performance)
+const GenerationCard = React.memo(
+  ({
+    item,
+    loading = false,
+  }: {
+    item: GenerationItem;
+    loading?: boolean;
+  }): React.JSX.Element => {
+    const [imageError, setImageError] = useState(false);
+    const isPlaceholder = "isPlaceholder" in item;
 
-  if (loading || isPlaceholder) {
+    // Detect states
+    const isGenerating = !isPlaceholder && item.state === "generating";
+    const isImageFailed = !isPlaceholder && item.state === "failed" && !item.videoUrl;
+    const isVideoFailed = !isPlaceholder && item.state === "completed" && item.videoGeneration === "failed";
+    const hasMotion = !isPlaceholder && !!item.has_Motion;
+
+    // Skeleton color logic
+    let skeletonColor = "bg-background-200";
+    if (isImageFailed) skeletonColor = "bg-red-500";
+
+    if (loading || isPlaceholder || isGenerating || isImageFailed) {
+      return (
+        <View
+          style={{
+            width: itemWidth,
+            height: itemHeight,
+            margin: spacing / 2,
+            borderRadius: 8,
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <Skeleton
+            variant="sharp"
+            style={{ width: "100%", height: "100%" }}
+            startColor={skeletonColor}
+            isLoaded={false}
+          />
+          {/* Error indicator for failed image */}
+          {isImageFailed && (
+            <View
+              style={{
+                position: "absolute",
+                top: 8,
+                left: 8,
+                backgroundColor: "rgba(255,255,255,0.85)",
+                borderRadius: 16,
+                padding: 4,
+                zIndex: 2,
+              }}
+            >
+              <EvilIcons name="exclamation" size={24} color="#ef4444" />
+            </View>
+          )}
+        </View>
+      );
+    }
+
     return (
-      <View
+      <Pressable
         style={{
           width: itemWidth,
           height: itemHeight,
           margin: spacing / 2,
           borderRadius: 8,
           overflow: "hidden",
+          backgroundColor: "#f0f0f0",
+          position: "relative",
         }}
+        onPress={() =>
+          router.push({
+            pathname: "/(app)/(auth)/generations/get",
+            params: { id: item.$id },
+          })
+        }
       >
-        <Skeleton variant="sharp" style={{ width: "100%", height: "100%" }} />
-      </View>
+        <Image
+          source={{
+            uri: item.generationImageUrl,
+          }}
+          style={{ width: "100%", height: "100%" }}
+          resizeMode="cover"
+          onError={() => setImageError(true)}
+        />
+
+        {/* Motion indicator */}
+        {hasMotion && (
+          <View
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              backgroundColor: "rgba(0,0,0,0.6)",
+              borderRadius: 12,
+              padding: 4,
+              width: 24,
+              height: 24,
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1,
+            }}
+          >
+            <MaterialIcons name="videocam" color="white" size={16} />
+          </View>
+        )}
+
+        {/* Video error badge */}
+        {isVideoFailed && (
+          <View
+            style={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#fff",
+              borderRadius: 999,
+              paddingVertical: 2,
+              paddingHorizontal: 10,
+              zIndex: 2,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 2,
+            }}
+          >
+            <MaterialIcons name="videocam" color="#ef4444" size={16} />
+            <EvilIcons name="exclamation" size={22} color="#ef4444" style={{ marginLeft: 2 }} />
+          </View>
+        )}
+
+        {"title" in item && item.title && (
+          <View
+            style={{
+              position: "absolute",
+              bottom: 0,
+              width: "100%",
+              backgroundColor: "rgba(0,0,0,0.6)",
+              padding: 8,
+            }}
+          >
+            <Text style={{ color: "white", textAlign: "center" }}>
+              {item.title}
+            </Text>
+          </View>
+        )}
+      </Pressable>
     );
   }
+);
 
-  // Check if the item has motion
-  const hasMotion = item.has_Motion === true;
-
-  return (
-    <Pressable
-      style={{
-        width: itemWidth,
-        height: itemHeight,
-        margin: spacing / 2,
-        borderRadius: 8,
-        overflow: "hidden",
-        backgroundColor: "#f0f0f0",
-        position: "relative",
-      }}
-      onPress={() =>
-        router.push({
-          pathname: "/(app)/(auth)/generations/get",
-          params: { id: item.$id },
-        })
-      }
-    >
-      <Image
-        source={{
-          uri: imageError
-            ? "https://placehold.co/900x1600/png"
-            : item.generationImageUrl,
-        }}
-        style={{ width: "100%", height: "100%" }}
-        resizeMode="cover"
-        onError={() => setImageError(true)}
-      />
-
-      {/* Motion indicator */}
-      {hasMotion && (
-        <View
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            backgroundColor: "rgba(0,0,0,0.6)",
-            borderRadius: 12,
-            padding: 4,
-            width: 24,
-            height: 24,
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1,
-          }}
-        >
-          <MaterialIcons name="videocam" color="white" size={16} />
-        </View>
-      )}
-
-      {item.title && (
-        <View
-          style={{
-            position: "absolute",
-            bottom: 0,
-            width: "100%",
-            backgroundColor: "rgba(0,0,0,0.6)",
-            padding: 8,
-          }}
-        >
-          <Text style={{ color: "white", textAlign: "center" }}>
-            {item.title}
-          </Text>
-        </View>
-      )}
-    </Pressable>
-  );
-};
-
-// Tab Component
-const TabSelector = ({
-  activeTab,
-  setActiveTab,
+// GenerationTypeTabs replaces TabSelector, fixes filtering logic
+const GenerationTypeTabs = ({
+  activeType,
+  setActiveType,
   motionCount = 0,
   imageCount = 0,
 }: {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeType: string;
+  setActiveType: (tab: string) => void;
   motionCount: number;
   imageCount: number;
 }): React.JSX.Element => {
-  // Memoize tabs array to prevent unnecessary recreations
-  const tabs = React.useMemo(
+  const tabs = useMemo(
     () => [
       { id: "all", label: "All", count: imageCount },
       { id: "motion", label: "Motion", count: motionCount },
@@ -146,106 +199,80 @@ const TabSelector = ({
     [imageCount, motionCount]
   );
 
-  // Memoize the container style to prevent recreation on each render
-  const containerStyle = React.useMemo(
-    () => ({
-      flexDirection: "row" as const,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      backgroundColor: "white",
-      borderBottomWidth: 1,
-      borderBottomColor: "#eaeaea",
-    }),
-    []
-  );
-
   return (
-    <View style={containerStyle}>
-      {tabs.map((tab) => {
-        // Memoize button style for each tab
-        const buttonStyle = React.useMemo(
-          () => ({
+    <View
+      style={{
+        flexDirection: "row",
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: "white",
+        borderBottomWidth: 1,
+        borderBottomColor: "#eaeaea",
+      }}
+    >
+      {tabs.map((tab) => (
+        <Button
+          key={tab.id}
+          variant={activeType === tab.id ? "solid" : "outline"}
+          style={{
             marginRight: 8,
-            backgroundColor: activeTab === tab.id ? Colors.light.primary[500] : "transparent",
-            borderColor: activeTab === tab.id ? "#3b82f6" : "#d1d5db",
-          }),
-          [activeTab, tab.id]
-        );
-
-        // Memoize text style for each tab
-        const textStyle = React.useMemo(
-          () => ({
-            color: activeTab === tab.id ? "white" : "#4b5563",
-          }),
-          [activeTab, tab.id]
-        );
-
-        return (
-          <Button
-            key={tab.id}
-            variant={activeTab === tab.id ? "solid" : "outline"}
-            style={buttonStyle}
-            onPress={() => setActiveTab(tab.id)}
+            backgroundColor:
+              activeType === tab.id ? Colors.light.primary[500] : "transparent",
+            borderColor: activeType === tab.id ? "#3b82f6" : "#d1d5db",
+          }}
+          onPress={() => setActiveType(tab.id)}
+        >
+          <ButtonText
+            style={{
+              color: activeType === tab.id ? "white" : "#4b5563",
+            }}
           >
-            <ButtonText style={textStyle}>
-              {tab.label} ({tab.count})
-            </ButtonText>
-          </Button>
-        );
-      })}
+            {tab.label} ({tab.count})
+          </ButtonText>
+        </Button>
+      ))}
     </View>
   );
 };
+
 export default function GeneratePage(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeType, setActiveType] = useState<string>("all");
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [generationsData, setGenerationsData] = useState<GenerationItem[]>([]);
   const [filteredData, setFilteredData] = useState<GenerationItem[]>([]);
 
-  // Keep track of counts for UI
-  const motionCount = generationsData.filter(
-    (item) => !("isPlaceholder" in item) && item.has_Motion === true
-  ).length;
+  const { testMode } = useUser();
+  const dbService = testMode.enabled ? mockDatabaseService : databaseService;
 
-  const imageCount = generationsData.filter(
-    (item) => !("isPlaceholder" in item)
-  ).length;
-
-  // Fetch data function
+  // Fetch data function (no random has_Motion, use actual property)
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await databaseService.listGenerations();
-
-      // Assuming the API doesn't return has_Motion, let's simulate it
-      // In a real scenario, you would get this from your API
-      const dataWithMotion = data.map((item) => ({
-        ...item,
-        has_Motion: Math.random() > 0.5, // Simulate has_Motion randomly for demo purposes
-      }));
-
-      setGenerationsData(dataWithMotion);
+      const data = await dbService.listGenerations();
+      setGenerationsData(data);
     } catch (error) {
       console.error("Error fetching generations:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [dbService]);
 
-  // Filter data based on active tab
+  // Filter data based on activeType
   useEffect(() => {
-    if (activeTab === "all") {
+    if (activeType === "all") {
       setFilteredData(generationsData);
-    } else if (activeTab === "motion") {
+    } else if (activeType === "motion") {
       setFilteredData(
         generationsData.filter(
-          (item) => !("isPlaceholder" in item) && item.has_Motion === true
+          (item) =>
+            !("isPlaceholder" in item) &&
+            !!item.has_Motion // Only true if has_Motion is true
         )
       );
     }
-  }, [activeTab, generationsData]);
+  }, [activeType, generationsData]);
 
   // Initial data load
   useEffect(() => {
@@ -259,25 +286,42 @@ export default function GeneratePage(): React.JSX.Element {
   };
 
   // Generate placeholder data when loading
-  const placeholderData = Array.from({ length: 6 }, (_, index) => ({
-    id: index,
-    isPlaceholder: true as const,
-  }));
+  const placeholderData = useMemo(
+    () =>
+      Array.from({ length: 6 }, (_, index) => ({
+        id: index,
+        isPlaceholder: true as const,
+      })),
+    []
+  );
 
   // Data to display based on loading state
   const displayData = loading ? placeholderData : filteredData;
 
+  // Accurate counts for tabs
+  const motionCount = useMemo(
+    () =>
+      generationsData.filter(
+        (item) => !("isPlaceholder" in item) && !!item.has_Motion
+      ).length,
+    [generationsData]
+  );
+  const imageCount = useMemo(
+    () => generationsData.filter((item) => !("isPlaceholder" in item)).length,
+    [generationsData]
+  );
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
-      <TabSelector
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+    <View style={{ flex: 1, backgroundColor: "white" }}>
+      <OrbsBackground />
+      <GenerationTypeTabs
+        activeType={activeType}
+        setActiveType={setActiveType}
         motionCount={motionCount}
         imageCount={imageCount}
       />
-      <FlatList
+      <FlashList
         data={displayData}
-
         renderItem={({ item }) => (
           <GenerationCard item={item} loading={loading} />
         )}
@@ -286,10 +330,10 @@ export default function GeneratePage(): React.JSX.Element {
         }
         numColumns={numColumns}
         contentContainerStyle={{ padding: spacing / 2 }}
-
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        estimatedItemSize={itemHeight + spacing}
         ListEmptyComponent={
           <View
             style={{
@@ -301,13 +345,13 @@ export default function GeneratePage(): React.JSX.Element {
             }}
           >
             <Text style={{ color: "#6b7280" }}>
-              {activeTab === "motion"
+              {activeType === "motion"
                 ? "No motion generations found"
                 : "No generations found"}
             </Text>
           </View>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }

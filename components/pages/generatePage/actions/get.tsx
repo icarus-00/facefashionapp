@@ -25,6 +25,9 @@ import { Button } from "@/components/ui/button";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useEvent } from "expo";
 import { router } from "expo-router";
+import mockDatabaseService from "@/services/database/mockDb";
+import { useUser } from "@/context/authcontext";
+import useStore from '@/store/lumaGeneration/useStore';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const ItemHeight = screenHeight * 0.85; // Reduced height to make room for buttons below
@@ -317,11 +320,14 @@ export default function GetGeneration({ id }: { id: string }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const flashListRef = useRef<FlashList<any>>(null);
+  const { testMode } = useUser();
+  const service = testMode.enabled ? mockDatabaseService : databaseService;
+  const { setVideoGenInput } = useStore();
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const data = await databaseService.getGeneration(id);
+      const data = await service.getGeneration(id);
       setGenerationsData(data);
     } catch (error) {
       console.error("Failed to fetch generation:", error);
@@ -337,7 +343,11 @@ export default function GetGeneration({ id }: { id: string }) {
   };
 
   const handleCreateVideo = () => {
-    console.log("Navigate to create video screen with generation ID:", id);
+    // Store videoGenInput in the global store
+    setVideoGenInput({ documentId: id, videoprompt: "" });
+    router.push('/(app)/(auth)/(tabs)/(generation)/chat')
+    // Optionally, navigate to the chat/generation screen if needed
+    // router.push('/(app)/(auth)/(tabs)/(generation)/chat');
   };
 
   const handleRetryVideo = () => {

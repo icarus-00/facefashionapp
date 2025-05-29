@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Skeleton } from "@rneui/base";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dimensions,
   TouchableOpacity,
@@ -20,16 +20,17 @@ import { Menu, MenuItem, MenuItemLabel } from "@/components/ui/menu";
 import { ScrollView } from "react-native-gesture-handler";
 import { useUser } from "@/context/authcontext";
 import databaseService, { ActorWithImage, OutfitWithImage, generationsWithImage } from "@/services/database/db";
+import Modal from "react-native-modal";
 
 const { width } = Dimensions.get("window");
 const numColumns = 3;
 const spacing = 8;
 const itemWidth = (width - spacing * (numColumns + 1)) / numColumns;
 
-const ProfilePage = () => {
+const ProfilePage = ({ onEditProfile }: { onEditProfile: () => void }) => {
   const router = useRouter();
   const { logout } = useUser();
-  const [activeTab, setActiveTab] = useState<"actors" | "items" | "history">("actors");
+  const [activeTab, setActiveTab] = useState<'history'>('history');
   const [userDetails, setUserDetails] = useState<{
     name: string;
     email: string;
@@ -42,6 +43,7 @@ const ProfilePage = () => {
   const [generations, setGenerations] = useState<generationsWithImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   // Fetch user profile data
   const fetchUserProfile = useCallback(async () => {
@@ -89,6 +91,7 @@ const ProfilePage = () => {
       console.error("Error fetching generations:", error);
     }
   }, []);
+  console.log("fullscreenImage", fullscreenImage);
 
   // Load all data
   const loadAllData = useCallback(async () => {
@@ -200,32 +203,28 @@ const ProfilePage = () => {
     </TouchableOpacity>
   );
 
-  // Render a history item card
+  // Render a history item card (no overlay, image focus top, fullscreen on press)
   const renderHistoryItem = ({ item }: { item: generationsWithImage }) => (
     <TouchableOpacity
       className="overflow-hidden rounded-lg"
       style={{
         width: itemWidth,
         height: itemWidth * 1.2,
-        margin: spacing / 2
+        margin: spacing / 2,
       }}
-      onPress={() => navigateToGeneration(item)}
+      onPress={() => {
+        if (!loading && item.state !== "generating") setFullscreenImage(item.generationImageUrl);
+      }}
+      activeOpacity={0.85}
     >
       {loading || item.state === "generating" ? (
         <Skeleton style={{ width: "100%", height: "100%", borderRadius: 8 }} />
       ) : (
-        <>
-          <Image
-            source={{ uri: item.generationImageUrl }}
-            style={{ width: "100%", height: "100%", borderRadius: 8 }}
-            resizeMode="cover"
-          />
-          <View className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
-            <Text className="text-white text-sm font-medium" numberOfLines={1}>
-              {item.state === "completed" ? "Completed" : "Failed"}
-            </Text>
-          </View>
-        </>
+        <Image
+          source={{ uri: item.generationImageUrl }}
+          style={{ width: "100%", height: "100%", borderRadius: 8 }}
+          resizeMode="cover"
+        />
       )}
     </TouchableOpacity>
   );
@@ -233,7 +232,6 @@ const ProfilePage = () => {
   return (
     <View className="h-full bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-
       {/* Profile Header */}
       <View className="items-center pt-4 pb-2 px-4 border-b border-gray-200">
         <View className="relative">
@@ -243,11 +241,10 @@ const ProfilePage = () => {
             <Image
               source={{ uri: userDetails?.url }}
               className="w-24 h-24 rounded-full"
+              resizeMode="cover"
+
             />
           )}
-          <TouchableOpacity className="absolute bottom-0 right-0 bg-cyan-500 w-8 h-8 rounded-full items-center justify-center">
-            <Text className="text-white text-xl">+</Text>
-          </TouchableOpacity>
         </View>
         <View className="w-full flex items-center justify-center">
           {loading ? (
@@ -269,7 +266,7 @@ const ProfilePage = () => {
 
         {/* Edit Profile Button */}
         <View className="flex-row mt-4 w-full">
-          <TouchableOpacity className="flex-1 bg-gray-100 py-2 rounded-lg border border-gray-300">
+          <TouchableOpacity className="flex-1 bg-gray-100 py-2 rounded-lg border border-gray-300" onPress={onEditProfile}>
             <Text className="text-black text-center font-semibold">
               Edit profile
             </Text>
@@ -297,123 +294,73 @@ const ProfilePage = () => {
             </MenuItem>
           </Menu>
         </View>
-
-        {/* Bio */}
-        <TouchableOpacity className="mt-3 mb-2 w-full items-center">
-          <Text className="text-center text-gray-500">+ Add bio</Text>
-        </TouchableOpacity>
       </View>
 
-      {/* Tab Navigation */}
+      {/* Only show history tab and content */}
       <View className="flex-row border-b border-gray-200">
         <TouchableOpacity
-          className={`flex-1 items-center py-3 ${activeTab === "actors" ? "border-b-2 border-black" : ""}`}
-          onPress={() => setActiveTab("actors")}
+          className={`flex-1 items-center py-3 border-b-2 border-black`}
+          onPress={() => setActiveTab('history')}
         >
-          <Text className={activeTab === "actors" ? "font-bold" : ""}>
-            Actors
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className={`flex-1 items-center py-3 ${activeTab === "items" ? "border-b-2 border-black" : ""}`}
-          onPress={() => setActiveTab("items")}
-        >
-          <Text className={activeTab === "items" ? "font-bold" : ""}>
-            Items
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className={`flex-1 items-center py-3 ${activeTab === "history" ? "border-b-2 border-black" : ""}`}
-          onPress={() => setActiveTab("history")}
-        >
-          <Text className={activeTab === "history" ? "font-bold" : ""}>
-            History
-          </Text>
+          <Text className={"font-bold"}>History</Text>
         </TouchableOpacity>
       </View>
 
       {/* Content Area */}
       <View className="flex-1 w-full">
-        {activeTab === "actors" && (
-          actors.length > 0 ? (
-            <FlashList
-              data={actors}
-              renderItem={renderActorItem}
-              keyExtractor={(item) => item.$id}
-              numColumns={3}
-              estimatedItemSize={itemWidth * 1.5}
-              contentContainerStyle={{ padding: spacing / 2 }}
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-            />
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              <Text className="text-gray-500">No actors added yet</Text>
-              <TouchableOpacity
-                className="mt-4 bg-primary py-2 px-4 rounded-lg"
-                onPress={() => router.push("/(app)/(auth)/actor/create")}
-              >
-                <Text className="text-white font-medium">Add Actors</Text>
-              </TouchableOpacity>
-            </View>
-          )
+        {generations.length > 0 ? (
+          <FlashList
+            data={generations}
+            renderItem={renderHistoryItem}
+            keyExtractor={(item) => item.$id}
+            numColumns={3}
+            estimatedItemSize={itemWidth * 1.2}
+            contentContainerStyle={{ padding: spacing / 2 }}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            removeClippedSubviews
+          />
+        ) : (
+          <View className="flex-1 items-center justify-center">
+            <Text className="text-gray-500">No generation history yet</Text>
+            <TouchableOpacity
+              className="mt-4 bg-primary py-2 px-4 rounded-lg"
+              onPress={() => router.push("/(app)/(auth)/(tabs)/(generation)/chat")}
+            >
+              <Text className="text-white font-medium">
+                Create Generation
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
+        {/* Fullscreen image modal using react-native-modal */}
+        <Modal
+          isVisible={!!fullscreenImage}
+          onBackdropPress={() => setFullscreenImage(null)}
+          onBackButtonPress={() => setFullscreenImage(null)}
+          style={{ margin: 0, justifyContent: 'center', alignItems: 'center' }}
+          backdropOpacity={0.9}
+          animationIn="fadeIn"
+          animationOut="fadeOut"
+          useNativeDriver
+        >
+          <View style={{ flex: 1, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.95)' }}>
+            <TouchableOpacity style={{ position: "absolute", top: 40, right: 20, zIndex: 101 }} onPress={() => setFullscreenImage(null)}>
+              <Ionicons name="close" size={36} color="#fff" />
+            </TouchableOpacity>
 
-        {activeTab === "items" && (
-          outfits.length > 0 ? (
-            <FlashList
-              data={outfits}
-              renderItem={renderClothingItem}
-              keyExtractor={(item) => item.$id}
-              numColumns={3}
-              estimatedItemSize={itemWidth * 1.2}
-              contentContainerStyle={{ padding: spacing / 2 }}
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-            />
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              <Text className="text-gray-500">No clothing items added yet</Text>
-              <TouchableOpacity
-                className="mt-4 bg-primary py-2 px-4 rounded-lg"
-                onPress={() => router.push("/(app)/(auth)/outfit/create")}
-              >
-                <Text className="text-white font-medium">
-                  Add Clothing Items
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )
-        )}
 
-        {activeTab === "history" && (
-          generations.length > 0 ? (
-            <FlashList
-              data={generations}
-              renderItem={renderHistoryItem}
-              keyExtractor={(item) => item.$id}
-              numColumns={3}
-              estimatedItemSize={itemWidth * 1.2}
-              contentContainerStyle={{ padding: spacing / 2 }}
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
+
+            <Image
+              source={{ uri: fullscreenImage! }}
+              style={{ width: "100%", height: "100%", borderRadius: 8 }}
+
+              onError={e => console.log('Image load error', e.nativeEvent)}
             />
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              <Text className="text-gray-500">No generation history yet</Text>
-              <TouchableOpacity
-                className="mt-4 bg-primary py-2 px-4 rounded-lg"
-                onPress={() => router.push("/(app)/(auth)/(tabs)/(generation)/chat")}
-              >
-                <Text className="text-white font-medium">
-                  Create Generation
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )
-        )}
+
+
+          </View>
+        </Modal>
       </View>
     </View>
   );

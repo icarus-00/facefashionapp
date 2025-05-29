@@ -83,8 +83,8 @@ export default function Outfit() {
 
       router.push("/(app)/(auth)/(tabs)/(generation)/chat")
 
-      
-    } 
+
+    }
     // If not selecting (showing plus button), navigate to actor gallery
     else if (!selecting) {
       router.push("/(app)/(auth)/(tabs)/actor")
@@ -95,7 +95,7 @@ export default function Outfit() {
   // Calculate rotation for animation
   const spin = rotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["0deg", "45deg"],
+    outputRange: ["90deg", "0deg"],
   })
 
   return (

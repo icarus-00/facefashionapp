@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import {
     View,
@@ -16,35 +15,56 @@ import { LinearGradient } from "expo-linear-gradient"
 import SafeAreaView from "@/components/atoms/safeview/safeview"
 import { useRouter } from "expo-router"
 import useStore from "@/store/lumaGeneration/useStore"
-import { generateImage } from "@/services/generation/gen"
+import { generateImage, generateVideo } from "@/services/generation/gen"
 
 export default function ChatScreen() {
     const [prompt, setPrompt] = useState("")
     const [isGenerating, setIsGenerating] = useState(false)
     const router = useRouter()
-    const { outfitItems, actorItems, getLength, clearOutfitItems, removeActorItems } = useStore()
+    const { outfitItems, actorItems, getLength, clearOutfitItems, removeActorItems, videoGenInput, clearVideoGenInput } = useStore()
 
     const totalItems = getLength()
     const hasActor = actorItems?.imageUrl && actorItems?.actorName
-
     const hasOutfits = outfitItems && outfitItems.length > 0
+    const hasVideoGenInput = !!videoGenInput
+
+    // Helper: get preview image for videoGenInput (if available)
+    const getVideoInputPreview = () => {
+        // Try to use a preview image if your app provides one, otherwise fallback to a placeholder
+        // If you store a preview image URL in videoGenInput, use it here. Otherwise, just show an icon.
+        return null // No image field in VideoGenInput
+    }
 
     const handleGenerate = async () => {
+        if (hasVideoGenInput) {
+            if (prompt.trim() === "") {
+                alert("Please enter a prompt")
+                return
+            }
+            try {
+                setIsGenerating(true)
+                generateVideo({ ...videoGenInput, videoprompt: prompt.trim() })
+                clearVideoGenInput()
+                router.push("/(app)/(auth)/(tabs)/(generation)/generations")
+            } catch (error) {
+                console.error("Video generation failed:", error)
+                alert("Failed to generate video. Please try again.")
+            } finally {
+                setIsGenerating(false)
+            }
+            return
+        }
+        // Image generation flow
         if (!hasActor || !hasOutfits) {
-            // Show error if no actor or outfits selected
             alert("Please select both an actor and at least one outfit item")
             return
         }
-
         if (prompt.trim() === "") {
-            // Show error if no prompt
             alert("Please enter a prompt")
             return
         }
-
         try {
             setIsGenerating(true)
-
             generateImage({
                 actorRef: actorItems.imageID,
                 outfitRefs: outfitItems.map((item) => item.imageID),
@@ -52,11 +72,7 @@ export default function ChatScreen() {
             })
             clearOutfitItems()
             removeActorItems()
-            // Navigate to generations page after successful generation
             router.push("/(app)/(auth)/(tabs)/(generation)/generations")
-
-            // Clear the items after generation (optional)
-            // clearItems()
         } catch (error) {
             console.error("Generation failed:", error)
             alert("Failed to generate image. Please try again.")
@@ -66,7 +82,7 @@ export default function ChatScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             {/* Background gradient circles */}
             <LinearGradient
                 colors={["rgba(255, 165, 0, 0.1)", "rgba(255, 165, 0, 0)"]}
@@ -89,12 +105,36 @@ export default function ChatScreen() {
 
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Selected Items</Text>
-                <Text style={styles.headerSubtitle}>{totalItems} items selected</Text>
+                <Text style={styles.headerSubtitle}>
+                    {hasVideoGenInput ? "Video input selected" : `${totalItems} items selected`}
+                </Text>
             </View>
-
             <ScrollView bounces={false} style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-                {/* Actor Section */}
-                {hasActor && (
+                {/* VideoGenInput Section */}
+                {hasVideoGenInput && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Video Input</Text>
+                        <View style={[styles.actorContainer, { alignItems: 'center', justifyContent: 'center' }]}>
+                            {/* Show the selected generation image to the left of the ID */}
+                            <Image
+                                source={{ uri: videoGenInput && (videoGenInput as any).generationImageUrl ? (videoGenInput as any).generationImageUrl : "/placeholder.svg?height=100&width=100" }}
+                                style={[styles.actorImage, { margin: 16 }]}
+                                resizeMode="cover"
+                            />
+                            <View style={styles.actorInfo}>
+                                <Text style={styles.actorName}>Video Generation Input</Text>
+                                <Text style={styles.actorDescription} numberOfLines={2}>
+                                    Video will be generated from the selected document.
+                                </Text>
+                                <Text style={styles.actorDescription} numberOfLines={2}>
+                                    Document ID: {videoGenInput.documentId}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                )}
+                {/* Actor/Outfit Section */}
+                {!hasVideoGenInput && hasActor && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Actor</Text>
                         <View style={styles.actorContainer}>
@@ -114,11 +154,9 @@ export default function ChatScreen() {
                         </View>
                     </View>
                 )}
-
                 {/* Outfit Items Section */}
-                {hasOutfits && (
+                {!hasVideoGenInput && hasOutfits && (
                     <View style={styles.section}>
-
                         <View style={styles.outfitGrid}>
                             {outfitItems.map((item, index) => (
                                 <View key={item.imageID || index} style={styles.outfitItem}>
@@ -135,17 +173,15 @@ export default function ChatScreen() {
                         </View>
                     </View>
                 )}
-
                 {/* Empty State */}
-                {!hasActor && !hasOutfits && (
+                {!hasVideoGenInput && !hasActor && !hasOutfits && (
                     <View style={styles.emptyState}>
                         <Ionicons name="shirt-outline" size={64} color="#ccc" />
                         <Text style={styles.emptyStateText}>No items selected</Text>
-                        <Text style={styles.emptyStateSubtext}>Select an actor and outfit items to generate an image</Text>
+                        <Text style={styles.emptyStateSubtext}>Select an actor and outfit items or a video input to generate</Text>
                     </View>
                 )}
             </ScrollView>
-
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "padding"}
                 keyboardVerticalOffset={100}
@@ -162,7 +198,7 @@ export default function ChatScreen() {
                 <Pressable
                     style={[styles.generateButton, isGenerating && styles.generatingButton]}
                     onPress={handleGenerate}
-                    disabled={isGenerating || !hasActor || !hasOutfits || prompt.trim() === ""}
+                    disabled={isGenerating || (!hasVideoGenInput && (!hasActor || !hasOutfits)) || prompt.trim() === ""}
                 >
                     {isGenerating ? (
                         <Text style={styles.buttonText}>Generating...</Text>
@@ -174,7 +210,7 @@ export default function ChatScreen() {
                     )}
                 </Pressable>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
     )
 }
 
@@ -192,7 +228,7 @@ const styles = StyleSheet.create({
     },
     header: {
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 0,
         borderBottomWidth: 1,
         borderBottomColor: "#eaeaea",
     },

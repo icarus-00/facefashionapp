@@ -19,11 +19,13 @@ interface OutfitCardProps {
   onLongPress: () => void
   selecting: boolean
   selected: boolean
+  actorSelected: boolean // <-- add this prop
 }
 
-const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting, selected }: OutfitCardProps) => {
+const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting, selected, actorSelected }: OutfitCardProps) => {
   // Check if the item is a placeholder
   const isPlaceholder = "isPlaceholder" in item
+  console.log(selecting)
 
   if (loading || isPlaceholder) {
     return (
@@ -33,48 +35,53 @@ const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting
     )
   }
 
+  // Checkbox: show if in selection mode
+  const showCheckbox = selecting;
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
-      onLongPress={onLongPress}
-      style={[styles.card, selected && styles.selectedCard, Platform.OS === "android" && styles.androidCard]}
+      onLongPress={selecting ? onLongPress : undefined}
+      style={[
+        styles.card,
+        selected && styles.selectedCard,
+        Platform.OS === "android" && styles.androidCard,
+      ]}
+      disabled={false}
     >
       <Image
         source={{ uri: item.imageUrl }}
         style={styles.image}
         contentFit="cover"
         transition={300}
-
       />
 
-      {/* Selection indicator - Always show when selected */}
+      {/* Custom Checkbox (bottom left) */}
+      {showCheckbox && (
+        <View style={styles.checkboxContainer}>
+          <View style={styles.checkboxOuter}>
+            {selected ? <View style={styles.checkboxInner} /> : null}
+          </View>
+        </View>
+      )}
+
+      {/* Selection indicator - Always show when selected (top right) */}
       {selected && (
         <View style={styles.selectedIndicator}>
           <CheckIcon color="white" />
         </View>
       )}
 
-
       {/* Outfit name label */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.8)']}
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 60,
-          justifyContent: 'flex-end',
-          paddingHorizontal: 10,
-          paddingBottom: 8
-        }}
+        colors={["transparent", "rgba(0,0,0,0.8)"]}
+        style={styles.gradientLabel}
       >
         <Text style={styles.label} numberOfLines={1} ellipsizeMode="tail">
           {item.outfitName}
-        </Text>                  
+        </Text>
       </LinearGradient>
-
     </TouchableOpacity>
   )
 })
@@ -126,13 +133,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  labelContainer: {
+  checkboxContainer: {
     position: "absolute",
+    bottom: 10,
+    left: 10,
+    zIndex: 10,
+  },
+  checkboxOuter: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#fff",
+    backgroundColor: "rgba(255,255,255,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#111",
+  },
+  gradientLabel: {
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 8,
+    height: 60,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 10,
+    paddingBottom: 8
   },
   label: {
     color: "white",
