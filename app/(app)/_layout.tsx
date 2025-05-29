@@ -5,10 +5,13 @@ import { useEffect } from "react";
 import { Platform } from "react-native";
 
 export default function AppLayout() {
-  const { isLoading, current } = useUser();
+  const { isLoading, current, enableTestMode, testMode } = useUser();
 
   const router = useRouter();
   const segments = useSegments();
+
+  // Enable test mode for offline testing
+
 
   useEffect(() => {
     console.log(current);
@@ -16,14 +19,14 @@ export default function AppLayout() {
     const authgroup = segments[1] == "(auth)";
     const appgroup = segments[0] == "(app)";
     console.log(current)
-    const isLoggedIn = (current!== undefined);
+
+    // Check if user is logged in, accounting for test mode
+    const isLoggedIn = (current !== undefined && current !== null) || (testMode.enabled && testMode.mockUserId);
 
     console.log("authgroup", authgroup);
     console.log("appgroup", appgroup);
     console.log("isLoggedIn", isLoggedIn);
-    
-    
-    
+
     if (isLoading) {
       return;
     }

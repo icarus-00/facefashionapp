@@ -124,7 +124,6 @@ export default function PillTabBar({ state, descriptors, navigation }: BottomTab
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         position: 'relative',
@@ -142,6 +141,7 @@ const styles = StyleSheet.create({
         height: 44,
         position: 'relative',
         overflow: 'hidden',
+        marginTop: 12,
     },
     indicator: {
         position: 'absolute',

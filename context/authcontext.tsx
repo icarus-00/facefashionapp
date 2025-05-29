@@ -33,6 +33,13 @@ interface OtpCreds {
   redirectUrl: string;
 }
 
+// Test mode type for enabling mock data usage
+interface TestModeConfig {
+  enabled: boolean;
+  mockUserId?: string;
+  mockEmail?: string;
+}
+
 type UserContextType = {
   current: Models.User<Models.Preferences> | null; //check if there's a user
   isLoading: boolean;
@@ -41,6 +48,8 @@ type UserContextType = {
   register: (email: string, password: string) => Promise<void>;
   verifyOtp: (email: string, token: string, type: string | "email", userId: string) => Promise<void>;
   Toast: (message: string) => void;
+  testMode: TestModeConfig;
+  enableTestMode: (config?: Partial<TestModeConfig>) => void;
 };
 
 // Create the context with an initial undefined value
@@ -64,12 +73,51 @@ export default function UserProvider({
 }: UserProviderProps): JSX.Element {
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [testMode, setTestMode] = useState<TestModeConfig>({ enabled: false });
   const { initializeUserId } = useStore();
+
+  // Function to enable test mode with optional configuration
+  function enableTestMode(config?: Partial<TestModeConfig>): void {
+    const newConfig = {
+      ...testMode,
+      ...config,
+      enabled: config?.enabled !== undefined ? config.enabled : true
+    };
+    setTestMode(newConfig);
+    console.log("Test mode enabled:", newConfig);
+
+    // If test mode is enabled and we have mock user data, set it immediately
+    if (newConfig.enabled && newConfig.mockUserId) {
+      const mockUser = {
+        $id: newConfig.mockUserId,
+        email: newConfig.mockEmail || "test@example.com",
+      } as Models.User<Models.Preferences>;
+
+      setUser(mockUser);
+      initializeUserId(mockUser.$id);
+      ToastGlue("Test mode active: Using mock user data");
+    }
+  }
+
   async function login(
     creds: emailpasswordCreds | OtpCreds,
     otp: boolean = false
   ): Promise<void | Models.Token> {
     try {
+      // If test mode is enabled, bypass actual authentication
+      if (testMode.enabled) {
+        console.log("Test mode active: Bypassing actual authentication");
+        const mockUser = {
+          $id: testMode.mockUserId || "test-user-id",
+          email: testMode.mockEmail || ("email" in creds ? creds.email : "test@example.com"),
+        } as Models.User<Models.Preferences>;
+
+        setUser(mockUser);
+        initializeUserId(mockUser.$id);
+        ToastGlue("Test mode: You are logged in");
+        return;
+      }
+
       if (otp) {
         const { email, redirectUrl } = creds as OtpCreds;
         const token = await account.createEmailToken(ID.unique(), email);
@@ -99,6 +147,20 @@ export default function UserProvider({
   }
   async function verifyOtp(email: string, token: string, type: string, userId: string): Promise<void> {
     try {
+      // If test mode is enabled, bypass actual verification
+      if (testMode.enabled) {
+        console.log("Test mode active: Bypassing OTP verification");
+        const mockUser = {
+          $id: testMode.mockUserId || userId || "test-user-id",
+          email: testMode.mockEmail || email || "test@example.com",
+        } as Models.User<Models.Preferences>;
+
+        setUser(mockUser);
+        initializeUserId(mockUser.$id);
+        ToastGlue("Test mode: OTP verified");
+        return;
+      }
+
       const result = await account.createSession(userId, token);
       console.log("otp data" + token + userId);
       console.log(result);
@@ -121,6 +183,16 @@ export default function UserProvider({
 
   async function logout(): Promise<void> {
     try {
+      // If in test mode, just clear the user state without server calls
+      if (testMode.enabled) {
+        console.log("Test mode active: Bypassing actual logout");
+        initializeUserId("");
+        setUser(null);
+        router.replace("/(app)");
+        ToastGlue("Test mode: Logged out");
+        return;
+      }
+
       await account.deleteSession("current");
 
       initializeUserId("");
@@ -136,6 +208,20 @@ export default function UserProvider({
 
   async function register(email: string, password: string): Promise<void> {
     try {
+      // If test mode is enabled, bypass actual registration
+      if (testMode.enabled) {
+        console.log("Test mode active: Bypassing actual registration");
+        const mockUser = {
+          $id: testMode.mockUserId || "test-user-id",
+          email: testMode.mockEmail || email,
+        } as Models.User<Models.Preferences>;
+
+        setUser(mockUser);
+        initializeUserId(mockUser.$id);
+        ToastGlue("Test mode: Account created successfully");
+        return;
+      }
+
       await account.create(ID.unique(), email, password);
       const result = await login({ email, password });
       console.log(result);
@@ -150,9 +236,22 @@ export default function UserProvider({
   async function checkSession(): Promise<void> {
     try {
       setIsLoading(true);
-      const loggedIn = await account.get();
-      initializeUserId(loggedIn?.$id!);
-      setUser(loggedIn!);
+
+      // If test mode is enabled with mock user data, use that instead of checking session
+      if (testMode.enabled && testMode.mockUserId) {
+        console.log("Test mode active: Using mock session");
+        const mockUser = {
+          $id: testMode.mockUserId,
+          email: testMode.mockEmail || "test@example.com",
+        } as Models.User<Models.Preferences>;
+
+        initializeUserId(mockUser.$id);
+        setUser(mockUser);
+      } else {
+        const loggedIn = await account.get();
+        initializeUserId(loggedIn?.$id!);
+        setUser(loggedIn!);
+      }
     } catch (err) {
       initializeUserId("");
       setUser(null);
@@ -172,7 +271,17 @@ export default function UserProvider({
 
   return (
     <UserContext.Provider
-      value={{ current: user, isLoading, login, logout, register, Toast, verifyOtp }}
+      value={{
+        current: user,
+        isLoading,
+        login,
+        logout,
+        register,
+        Toast,
+        verifyOtp,
+        testMode,
+        enableTestMode
+      }}
     >
       {children}
     </UserContext.Provider>

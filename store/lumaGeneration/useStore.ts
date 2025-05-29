@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { account } from "@/services/config/appwrite";
 import { images } from "../../constants/images";
+import { VideoGenInput } from "@/interfaces/generationApi";
 
 // Define outfit category types
 type OutfitCategory = "full" | "top" | "bottom" | "accessory";
@@ -38,6 +39,8 @@ type Data = {
   userId: string;
   length: number;
   outfitImageUrls: string[];
+  // Add for video generation
+  videoGenInput: VideoGenInput | null;
 };
 
 type Actions = {
@@ -63,6 +66,8 @@ type Actions = {
   setOutfitImageUrls: (urls: string[]) => void;
   updateActorItems: (imageID: string, imageUrl: string, actorName: string, age: number, weight: number, height: number, bio: string, gender: string, genre: string) => void;
   removeActorItems: () => void;
+  setVideoGenInput: (input: VideoGenInput) => void;
+  clearVideoGenInput: () => void;
 };
 
 const useStore = create<Data & Actions>()(
@@ -77,6 +82,7 @@ const useStore = create<Data & Actions>()(
 
       actorItems: { imageID: "", imageUrl: "", actorName: "", age: 0, weight: 0, height: 0, bio: "", gender: "", genre: ""},
 
+      videoGenInput: null,
 
       initializeUserId: (id) => {
         set({ userId: id });
@@ -85,8 +91,11 @@ const useStore = create<Data & Actions>()(
       updateActorImageID: (imageID, imageUrl) =>
         set({ actorImageID: imageID, actorImageUrl: imageUrl }),
       updateActorItems: (imageID, imageUrl, actorName, age, weight, height, bio, gender, genre) => {
-        console.log(imageUrl);
-        set({ actorItems: { imageID: imageID, imageUrl: imageUrl, actorName, age, weight, height, bio, gender, genre } })
+        // Selecting an actor clears videoGenInput
+        set({
+          videoGenInput: null,
+          actorItems: { imageID: imageID, imageUrl: imageUrl, actorName, age, weight, height, bio, gender, genre }
+        })
       },
       removeActorItems: () =>
         set({ actorItems: { imageID: "", imageUrl: "", actorName: "", age: 0, weight: 0, height: 0, bio: "", gender: "", genre: "" } }),
@@ -100,7 +109,9 @@ const useStore = create<Data & Actions>()(
       },
 
       addOutfitItem: (imageID, category, imageUrl, outfitName, brand, size, material, garmentType, attireTheme) => {
+        // Selecting an outfit clears videoGenInput
         const { outfitItems, showFullOutfitAlert } = get();
+        set({ videoGenInput: null });
         
         // Determine the garment type mapping to our categories
         // This is important for validation of selections
@@ -170,6 +181,7 @@ const useStore = create<Data & Actions>()(
 
       removeOutfitItem: (category) => {
         const { outfitItems } = get();
+        // Always create a new array reference
         set({
           outfitItems: outfitItems.filter((item) => item.category !== category),
         });
@@ -194,6 +206,16 @@ const useStore = create<Data & Actions>()(
 
       updateActorImageUrl: (imageUrl) => set({ actorImageUrl: imageUrl }),
       setOutfitImageUrls: (urls) => set({ outfitImageUrls: urls }),
+      setVideoGenInput: (input) => {
+        // Clear actor and outfit selections when setting videoGenInput
+        set({
+          videoGenInput: input,
+          actorItems: { imageID: "", imageUrl: "", actorName: "", age: 0, weight: 0, height: 0, bio: "", gender: "", genre: "" },
+          outfitItems: [],
+        });
+      },
+      clearVideoGenInput: () => set({ videoGenInput: null }),
+      
     }),
     {
       name: "app-storage",

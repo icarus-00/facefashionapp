@@ -3,11 +3,11 @@ import { View, StyleSheet, Dimensions, TouchableOpacity, Platform, Text } from "
 import { Image } from "expo-image"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CheckIcon } from "@/components/ui/icon"
-import { LinearGradient } from "expo-linear-gradient";
+import { LinearGradient } from "expo-linear-gradient"
 
 const { width: screenWidth } = Dimensions.get("screen")
 const numColumns = 2
-const spacing = Platform.OS === "android" ? 10 : 7 // Increased spacing for Android
+const spacing = Platform.OS === "android" ? 10 : 7
 const itemWidth = (screenWidth - spacing * (numColumns + 3)) / numColumns
 const itemHeight = itemWidth * 1.5
 
@@ -19,9 +19,10 @@ interface OutfitCardProps {
   onLongPress: () => void
   selecting: boolean
   selected: boolean
+  actorSelected: boolean
 }
 
-const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting, selected }: OutfitCardProps) => {
+const OutfitCard = ({ item, loading, index, onPress, onLongPress, selecting, selected, actorSelected }: OutfitCardProps) => {
   // Check if the item is a placeholder
   const isPlaceholder = "isPlaceholder" in item
 
@@ -33,51 +34,56 @@ const OutfitCard = memo(({ item, loading, index, onPress, onLongPress, selecting
     )
   }
 
+  // Use the selected prop directly from parent
+  const isSelected = selected
+
+  // Checkbox: show if in selection mode
+  const showCheckbox = selecting
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
-      onLongPress={onLongPress}
-      style={[styles.card, selected && styles.selectedCard, Platform.OS === "android" && styles.androidCard]}
+      onLongPress={selecting ? onLongPress : undefined}
+      style={[
+        styles.card,
+        isSelected && styles.selectedCard,
+        Platform.OS === "android" && styles.androidCard,
+      ]}
+      disabled={false}
     >
       <Image
         source={{ uri: item.imageUrl }}
         style={styles.image}
         contentFit="cover"
         transition={300}
-
       />
 
-      {/* Selection indicator - Always show when selected */}
-      {selected && (
-        <View style={styles.selectedIndicator}>
-          <CheckIcon color="white" />
+      {/* Selection indicator - Show in selection mode */}
+      {showCheckbox && (
+        <View style={[
+          styles.selectedIndicator,
+          isSelected ? styles.selectedIndicatorSelected : styles.selectedIndicatorUnselected
+        ]}>
+          {isSelected && <CheckIcon color="white\" width={16} height={16} />}
         </View>
       )}
 
-
       {/* Outfit name label */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.8)']}
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 60,
-          justifyContent: 'flex-end',
-          paddingHorizontal: 10,
-          paddingBottom: 8
-        }}
+        colors={["transparent", "rgba(0,0,0,0.8)"]}
+        style={styles.gradientLabel}
       >
         <Text style={styles.label} numberOfLines={1} ellipsizeMode="tail">
           {item.outfitName}
-        </Text>                  
+        </Text>
       </LinearGradient>
-
     </TouchableOpacity>
   )
-})
+}
+
+// Removed the custom memo comparison to let React handle rerenders naturally
+export default memo(OutfitCard)
 
 const styles = StyleSheet.create({
   card: {
@@ -99,7 +105,6 @@ const styles = StyleSheet.create({
     }),
   },
   androidCard: {
-    // Android-specific adjustments
     marginBottom: 4,
   },
   selectedCard: {
@@ -119,20 +124,31 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 8,
     right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#6D28D9",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 20,
+    borderWidth: 2,
   },
-  labelContainer: {
-    position: "absolute",
+  selectedIndicatorUnselected: {
+    backgroundColor: "rgba(255, 255, 255, 0.8)", // Semi-transparent white
+    borderColor: "rgba(0, 0, 0, 0.3)", // Faded black border
+  },
+  selectedIndicatorSelected: {
+    backgroundColor: "#000", // Solid black when selected
+    borderColor: "#000",
+  },
+  gradientLabel: {
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 8,
+    height: 60,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 10,
+    paddingBottom: 8
   },
   label: {
     color: "white",
@@ -140,6 +156,3 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 })
-
-OutfitCard.displayName = 'OutfitCard';
-export default OutfitCard

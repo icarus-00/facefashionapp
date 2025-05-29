@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { ThemedView } from "@/components/ThemedView"
@@ -30,157 +28,130 @@ import Animated, {
   useSharedValue,
   withTiming,
   useAnimatedStyle,
-  withDelay,
   withSpring,
   interpolate,
   FadeIn,
   ZoomIn,
-  cancelAnimation,
   Extrapolate,
+  withSequence,
+  runOnJS,
 } from "react-native-reanimated"
 
-// Define types for our data
+// Constants
 const { width: screenWidth } = Dimensions.get("screen")
 const numColumns = 2
-const spacing = Platform.OS === "android" ? 10 : 7 // Increased spacing for Android
-const itemWidth = (screenWidth - spacing * (numColumns + 3)) / numColumns
-const itemHeight = itemWidth * 1.5
-
-// Define constants
+const spacing = Platform.OS === "android" ? 10 : 7
+const SCROLL_THRESHOLD = 10
+const ANIMATION_DURATION = 250
 const CATEGORIES = ["All", "Full", "Tops", "Bottoms", "Accessories"]
 
 type OutfitItem = OutfitWithImage | { id: number; isPlaceholder: true }
 
-export default function OutFitPageComp({
-  selecting = false,
-}: {
-  selecting?: boolean
-}): React.JSX.Element {
+export default function OutFitPageComp({ selecting = false }: { selecting?: boolean }): React.JSX.Element {
+  // State management
   const [outfits, setOutfits] = useState<OutfitWithImage[]>([])
   const [filteredOutfits, setFilteredOutfits] = useState<OutfitWithImage[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [refreshing, setRefreshing] = useState<boolean>(false)
   const [attireTheme, setAttireTheme] = useState<string[]>([])
   const [selectedSubFilter, setSelectedSubFilter] = useState<string>()
-  const [modalProps, setModalProps] = useState<{
-    id: string
-    visible: boolean
-  }>({ id: "", visible: false })
+  const [modalProps, setModalProps] = useState<{ id: string; visible: boolean }>({ id: "", visible: false })
   const [bottomSheetVisible, setBottomSheetVisible] = useState(false)
   const [activeFilter, setActiveFilter] = useState<string>("all")
-
-  // Selection state
   const [isSelecting, setIsSelecting] = useState<boolean>(selecting)
 
-  // Get store methods
-  const { outfitItems, addOutfitItem, removeOutfitItem } = useStore()
+  // Refs
+  const scrollRef = useRef<FlashList<OutfitItem>>(null)
+  const lastScrollY = useRef(0)
+  const isScrolling = useRef(false)
+  const scrollTimeout = useRef<NodeJS.Timeout | number | undefined>(undefined)
 
-  // Animation refs to track if animations have run
-  const animationsRun = useRef(false)
-  const isInitialMount = useRef(true)
-
+  // Store
+  const { outfitItems, addOutfitItem, removeOutfitItem, actorItems } = useStore()
   const router = useRouter()
 
-  // Animation values
-  const headerOpacity = useSharedValue(0)
-  const cardScale = useSharedValue(0.95)
-  
-  // Scroll position tracking for filter visibility
-  const scrollY = useSharedValue(0)
-  const lastScrollY = useSharedValue(0)
-  const filterVisible = useSharedValue(1) // 1 = visible, 0 = hidden
+  // Animated values
+  const filterVisible = useSharedValue(1)
+  const headerOpacity = useSharedValue(1)
 
-  // Run entrance animations only once on initial mount
-  useEffect(() => {
-    if (isInitialMount.current && !animationsRun.current) {
-      // Set animations as run
-      animationsRun.current = true
+  // Animations
+  const filterAnimStyle = useAnimatedStyle(() => ({
+    opacity: filterVisible.value,
+    transform: [
+      {
+        translateY: interpolate(
+          filterVisible.value,
+          [0, 1],
+          [-60, 0], // Move further up when hidden for more space
+          Extrapolate.CLAMP
+        ),
+      },
+    ],
+    height: interpolate(
+      filterVisible.value,
+      [0, 1],
+      [0, 80], // Increase max height for filter bar
+      Extrapolate.CLAMP
+    ),
+  }))
 
-      // Run entrance animations
-      headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }))
-      cardScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }))
+  const headerAnimStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [
+      {
+        translateY: interpolate(
+          headerOpacity.value,
+          [0, 1],
+          [-20, 0],
+          Extrapolate.CLAMP
+        ),
+      },
+    ],
+  }))
 
-      // Mark initial mount as complete
-      isInitialMount.current = false
-    }
+  // Optimized scroll handling
+  const handleScroll = useCallback(
+    (event: any) => {
+      const currentY = event.nativeEvent?.contentOffset?.y || 0
+      const delta = currentY - lastScrollY.current
 
-    // Cleanup animations on unmount
-    return () => {
-      cancelAnimation(headerOpacity)
-      cancelAnimation(cardScale)
-    }
-  }, [headerOpacity, cardScale])
+      // Clear existing timeout
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current)
+      }
 
-  // Header animation
-  const headerAnimStyle = useAnimatedStyle(() => {
-    return {
-      opacity: headerOpacity.value,
-      transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }],
-    }
-  }, [])
-  
-  // Filter visibility animation
-  const filterAnimStyle = useAnimatedStyle(() => {
-    return {
-      opacity: filterVisible.value,
-      transform: [
-        { translateY: interpolate(filterVisible.value, [0, 1], [-50, 0], Extrapolate.CLAMP) }
-      ],
-      // Remove height interpolation to allow natural height
-      maxHeight: interpolate(filterVisible.value, [0, 1], [0, 100], Extrapolate.CLAMP),
-      overflow: 'hidden',
-      marginBottom: interpolate(filterVisible.value, [0, 1], [0, 10], Extrapolate.CLAMP)
-    }
-  }, [])
-  
-  // Manual scroll handler function to avoid compatibility issues
-  const handleScroll = useCallback((event: any) => {
-    const currentScrollY = event.nativeEvent?.contentOffset?.y || 0
-    
-    // Determine scroll direction
-    if (currentScrollY > lastScrollY.value + 10) {
-      // Scrolling down - hide filter
-      filterVisible.value = withTiming(0, { duration: 300 })
-    } else if (currentScrollY < lastScrollY.value - 10) {
-      // Scrolling up - show filter
-      filterVisible.value = withTiming(1, { duration: 300 })
-    }
-    
-    // Update scroll position
-    scrollY.value = currentScrollY
-    lastScrollY.value = currentScrollY
-  }, [filterVisible, scrollY, lastScrollY])
+      // Set scrolling flag
+      isScrolling.current = true
 
-  // Initialize selection mode from props
-  useEffect(() => {
-    setIsSelecting(selecting)
-  }, [selecting])
+      // Update scroll position
+      lastScrollY.current = currentY
 
-  // Update bottom sheet visibility and selection mode when modal is shown/hidden
-  useEffect(() => {
-    setBottomSheetVisible(outfitItems.length > 0)
-    
-    // Enable selection mode if there are items in the cart
-    if (outfitItems.length > 0 && !isSelecting) {
-      setIsSelecting(true)
-    }
-  }, [outfitItems, isSelecting])
+      // Only trigger animation if scroll delta exceeds threshold
+      if (Math.abs(delta) > SCROLL_THRESHOLD) {
+        const shouldHide = delta > 0
+        filterVisible.value = withTiming(
+          shouldHide ? 0 : 1,
+          { duration: ANIMATION_DURATION }
+        )
+      }
 
-  // Use useCallback to prevent recreation of this function on every render
-  const fetchData = useCallback(async (): Promise<void> => {
+      // Reset scrolling flag after delay
+      scrollTimeout.current = setTimeout(() => {
+        isScrolling.current = false
+      }, 150)
+    },
+    [filterVisible]
+  )
+
+  // Data fetching
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const data = await databaseService.ListOutfits()
       const themes = useAttireStore.getState().themes
-
-      // Only update attireTheme if it has changed
-      if (JSON.stringify(themes) !== JSON.stringify(attireTheme)) {
-        setAttireTheme(themes || [])
-      }
-
+      setAttireTheme(themes || [])
       setOutfits(data || [])
-      // Apply initial filtering
-      applyFilters(data || [], activeFilter, selectedSubFilter)
+      // Don't call applyFilters here; let the effect handle it
     } catch (error) {
       console.error("Error fetching outfits: ", error)
       setOutfits([])
@@ -189,13 +160,12 @@ export default function OutFitPageComp({
       setLoading(false)
       setRefreshing(false)
     }
-  }, [activeFilter, selectedSubFilter])
+  }, [])
 
-  // Apply filters based on category and subcategory
+  // Filter logic
   const applyFilters = useCallback((data: OutfitWithImage[], category: string, subCategory?: string) => {
     let result = [...data]
 
-    // Filter by category (case-insensitive)
     if (category && category.toLowerCase() !== "all") {
       result = result.filter((outfit) => {
         const garmentType = (outfit.garmentType || "").toLowerCase()
@@ -209,205 +179,172 @@ export default function OutFitPageComp({
           case "bottoms":
             return garmentType.includes("bottom") || garmentType.includes("pant") || garmentType.includes("skirt")
           case "accessories":
-            return garmentType.includes("accessory") || garmentType.includes("accessories") || garmentType.includes("hat") || garmentType.includes("jewelry")
+            return garmentType.includes("accessory") || garmentType.includes("accessories")
           default:
             return true
         }
       })
     }
 
-    // Filter by subcategory if selected
     if (subCategory) {
-      result = result.filter((outfit) => (outfit.attireTheme || "").toLowerCase() === subCategory.toLowerCase())
+      result = result.filter((outfit) =>
+        (outfit.attireTheme || "").toLowerCase() === subCategory.toLowerCase()
+      )
     }
 
     setFilteredOutfits(result)
   }, [])
 
-  // Only call fetchData on initial mount and manual refreshes
+  // Effects
+  // Fetch data only on mount or manual refresh
   useEffect(() => {
     fetchData()
-  }, [fetchData])
+  }, [])
 
-  // Apply filters when activeFilter or selectedSubFilter changes
+  // Apply filters when filter/subfilter/outfits change
   useEffect(() => {
     if (outfits.length > 0) {
       applyFilters(outfits, activeFilter, selectedSubFilter)
+    } else {
+      setFilteredOutfits([])
     }
   }, [activeFilter, selectedSubFilter, outfits, applyFilters])
 
-  // Handle refresh separately without retriggering the useEffect
+  useEffect(() => {
+    // Enable selection mode if an actor is selected
+    console.log('actorItems:', actorItems)
+    console.log('actorItems.imageID:', actorItems.imageID, 'isSelecting:', !!actorItems && !!actorItems.imageID)
+    if (!!actorItems && !!actorItems.imageID) {
+      setIsSelecting(true)
+    } else {
+      setIsSelecting(false)
+    }
+  }, [actorItems])
+
+  // Handlers
   const handleRefresh = useCallback(() => {
     setRefreshing(true)
     fetchData()
   }, [fetchData])
 
-  // Check if an outfit is selected
   const isOutfitSelected = useCallback(
-    (outfitId: string) => {
-      return outfitItems.some((item) => item.imageID === outfitId)
-    },
-    [outfitItems],
+    (outfitId: string) => outfitItems.some((item) => item.imageID === outfitId),
+    [outfitItems]
   )
 
-  // Determine the appropriate outfit category based on garment type
   const getOutfitCategory = useCallback((garmentType: string): "full" | "top" | "bottom" | "accessory" => {
-    const typeLower = (garmentType || "").toLowerCase();
-    
-    if (typeLower.includes('full') || typeLower.includes('dress') || typeLower.includes('suit')) {
-      return 'full';
-    } else if (typeLower.includes('top') || typeLower.includes('shirt') || typeLower.includes('blouse')) {
-      return 'top';
-    } else if (typeLower.includes('bottom') || typeLower.includes('pant') || typeLower.includes('skirt')) {
-      return 'bottom';
-    } else if (typeLower.includes('accessory') || typeLower.includes('accessories') || typeLower.includes('hat') || typeLower.includes('jewelry')) {
-      return 'accessory';
-    }
-    
-    // Default case - if we can't determine, use the filtered category
-    if (activeFilter.toLowerCase() === 'full') return 'full';
-    if (activeFilter.toLowerCase() === 'tops') return 'top';
-    if (activeFilter.toLowerCase() === 'bottoms') return 'bottom';
-    if (activeFilter.toLowerCase() === 'accessories') return 'accessory';
-    
-    // Fallback to full if we still can't determine
-    return 'full';
-  }, [activeFilter]);
+    const typeLower = (garmentType || "").toLowerCase()
 
-  // Toggle outfit selection
+    if (typeLower.includes('full') || typeLower.includes('dress')) return 'full'
+    if (typeLower.includes('top') || typeLower.includes('shirt')) return 'top'
+    if (typeLower.includes('bottom') || typeLower.includes('pant')) return 'bottom'
+    if (typeLower.includes('accessory')) return 'accessory'
+
+    return 'full'
+  }, [])
+
   const toggleOutfitSelection = useCallback(
     (outfit: OutfitWithImage) => {
-      // Determine the proper category based on garment type
-      const category = getOutfitCategory(outfit.garmentType);
-      
+      const category = getOutfitCategory(outfit.garmentType)
+
       if (isOutfitSelected(outfit.$id)) {
-        // Remove from selection
-        removeOutfitItem(category) 
+        removeOutfitItem(category)
       } else {
-        // Add to selection with the correct category
         addOutfitItem(
-          outfit.fileID, 
-          category, 
-          outfit.imageUrl, 
-          outfit.outfitName, 
-          outfit.brand, 
-          outfit.size, 
-          outfit.material, 
-          outfit.garmentType, 
+          outfit.fileID,
+          category,
+          outfit.imageUrl,
+          outfit.outfitName,
+          outfit.brand,
+          outfit.size,
+          outfit.material,
+          outfit.garmentType,
           outfit.attireTheme
         )
       }
     },
-    [isOutfitSelected, addOutfitItem, removeOutfitItem, getOutfitCategory],
+    [isOutfitSelected, addOutfitItem, removeOutfitItem, getOutfitCategory]
   )
 
-  // Memoize the TabBar component to prevent unnecessary re-renders
-  const TabBar = useMemo(() => {
-    const handleTabPress = (tab: string): void => {
-      setActiveFilter(tab.toLowerCase())
-    }
+  // Memoized components
+  const TabBar = useMemo(() => (
+    <Animated.View style={[headerAnimStyle]} className="py-3 px-4 bg-white">
+      <HStack className="justify-between items-center mb-3">
+        <Text className="text-2xl font-bold text-gray-800">Outfits Gallery</Text>
+        <Animated.View entering={ZoomIn.duration(300)}>
+          <TouchableOpacity
+            className="h-10 w-10 bg-primary-500 rounded-full justify-center items-center"
+            onPress={() => router.push({ pathname: "/(app)/(auth)/outfit/create" })}
+          >
+            <Text className="text-white mb-1 font-medium text-2xl">+</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </HStack>
 
-    return (
-      <Animated.View style={[headerAnimStyle]} className="py-3 px-4 bg-white">
-        <HStack className="justify-between items-center mb-3">
-          <Text className="text-2xl font-bold text-gray-800">Outfits Gallery</Text>
-
-          {/* Add button */}
-          <Animated.View entering={ZoomIn.delay(600).duration(300)}>
+      <HStack space="md" className="overflow-visible">
+        <FlatList
+          data={CATEGORIES}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingRight: 20 }}
+          renderItem={({ item }) => (
             <TouchableOpacity
-              className="h-10 w-10 bg-primary-500 rounded-full justify-center items-center"
-              onPress={() => {
-                router.push({ pathname: "/(app)/(auth)/outfit/create" })
-              }}
+              onPress={() => setActiveFilter(item.toLowerCase())}
+              className={`py-2 px-4 mr-2 rounded-full ${activeFilter.toLowerCase() === item.toLowerCase()
+                ? "bg-primary-500"
+                : "bg-gray-100"
+                }`}
             >
-              <Text className="text-white mb-1 font-medium text-2xl">+</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </HStack>
-
-        <HStack space="md" className="overflow-visible">
-          <FlatList
-            data={CATEGORIES}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 20 }}
-            renderItem={({ item }: { item: string }) => (
-              <TouchableOpacity
-                onPress={() => handleTabPress(item)}
-                className={`py-2 px-4 mr-2 rounded-full ${activeFilter.toLowerCase() === item.toLowerCase() ? "bg-primary-500" : "bg-gray-100"
+              <Text
+                className={`font-medium ${activeFilter.toLowerCase() === item.toLowerCase()
+                  ? "text-white"
+                  : "text-gray-700"
                   }`}
               >
-                <Text
-                  className={`font-medium ${activeFilter.toLowerCase() === item.toLowerCase() ? "text-white" : "text-gray-700"
-                    }`}
-                >
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            )}
-            keyExtractor={(item) => item}
-          />
-        </HStack>
-      </Animated.View>
-    )
-  }, [headerAnimStyle, activeFilter, router])
+                {item}
+              </Text>
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item) => item}
+        />
+      </HStack>
+    </Animated.View>
+  ), [headerAnimStyle, activeFilter, router])
 
-  // Generate placeholder data with proper typing
-  const getPlaceholderData = useCallback((): OutfitItem[] => {
-    return Array.from({ length: 6 }, (_, index) => ({
-      id: index,
-      isPlaceholder: true,
-    }))
-  }, [])
-
-  const displayData: OutfitItem[] = useMemo(() => {
-    return loading ? getPlaceholderData() : filteredOutfits
-  }, [loading, filteredOutfits, getPlaceholderData])
-
-  const handleCardPress = useCallback((item: OutfitItem) => {
-    if ("isPlaceholder" in item) return
-
-    // Open modal with item details
-    setModalProps({
-      id: item.$id || "",
-      visible: true,
-    })
-  }, [])
-
-  const handleCardLongPress = useCallback(
-    (item: OutfitItem) => {
-      if ("isPlaceholder" in item) return
-
-      if (isSelecting) {
-        toggleOutfitSelection(item as OutfitWithImage)
-      }
-    },
-    [isSelecting, toggleOutfitSelection],
-  )
-
-  // Render item function to ensure proper pressability
   const renderItem = useCallback(
     ({ item, index }: { item: OutfitItem; index: number }) => (
-      <OutfitCard
-        selected={!("isPlaceholder" in item) && isOutfitSelected(item.$id || "")}
-        item={item}
-        loading={loading}
-        index={index}
-        onLongPress={() => handleCardLongPress(item)}
-        onPress={() => handleCardPress(item)}
-        selecting={isSelecting}
-      />
+      <Animated.View
+        entering={FadeIn.delay(index * 50).duration(200)}
+        style={[styles.cardContainer]}
+      >
+        <OutfitCard
+          selected={!("isPlaceholder" in item) && isOutfitSelected(item.$id || "")}
+          item={item}
+          loading={loading}
+          index={index}
+          onLongPress={() => {
+            if (!("isPlaceholder" in item)) {
+              toggleOutfitSelection(item)
+            }
+          }}
+          onPress={() => {
+            if (!("isPlaceholder" in item)) {
+              setModalProps({ id: item.$id, visible: true })
+            }
+          }}
+          selecting={isSelecting}
+
+          actorSelected={!!actorItems && !!actorItems.imageID}
+        />
+      </Animated.View>
     ),
-    [loading, isSelecting, isOutfitSelected, handleCardPress, handleCardLongPress],
+    [loading, isSelecting, isOutfitSelected, toggleOutfitSelection, actorItems]
   )
 
   return (
     <ThemedView style={styles.container}>
       <VStack className="flex-1">
-        {/* Header with tabs */}
         {TabBar}
-
-        {/* SubCategories filter with animated visibility */}
         <Animated.View style={[styles.subCategoriesContainer, filterAnimStyle]}>
           <SubCategoriesExbandableFilter
             loading={loading}
@@ -424,32 +361,20 @@ export default function OutFitPageComp({
           </View>
         ) : (
           <FlashList
-            extraData={[outfitItems, isSelecting]} // Make sure list re-renders when selection changes
-            data={displayData}
-            estimatedItemSize={254} // Set recommended value to avoid warning
+            ref={scrollRef}
+            estimatedItemSize={200}
+            data={filteredOutfits}
             numColumns={numColumns}
-            contentContainerStyle={{
-              paddingHorizontal: spacing,
-              paddingBottom: selecting ? 100 : 20,
-            }}
-            renderItem={({ item, index }) => (
-              <Animated.View
-                entering={FadeIn.delay(index * 50).duration(300)}
-                style={[styles.cardContainer, Platform.OS === "android" && styles.androidCardContainer]}
-              >
-                {renderItem({ item, index })}
-              </Animated.View>
-            )}
-            keyExtractor={(item, index) => {
-              if ("isPlaceholder" in item) {
-                return `placeholder-${item.id}`
-              }
-              return item.$id || `item-${index}`
-            }}
+            renderItem={renderItem}
+            keyExtractor={(item) =>
+              "isPlaceholder" in item ? `placeholder-${item.id}` : item.$id
+            }
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            onScroll={handleScroll}
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center py-20">
                 <Text className="text-gray-500 text-lg">No outfits found</Text>
@@ -463,12 +388,16 @@ export default function OutFitPageComp({
               </View>
             }
             ListFooterComponent={<View style={{ height: 80 }} />}
+            extraData={{
+              outfitItems,
+              isSelecting,
+              actorItems,
+            }}
           />
         )}
 
-        {/* Modal for outfit details */}
         {modalProps.visible && (
-          <View className="absolute bottom-0 top-0 right-0 left-0 w-full h-full justify-center items-center">
+          <View className="absolute inset-0 justify-center items-center">
             <ModalComponent
               id={modalProps.id}
               visible={modalProps.visible}
@@ -501,11 +430,10 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     margin: spacing,
-    justifyContent: "center",
-    alignItems: "center",
+    flex: 1,
   },
-  androidCardContainer: {
-    // Android-specific adjustments
-    marginVertical: spacing * 1.2,
+  listContainer: {
+    paddingHorizontal: spacing,
+    paddingBottom: 100,
   },
 })

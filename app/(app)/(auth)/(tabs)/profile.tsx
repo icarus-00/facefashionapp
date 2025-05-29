@@ -34,9 +34,10 @@ const profileData = {
 };
 
 const Profile = () => {
+  const router = useRouter();
   return (
     <SafeAreaView>
-      <ProfilePage />
+      <ProfilePage onEditProfile={() => router.push('/(app)/(auth)/profileSettings/profileSettings')} />
     </SafeAreaView>
   );
 };

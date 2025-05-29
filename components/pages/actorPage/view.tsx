@@ -9,9 +9,7 @@ import { AddIcon } from "@/components/ui/icon";
 import { router, useRouter } from "expo-router";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
-import Modal from "react-native-modal";
 import { LinearGradient } from "expo-linear-gradient";
-import GetActor from "./actions/get";
 import Animated, {
   useSharedValue,
   withTiming,
@@ -52,35 +50,7 @@ const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedView = Animated.createAnimatedComponent(View);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const ModalComponent = ({
-  id,
-  visible,
-  onPress,
-}: {
-  id: string;
-  visible: boolean;
-  onPress: () => void;
-}) => {
-  return (
-    <Modal
-      accessible
-      animationIn="slideInUp"
-      animationOut="slideOutDown"
-
-      isVisible={visible}
-      onBackButtonPress={onPress}
-
-      propagateSwipe
-    >
-
-      <GetActor paramid={id} onClose={onPress} />
-    </Modal>
-  );
-};
-
 export default function ActorPageComp(): React.JSX.Element {
-  const [visible, setVisible] = useState(false);
-  const [modalId, setModalId] = useState<string>("");
   const [actors, setActors] = useState<ActorWithImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -90,22 +60,27 @@ export default function ActorPageComp(): React.JSX.Element {
   // Animation values
   const headerOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.95);
+  const hasAnimatedRef = React.useRef(false); // Only animate once
 
   useEffect(() => {
-    // Entrance animations
-    headerOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
-    cardScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 90 }));
+    if (!hasAnimatedRef.current) {
+      headerOpacity.value = withTiming(1, { duration: 350 });
+      cardScale.value = withSpring(1, { damping: 14, stiffness: 120 });
+      hasAnimatedRef.current = true;
+    }
   }, []);
 
   // Header animation
   const headerAnimStyle = useAnimatedStyle(() => {
     return {
       opacity: headerOpacity.value,
-      transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-20, 0]) }]
+      transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [-10, 0]) }]
     };
   });
 
   const fetchData = useCallback(async (): Promise<void> => {
+    // Only set loading to true on initial mount, not on refresh
+    if (!hasAnimatedRef.current) setLoading(true);
     try {
       const data = await databaseService.listActors();
       setActors(data);
@@ -136,29 +111,27 @@ export default function ActorPageComp(): React.JSX.Element {
   }: ActorCardProps): React.JSX.Element {
     const [fallbackImage, setFallbackImage] = useState<boolean>(false);
     const router = useRouter();
-    // Check if item is a placeholder
     const isPlaceholder = "isPlaceholder" in item;
-
+    // Only animate once per card
     const itemCardScale = useSharedValue(0.95);
-
+    const cardHasAnimated = React.useRef(false);
     useEffect(() => {
-      // Staggered animation for cards
-      itemCardScale.value = withDelay(index * 100 + 200, withSpring(1, { damping: 12, stiffness: 90 }));
+      if (!cardHasAnimated.current) {
+        itemCardScale.value = withDelay(index * 30, withSpring(1, { damping: 14, stiffness: 120 }));
+        cardHasAnimated.current = true;
+      }
     }, []);
-
     const cardAnimStyle = useAnimatedStyle(() => {
       return {
         transform: [{ scale: itemCardScale.value }],
         opacity: interpolate(itemCardScale.value, [0.95, 1], [0.5, 1])
       };
     });
-
     // Safe way to get actor name
     const getActorName = (): string => {
       if (isPlaceholder) return "Loading...";
       return item.actorName || "Unknown Actor";
     };
-
     // Safe way to render image
     const renderActorImage = (): React.JSX.Element => {
       if (loading || isPlaceholder) {
@@ -166,7 +139,6 @@ export default function ActorPageComp(): React.JSX.Element {
           <Skeleton variant="sharp" style={{ width: "100%", height: "100%" }} />
         );
       }
-
       try {
         // Use the imageUrl from ActorWithImage
         const actorItem = item as ActorWithImage;
@@ -182,24 +154,22 @@ export default function ActorPageComp(): React.JSX.Element {
         console.error("Image rendering error:", error);
         return (
           <View className="flex-1 w-full h-full bg-gray-200 justify-center items-center">
-            <Text className="text-gray-500">Image not available</Text>
           </View>
         );
       }
     };
-
     return (
       <AnimatedPressable
         style={[cardAnimStyle, { width: itemWidth, height: itemHeight }]}
         className="overflow-hidden rounded-xl shadow-lg elevation-3"
         onPress={() => {
-          if (!("isPlaceholder" in item)) {
+          if (!isPlaceholder) {
+            // Only animate on press, not on every render
             itemCardScale.value = withSequence(
-              withTiming(0.97, { duration: 100 }),
-              withSpring(1, { damping: 4, stiffness: 300 })
+              withTiming(0.97, { duration: 80 }),
+              withSpring(1, { damping: 5, stiffness: 250 })
             );
-            setModalId(item.$id);
-            setVisible(true);
+            router.push({ pathname: "/(app)/(auth)/actor/[get]", params: { get: item.$id } });
           }
         }}
       >
@@ -210,7 +180,6 @@ export default function ActorPageComp(): React.JSX.Element {
           <View style={{ width: "100%", height: "100%" }}>
             {renderActorImage()}
           </View>
-
           {/* Gradient overlay */}
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.8)']}
@@ -225,17 +194,17 @@ export default function ActorPageComp(): React.JSX.Element {
               paddingBottom: 8
             }}
           >
-            <Text className="text-white font-semibold text-base">{getActorName()}</Text>
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }} numberOfLines={1} ellipsizeMode="tail">
+              {getActorName()}
+            </Text>
           </LinearGradient>
         </Box>
       </AnimatedPressable>
     );
   }
 
-  // Handle modal close
-  function handleClose(): void {
-    setVisible(false);
-  }
+  // Memoize ActorCardComponent for better list performance
+  const MemoizedActorCardComponent = React.memo(ActorCardComponent);
 
   const TabBar = (): React.JSX.Element => {
     // Use the activeFilter directly for selectedTab to ensure they stay in sync
@@ -287,7 +256,7 @@ export default function ActorPageComp(): React.JSX.Element {
           <Text className="text-2xl font-bold text-gray-800">Actors Gallery</Text>
 
           {/* Add button moved to top right */}
-          <Animated.View entering={ZoomIn.delay(600).duration(300)}>
+          <Animated.View entering={ZoomIn.delay(200).duration(200)}>
             <TouchableOpacity
               className="h-10 w-10 bg-primary-500 rounded-full justify-center items-center"
               onPress={() => {
@@ -301,20 +270,19 @@ export default function ActorPageComp(): React.JSX.Element {
 
         {/* Genre tabs */}
         <HStack space="md" className="overflow-visible mb-3">
-          <ScrollFlatList
+          <ScrollFlashListString
             data={[
               "All",
               "Action",
               "Comedic",
               "Dramatic",
               "Thrilling",
-              "Adventurous",
-              "generic"
+              "Adventurous"
             ]}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingRight: 20 }}
-            renderItem={({ item }: { item: string }) => (
+            renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => handleTabPress(item)}
                 className={`py-2 px-4 mr-2 rounded-full ${selectedTab === item ? "bg-black" : "bg-gray-100"
@@ -334,13 +302,13 @@ export default function ActorPageComp(): React.JSX.Element {
 
         {/* Gender filter tabs */}
         <HStack space="md" className="overflow-visible">
-          <ScrollFlatList
+          <ScrollFlashListString
             data={["M / F", "Males", "Females"]}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingRight: 20 }}
             extraData={activeGenderFilter}
-            renderItem={({ item }: { item: string }) => (
+            renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => handleGenderTabPress(item)}
                 className={`py-2 px-4 mr-2 rounded-full ${selectedGenderTab === item ? "bg-black" : "bg-gray-200"
@@ -371,7 +339,6 @@ export default function ActorPageComp(): React.JSX.Element {
     { id: "dramatic", label: "Dramatic" },
     { id: "thrilling", label: "Thrilling" },
     { id: "adventurous", label: "Adventurous" },
-    { id: "generic", label: "Generic" },
   ];
 
   // Generate placeholder data with proper typing
@@ -385,76 +352,62 @@ export default function ActorPageComp(): React.JSX.Element {
   // Apply active filter to the data
   const filterActors = useCallback((data: ActorWithImage[]) => {
     let filteredData = data;
-
+    // Debug log
+    // console.log('Fetched actors:', data.map(a => ({ name: a.actorName, genre: a.genre, gender: a.gender })));
     // Apply genre filter
     if (activeFilter !== "all") {
-      // Filter actors by selected genre
       filteredData = filteredData.filter(actor => {
         if (!actor.genre) return false;
-
-        // Exact match comparison - the genre in the database must match exactly with the selected filter
-        // This is important since Appwrite uses enum validation for the genre field
-        return actor.genre === activeFilter;
+        // Case-insensitive match
+        return actor.genre.toLowerCase() === activeFilter.toLowerCase();
       });
     }
-
     // Apply gender filter
-    if (activeGenderFilter !== "all") {
-      // Filter by gender
+    if (activeGenderFilter !== "all" && activeGenderFilter !== "M / F") {
       filteredData = filteredData.filter(actor => {
-        // This assumes there's a gender field in the actor data
-        const gender = actor.gender?.toLowerCase() || '';
-
-        // Compare based on gender filter value
-        switch (activeGenderFilter) {
-          case "male":
-            return gender === "male";
-          case "female":
-            return gender === "female";
-          // Removed "kids" option as requested
-          default:
-            return true;
-        }
+        const gender = (actor.gender || '').toLowerCase();
+        return gender === activeGenderFilter.toLowerCase();
       });
     }
-
     return filteredData;
   }, [activeFilter, activeGenderFilter]);
 
   const displayData: ActorItem[] = loading ? getPlaceholderData() : filterActors(actors);
 
   // Component to replace regular FlatList for types
-  const ScrollFlatList = ({ ...props }: FlatList['props']) => (
-    <FlatList {...props} />
+  const ScrollFlashList = ({ ...props }: React.ComponentProps<typeof FlashList>) => (
+    <FlashList estimatedItemSize={40} {...props} />
+  );
+
+  // Component to replace regular FlatList for types
+  const ScrollFlashListString = (props: React.ComponentProps<typeof FlashList<string>>) => (
+    <FlashList<string> estimatedItemSize={40} {...props} />
   );
 
   return (
     <View className="flex-1 bg-white">
-
       <VStack className="flex-1">
         <TabBar />
-        <FlatList
-
+        <FlashList
           data={displayData}
           numColumns={numColumns}
-          contentContainerStyle={{
-
-            paddingRight: 10,
-          }}
+          estimatedItemSize={itemHeight}
+          contentContainerStyle={{ paddingRight: 10 }}
+          removeClippedSubviews={true}
           renderItem={({ item, index }) => (
             <Animated.View
-              entering={FadeIn.delay(index * 100).duration(300)}
+              entering={FadeIn.delay(index * 30).duration(180)}
               style={{ marginHorizontal: 10, marginVertical: 7 }}
               className="flex justify-center items-center"
             >
-              <ActorCardComponent item={item} loading={loading} index={index} />
+              <MemoizedActorCardComponent item={item} loading={loading} index={index} />
             </Animated.View>
           )}
-          keyExtractor={(item, index) => {
+          keyExtractor={(item: ActorItem, index: number) => {
             if ("isPlaceholder" in item) {
               return `placeholder-${item.id}`;
             }
-            return item.$id || `item-${index}`;
+            return (item as any).$id || `item-${index}`;
           }}
           showsVerticalScrollIndicator={false}
           refreshing={refreshing}
@@ -474,14 +427,6 @@ export default function ActorPageComp(): React.JSX.Element {
           ListFooterComponent={<View style={{ height: 80 }} />}
         />
       </VStack>
-
-      {
-        visible &&
-        <View className="absolute bottom-0 top-0 right-0 left-0 w-full h-full justify-center items-center">
-
-          <ModalComponent id={modalId} visible={visible} onPress={handleClose} />
-        </View>
-      }
     </View>
   );
 }
