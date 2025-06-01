@@ -2,7 +2,6 @@ import { memo } from "react"
 import { View, StyleSheet, Dimensions, TouchableOpacity, Platform, Text } from "react-native"
 import { Image } from "expo-image"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CheckIcon } from "@/components/ui/icon"
 import { LinearGradient } from "expo-linear-gradient"
 
 const { width: screenWidth } = Dimensions.get("screen")
@@ -37,14 +36,10 @@ const OutfitCard = ({ item, loading, index, onPress, onLongPress, selecting, sel
   // Use the selected prop directly from parent
   const isSelected = selected
 
-  // Checkbox: show if in selection mode
-  const showCheckbox = selecting
-
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
-      onLongPress={selecting ? onLongPress : undefined}
       style={[
         styles.card,
         isSelected && styles.selectedCard,
@@ -58,16 +53,6 @@ const OutfitCard = ({ item, loading, index, onPress, onLongPress, selecting, sel
         contentFit="cover"
         transition={300}
       />
-
-      {/* Selection indicator - Show in selection mode */}
-      {showCheckbox && (
-        <View style={[
-          styles.selectedIndicator,
-          isSelected ? styles.selectedIndicatorSelected : styles.selectedIndicatorUnselected
-        ]}>
-          {isSelected && <CheckIcon color="white\" width={16} height={16} />}
-        </View>
-      )}
 
       {/* Outfit name label */}
       <LinearGradient

@@ -1,31 +1,23 @@
 ///components/pages/outfitPage/actions/get.tsx
-import { Image, Text, View, StyleSheet, Dimensions, FlatList, Modal, TouchableOpacity } from "react-native"
-import { router, useFocusEffect } from "expo-router"
+import { Image, Text, View, StyleSheet, Dimensions, Modal, TouchableOpacity, Alert } from "react-native"
+import { router } from "expo-router"
 import databaseService, { type OutfitWithImage } from "@/services/database/db"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Center } from "@/components/ui/center"
 import { Spinner } from "@/components/ui/spinner"
 import { Feather, AntDesign } from "@expo/vector-icons"
 import { SpeedDial } from "@rneui/themed"
-import { Colors } from "@/constants/Colors"
+import useStore from "@/store/lumaGeneration/useStore"
 import {
   Popover,
-  PopoverBackdrop,
-  PopoverArrow,
   PopoverBody,
   PopoverContent,
 } from "@/components/ui/popover"
 import { Pressable } from "react-native-gesture-handler"
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  FadeIn,
-} from "react-native-reanimated"
-import { LinearGradient } from "expo-linear-gradient"
-import { VStack } from "@/components/ui/vstack"
 import { HStack } from "@/components/ui/hstack"
+
+// Define outfit category types locally
+type OutfitCategory = "full" | "top" | "bottom" | "accessory";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
 
@@ -103,6 +95,7 @@ export default function GetOutfit({
   const [loading, setLoading] = useState(true)
   const [fabOpen, setFabOpen] = useState(false)
   const [fullImageVisible, setFullImageVisible] = useState(false)
+  const { addOutfitItem } = useStore()
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -209,6 +202,57 @@ export default function GetOutfit({
           <InfoItem label="Theme" value={outfit?.attireTheme || ""} />
           <InfoItem label="Type" value={outfit?.garmentType || ""} />
         </View>
+
+        {/* Try button */}
+        <TouchableOpacity
+          style={styles.tryButton}
+          onPress={() => {
+            if (outfit) {
+              // Determine the category based on garment type
+              let category: OutfitCategory = "top" as OutfitCategory; // default
+              const garmentType = (outfit.garmentType || "").toLowerCase();
+              
+              if (garmentType.includes('full') || garmentType.includes('dress') || garmentType.includes('suit')) {
+                category = 'full' as OutfitCategory;
+              } else if (garmentType.includes('top') || garmentType.includes('shirt') || garmentType.includes('blouse')) {
+                category = 'top' as OutfitCategory;
+              } else if (garmentType.includes('bottom') || garmentType.includes('pant') || garmentType.includes('skirt')) {
+                category = 'bottom' as OutfitCategory;
+              } else if (garmentType.includes('accessory') || garmentType.includes('hat') || garmentType.includes('jewelry') || 
+                        garmentType.includes('necklace') || garmentType.includes('bracelet') || garmentType.includes('earring') || 
+                        garmentType.includes('watch') || garmentType.includes('glasses') || garmentType.includes('scarf')) {
+                category = 'accessory' as OutfitCategory;
+                console.log('Detected as accessory:', outfit.outfitName, outfit.garmentType);
+              }
+              
+              const result = addOutfitItem(
+                outfit.fileID,
+                category,
+                outfit.imageUrl,
+                outfit.outfitName,
+                outfit.brand,
+                outfit.size,
+                outfit.material,
+                outfit.garmentType,
+                outfit.attireTheme
+              );
+              
+              if (result) {
+                Alert.alert(
+                  "Item Added",
+                  `${outfit.outfitName} has been added to your selection.`,
+                  [{ text: "OK", onPress: () => onClose && onClose() }]
+                );
+              }
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <HStack space="md" style={{ alignItems: 'center', justifyContent: 'center' }}>
+            <Feather name="plus" size={20} color="white" />
+            <Text style={styles.tryButtonText}>Add item</Text>
+          </HStack>
+        </TouchableOpacity>
       </View>
 
       {/* CustomFab */}
@@ -254,6 +298,25 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 5,
     backgroundColor: 'rgba(0,0,0,0.8)',
+  },
+  tryButton: {
+    backgroundColor: 'black',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 40,
+    marginTop: 20,
+    marginHorizontal: "auto",
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tryButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
   },
   fullImageModalContainer: {
     flex: 1,
@@ -363,8 +426,8 @@ const styles = StyleSheet.create({
   },
   speedDial: {
     position: "absolute",
-    bottom: 16,
-    right: 16,
+    bottom: 5,
+    right: 5,
   },
 })
 

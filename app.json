@@ -4,7 +4,7 @@
     "slug": "renderwear",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/rwlogo.png",
+    "icon": "assets/images/sceneWearl.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -19,7 +19,6 @@
       },
       "package": "com.icarus.renderwear",
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -65,12 +64,6 @@
       "eas": {
         "projectId": "8851ac67-37e0-4975-aa89-4f0868e37d7f"
       }
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/8851ac67-37e0-4975-aa89-4f0868e37d7f"
     }
   }
 }

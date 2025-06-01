@@ -246,7 +246,7 @@ export default function Home() {
                   className="text-black font-extrabold"
                   size="5xl"
                 >
-                  RenderWear
+                  SceneWear
                 </AnimatedHeading>
               </Center>
             </Animated.View>

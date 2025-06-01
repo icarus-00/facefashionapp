@@ -19,7 +19,6 @@ import { useRouter } from "expo-router"
 import useStore from "@/store/lumaGeneration/useStore"
 import { generateImage, generateVideo } from "@/services/generation/gen"
 import { VideoGenInput } from "@/interfaces/generationApi"
-import { Colors } from "@/constants/Colors"
 
 const generateVideoAwaitable = (videoApi: VideoGenInput) => {
     return new Promise((resolve, reject) => {
@@ -148,28 +147,10 @@ export default function ChatScreen() {
             />
 
             <View style={styles.header}>
-
-                <View style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                    <Text style={styles.headerTitle}>Selected Items</Text>
-                    <Text style={styles.headerSubtitle}>
-                        {hasVideoGenInput ? "Video input selected" : `${totalItems} items selected`}
-                    </Text>
-
-                </View>
-                <Pressable>
-                    <Ionicons
-                        name="help-circle-outline"
-                        size={36}
-                        color={Colors.light.primary[500]}
-                        onPress={() => {
-                            clearOutfitItems()
-                            removeActorItems()
-                            clearVideoGenInput()
-                            router.back()
-                        }}
-                    />
-                </Pressable>
-
+                <Text style={styles.headerTitle}>Selected Items</Text>
+                <Text style={styles.headerSubtitle}>
+                    {hasVideoGenInput ? "Video input selected" : `${totalItems} items selected`}
+                </Text>
             </View>
             <ScrollView bounces={false} style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
                 {/* VideoGenInput Section */}
