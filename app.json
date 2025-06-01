@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "renderwear",
+    "slug": "renderwear",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "assets/images/sceneWearl.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.icarus.renderwear"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/rwlogo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.icarus.renderwear",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": false,
+          "supportsPictureInPicture": false
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "8851ac67-37e0-4975-aa89-4f0868e37d7f"
+      }
+    }
+  }
+}
