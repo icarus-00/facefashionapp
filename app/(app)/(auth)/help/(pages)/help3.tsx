@@ -1,13 +1,16 @@
+import SafeAreaView from '@/components/atoms/safeview/safeview';
 import HelpPageTemplate from "@/components/pages/helpPages/template";
-import { ScrollView } from "react-native/Libraries/Components/ScrollView/ScrollView";
 import { helpPagesContent } from "@/constants/helpPages";
-export default function HelpPage1() {
+import { ScrollView } from 'react-native-gesture-handler';
+export default function HelpPage3() {
     return (
-        <ScrollView>
+        <SafeAreaView >
+            <ScrollView>
             <HelpPageTemplate
                 header="Actors and outfits"
                 sections={helpPagesContent.help3.sections}
             />
-        </ScrollView>
+            </ScrollView>
+        </SafeAreaView>
     )
 }

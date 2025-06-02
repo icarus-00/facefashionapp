@@ -45,10 +45,10 @@ const HelpPageTemplate: React.FC<HelpPageTemplateProps> = ({ header, sections })
                 const bullets = section.text.split(/-\s+/).filter(Boolean);
                 return (
                     <View key={idx} style={styles.bulletSection}>
-                        {bullets.map((b, i) => (
+                        {bullets.map((bullet, i) => (
                             <View key={i} style={styles.bulletItem}>
-                                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
-                                <Text style={styles.bulletText}>{b.trim()}</Text>
+                                <Text style={styles.bulletPoint}>•</Text>
+                                <Text style={styles.bulletText}>{bullet.trim()}</Text>
                             </View>
                         ))}
                     </View>
@@ -145,5 +145,5 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
 });
-HelpPageTemplate.displayName = "HelpPageTemplate"
+
 export default HelpPageTemplate;
