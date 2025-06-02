@@ -29,11 +29,11 @@ import mockDatabaseService from "@/services/database/mockDb";
 import { useUser } from "@/context/authcontext";
 import useStore from '@/store/lumaGeneration/useStore';
 import { SpeedDial } from "@rneui/themed";
-
+import storageService from "@/services/config/files";
 import ShareModal from "../components/ShareModal";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const ItemHeight = screenHeight * 0.85; // Reduced height to make room for buttons below
-function CustomFab({fabOpen , setFabOpen,setFabClose ,handleDelete, handleShare} : { fabOpen :boolean , setFabOpen:()=>void , setFabClose:()=>void , handleDelete:()=>void , handleShare:()=>void })
+function CustomFab({fabOpen , setFabOpen,setFabClose ,handleDelete, handleShare , handleSave} : { fabOpen :boolean , setFabOpen:()=>void , setFabClose:()=>void , handleDelete:()=>void , handleShare:()=>void , handleSave?:()=>void })
 {
   return (
     <SpeedDial
@@ -56,15 +56,21 @@ function CustomFab({fabOpen , setFabOpen,setFabClose ,handleDelete, handleShare}
           right: 5}}
       >
         <SpeedDial.Action
-          icon={<Feather name="trash" size={20} color="white" />}
+          icon={<Feather name="save" size={20} color="white" />}
           buttonStyle={{ backgroundColor: "black" }}
-          onPress={handleDelete}
+          onPress={handleSave}
         />
         <SpeedDial.Action
           icon={<Feather name="share" size={20} color="white" />}
           buttonStyle={{ backgroundColor: "black" }}
           onPress={handleShare}
         />
+        <SpeedDial.Action
+          icon={<Feather name="trash" size={20} color="white" />}
+          buttonStyle={{ backgroundColor: "red" }}
+          onPress={handleDelete}
+        />
+        
       </SpeedDial>
   )
 }
@@ -361,7 +367,10 @@ export default function GetGeneration({ id }: { id: string }) {
   const handleSharePress = () => {
     setIsShareModalVisible(true);
   }
-
+  const handleSavePress = ()=>
+  {
+    
+  }
   const handleDeletePress = () => {
     Alert.alert(
       "Delete Generation",
