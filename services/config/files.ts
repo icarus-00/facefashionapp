@@ -37,13 +37,10 @@ class StorageService {
   }
 
   getfileview(fileId: string, quality: number = 90): string {
-    return this.storage.getFilePreview(
+    return this.storage.getFileView(
       this.bucketId,
       fileId,
-      undefined,
-      undefined,
-      undefined,
-      quality
+      
     ).toString();
   }
 

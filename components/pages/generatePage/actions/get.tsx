@@ -269,7 +269,7 @@ function GenerationVideoView({
       </View>
     );
   }
-
+  console.log(item.videoUrl)
   return (
     <VideoPlayer
       videoUri={item.videoUrl}
