@@ -39,8 +39,8 @@ async function generateImage(imageApi: ImageGenInput) {
     });
 }
 
-function generateVideo(videoApi: VideoGenInput) {
-  const data = generateVideoApi(videoApi.documentId, videoApi.videoprompt);
+async function generateVideo(videoApi: VideoGenInput) {
+  const data = await generateVideoApi(videoApi.documentId, videoApi.videoprompt);
   console.log("data", data);
   fetch(videoGenEndpoint, {
     method: "POST",

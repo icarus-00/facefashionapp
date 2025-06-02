@@ -40,7 +40,7 @@ type Data = {
   length: number;
   outfitImageUrls: string[];
   // Add for video generation
-  videoGenInput: VideoGenInput | null;
+  videoGenInput: VideoGenInput & {imageUrl:string} | null;
 };
 
 type Actions = {
@@ -66,7 +66,7 @@ type Actions = {
   setOutfitImageUrls: (urls: string[]) => void;
   updateActorItems: (imageID: string, imageUrl: string, actorName: string, age: number, weight: number, height: number, bio: string, gender: string, genre: string) => void;
   removeActorItems: () => void;
-  setVideoGenInput: (input: VideoGenInput) => void;
+  setVideoGenInput: (input: VideoGenInput & {imageUrl:string}) => void;
   clearVideoGenInput: () => void;
 };
 

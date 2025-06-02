@@ -23,7 +23,7 @@ import { VideoGenInput } from "@/interfaces/generationApi"
 const generateVideoAwaitable = (videoApi: VideoGenInput) => {
     return new Promise((resolve, reject) => {
         try {
-            const data = require('@/services/generation/gen').generateVideoApi(videoApi.documentId, videoApi.videoprompt);
+            const data = require('@/services/generation/gen').generateVideo(videoApi.documentId, videoApi.videoprompt);
             fetch(require('@/services/generation/gen').videoGenEndpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -71,7 +71,9 @@ export default function ChatScreen() {
             try {
                 setIsGenerating(true)
                 // Await the POST request to finish (not just the function call)
-                await generateVideoAwaitable({ ...videoGenInput, videoprompt: prompt.trim() })
+                generateVideo({ documentId: videoGenInput.documentId, videoprompt: prompt.trim() })
+                
+//                await generateVideoAwaitable({ documentId: videoGenInput.documentId, videoprompt: prompt.trim() })
                 clearVideoGenInput()
                 router.push("/(app)/(auth)/(tabs)/(generation)/generations")
             } catch (error) {
@@ -150,7 +152,7 @@ export default function ChatScreen() {
  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
  <Text style={styles.headerTitle}>Selected Items</Text>
  <Pressable onPress={() => router.push('/(app)/(auth)/help/helpPage')} style={{ marginLeft: 8 }}>
- <Ionicons name="help-circle-outline" size={24} color="#000" />
+ <Ionicons name="help-circle-outline" size={30} color="#000" />
  </Pressable>
  </View>
  <Text style={styles.headerSubtitle}>
@@ -165,8 +167,8 @@ export default function ChatScreen() {
                         <View style={[styles.actorContainer, { alignItems: 'center', justifyContent: 'center' }]}>
                             {/* Show the selected generation image to the left of the ID */}
                             <Image
-                                source={{ uri: videoGenInput && (videoGenInput as any).generationImageUrl ? (videoGenInput as any).generationImageUrl : "/placeholder.svg?height=100&width=100" }}
-                                style={[styles.actorImage, { margin: 16 }]}
+                                source={{ uri: videoGenInput.imageUrl }}
+                                style={[styles.actorImage, { margin: 4 , borderRadius:8 }]}
                                 resizeMode="cover"
                             />
                             <View style={styles.actorInfo}>

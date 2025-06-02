@@ -348,7 +348,8 @@ export default function GetGeneration({ id }: { id: string }) {
 
   const handleCreateVideo = () => {
     // Store videoGenInput in the global store
-    setVideoGenInput({ documentId: id, videoprompt: "" });
+    setVideoGenInput({ documentId: id, videoprompt: "" , imageUrl: generationsData?.generationImageUrl!});
+    console.log(id)
     router.push('/(app)/(auth)/(tabs)/(generation)/chat')
     // Optionally, navigate to the chat/generation screen if needed
     // router.push('/(app)/(auth)/(tabs)/(generation)/chat');
