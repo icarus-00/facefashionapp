@@ -145,5 +145,5 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
 });
-
+HelpPageTemplate.displayName = "HelpPageTemplate"
 export default HelpPageTemplate;

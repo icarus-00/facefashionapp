@@ -14,6 +14,7 @@ export default function AuthLayout() {
           options={{ headerShown: false, presentation: "transparentModal" }}
         />
         <Stack.Screen name="generations" options={{ headerShown: false }} />
+        <Stack.Screen name="help" options={{headerShown:false}}/>
       </Stack>
     </GestureHandlerRootView>
   );
