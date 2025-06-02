@@ -147,10 +147,15 @@ export default function ChatScreen() {
             />
 
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Selected Items</Text>
-                <Text style={styles.headerSubtitle}>
-                    {hasVideoGenInput ? "Video input selected" : `${totalItems} items selected`}
-                </Text>
+ <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+ <Text style={styles.headerTitle}>Selected Items</Text>
+ <Pressable onPress={() => router.push('/(app)/(auth)/help/helpPage')} style={{ marginLeft: 8 }}>
+ <Ionicons name="help-circle-outline" size={24} color="#000" />
+ </Pressable>
+ </View>
+ <Text style={styles.headerSubtitle}>
+ {hasVideoGenInput ? "Video input selected" : `${totalItems} items selected`}
+ </Text>
             </View>
             <ScrollView bounces={false} style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
                 {/* VideoGenInput Section */}
