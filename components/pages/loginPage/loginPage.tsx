@@ -34,7 +34,7 @@ import { useState, useEffect, useRef } from "react";
 import { BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from "@gorhom/bottom-sheet";
 import { OtpInput } from "react-native-otp-entry";
 
-const RwLogo = require("@/assets/images/rwlogo.png");
+const RwLogo = require("@/assets/images/sceneWearl.png");
 
 export default function LoginPage({
   setEmail,
@@ -427,11 +427,11 @@ export default function LoginPage({
                 <View className="items-center justify-center">
                   <Image
                     source={RwLogo}
-                    style={{ width: 120, height: 120, tintColor: 'white' }}
+                    style={{ width: 280, height: 280, tintColor: 'white' }}
                     resizeMode="contain"
                     onLoad={() => setLogoLoaded(true)}
                   />
-                  <Animated.Text style={logoTextStyle}>
+                  {/* <Animated.Text style={logoTextStyle}>
                     RenderWear
                   </Animated.Text>
                   <Animated.Text
@@ -441,7 +441,7 @@ export default function LoginPage({
                     ]}
                   >
                     Experience fashion in a whole new dimension
-                  </Animated.Text>
+                  </Animated.Text> */}
                 </View>
               </Animated.View>
             </Animated.View>
@@ -600,7 +600,7 @@ export default function LoginPage({
                         <ButtonText>
                           {otpTimer > 0
                             ? `Login with OTP (${otpTimer}s)`
-                            : "Login with OTP"}
+                            : "SignUp with OTP"}
                         </ButtonText>
                       </View>
                       <View style={{ position: 'absolute', right: 16 }}>

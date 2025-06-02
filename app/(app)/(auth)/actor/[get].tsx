@@ -6,15 +6,17 @@ import {
   Dimensions,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import SafeAreaView from "@/components/atoms/safeview/safeview";
 import { VStack } from "@/components/ui/vstack";
+import { HStack } from "@/components/ui/hstack";
 import databaseService, { ActorWithImage } from "@/services/database/db";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
 import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import useStore from "@/store/lumaGeneration/useStore";
 const { width } = Dimensions.get("window");
@@ -129,6 +131,8 @@ export default function GetActor() {
                   left: 0,
                   right: 0,
                   height: 80,
+                  width: "89%",
+                  marginHorizontal: "5.33%",
                   borderBottomLeftRadius: 16,
                   borderBottomRightRadius: 16,
                   justifyContent: "flex-end",
@@ -202,6 +206,71 @@ export default function GetActor() {
           </ScrollView>
         </View>
         <View style={{ padding: 20, paddingTop: 0 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+            <Button
+              size="lg"
+              variant="outline"
+              style={{ 
+                flex: 1, 
+                marginRight: 8, 
+                borderColor: '#e74c3c',
+                backgroundColor: 'transparent' 
+              }}
+              onPress={() => {
+                Alert.alert(
+                  "Delete Actor",
+                  "Are you sure you want to delete this actor?",
+                  [
+                    {
+                      text: "Cancel",
+                      style: "cancel"
+                    },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: async () => {
+                        try {
+                          await databaseService.deleteActor(actor.$id, actor.fileID);
+                          router.replace("/(app)/(auth)/(tabs)/actor");
+                        } catch (error) {
+                          console.error("Error deleting actor:", error);
+                          Alert.alert("Error", "Failed to delete actor");
+                        }
+                      }
+                    }
+                  ]
+                );
+              }}
+            >
+              <HStack space="sm" alignItems="center">
+                <Feather name="trash-2" size={16} color="#e74c3c" />
+                <ButtonText style={{ color: '#e74c3c' }}>Delete</ButtonText>
+              </HStack>
+            </Button>
+            
+            <Button
+              size="lg"
+              variant="outline"
+              style={{ 
+                flex: 1, 
+                marginLeft: 8,
+                borderColor: '#333',
+                backgroundColor: 'transparent' 
+              }}
+              onPress={() => {
+                router.push({
+                  pathname: "/(app)/(auth)/actor/edit",
+                  params: { id: actor.$id },
+                });
+              }}
+            >
+              <HStack space="sm" alignItems="center">
+                <Feather name="edit-2" size={16} color="#333" />
+                <ButtonText style={{ color: '#333' }}>Edit</ButtonText>
+              </HStack>
+            </Button>
+          </View>
+          
           <Button
             size="full"
             onPress={() => {
@@ -217,8 +286,8 @@ export default function GetActor() {
                 actor.genre
               );
               router.push("/(app)/(auth)/(tabs)/outfit")
-            }
-            }
+            }}
+            style={{ backgroundColor: '#000' }}
           >
             <ButtonText>Dress up</ButtonText>
           </Button>

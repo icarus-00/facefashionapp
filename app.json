@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "renderwear",
+    "name": "sceneWear",
     "slug": "renderwear",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/rwlogo.png",
+    "icon": "assets/images/sceneWearl.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

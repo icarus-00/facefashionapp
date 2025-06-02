@@ -277,12 +277,14 @@ const SelectedItemsModal = ({ visible }: SelectedItemsModalProps) => {
                 typeIcon="shirt-outline"
                 emptyText="No top selected"
               />
+              <View style={{ height: 10 }} />
               <ItemCard
                 item={bottomItem}
                 onRemove={() => handleRemoveItem("bottom")}
                 typeIcon="hardware-chip-outline"
                 emptyText="No bottom selected"
               />
+              <View style={{ height: 10 }} />
               <ItemCard
                 item={accessoryItem}
                 onRemove={() => handleRemoveItem("accessory")}

@@ -177,7 +177,7 @@ const OutfitScreen = () => {
             <Pressable onPress={() => router.back()} style={styles.backButton} testID="back-button">
               <MaterialIcons name="arrow-back" size={24} color="#333" />
             </Pressable>
-            <Text style={styles.headerTitle}>Add item</Text>
+            <Text style={styles.headerTitle}>Create item</Text>
           </View>
 
           <ScrollView
@@ -348,7 +348,7 @@ const OutfitScreen = () => {
               {/* Submit Button */}
               <View style={styles.buttonContainer}>
                 <Button
-                  title="Dress Up"
+                  title="Add Item"
                   buttonStyle={styles.submitButton}
                   titleStyle={styles.buttonText}
                   onPress={handleSubmit}
