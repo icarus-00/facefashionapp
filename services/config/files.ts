@@ -75,6 +75,9 @@ class StorageService {
     );
     return result.$id;
   }
+  async downloadFile(fileId: string): Promise<URL> {
+    return this.storage.getFileDownload(this.bucketId, fileId);
+  }
   async updateFile(
     fileId: string,
     file: {
