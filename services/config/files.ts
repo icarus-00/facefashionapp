@@ -43,6 +43,15 @@ class StorageService {
       
     ).toString();
   }
+  getfilepreview(fileId: string, quality: number = 90): string {
+    return this.storage.getFilePreview(
+      this.bucketId,
+      fileId,
+      undefined,
+      undefined,undefined,quality
+      
+    ).toString();
+  }
 
   listFiles(): Promise<Models.FileList> {
     return this.storage.listFiles(this.bucketId);
