@@ -18,7 +18,7 @@ import {
   BadgeText,
   ThirdPartyBadgeIcon,
 } from "@/components/ui/badge";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { Box } from "@/components/ui/box";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -28,10 +28,46 @@ import { router } from "expo-router";
 import mockDatabaseService from "@/services/database/mockDb";
 import { useUser } from "@/context/authcontext";
 import useStore from '@/store/lumaGeneration/useStore';
+import { SpeedDial } from "@rneui/themed";
 
+import ShareModal from "../components/ShareModal";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const ItemHeight = screenHeight * 0.85; // Reduced height to make room for buttons below
-
+function CustomFab({fabOpen , setFabOpen,setFabClose ,handleDelete, handleShare} : { fabOpen :boolean , setFabOpen:()=>void , setFabClose:()=>void , handleDelete:()=>void , handleShare:()=>void })
+{
+  return (
+    <SpeedDial
+        isOpen={fabOpen}
+        icon={<Feather name="menu" size={24} color="white" />}
+        openIcon={<Feather name="x" size={24} color="white" />}
+        onOpen={() => setFabOpen()}
+        onClose={() => setFabClose()}
+        overlayColor="transparent"
+        buttonStyle={{
+          backgroundColor: "black",
+          shadowColor: "black",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 3,
+          elevation: 5,
+        }}
+        style={{position: "absolute",
+          bottom: 5,
+          right: 5}}
+      >
+        <SpeedDial.Action
+          icon={<Feather name="trash" size={20} color="white" />}
+          buttonStyle={{ backgroundColor: "black" }}
+          onPress={handleDelete}
+        />
+        <SpeedDial.Action
+          icon={<Feather name="share" size={20} color="white" />}
+          buttonStyle={{ backgroundColor: "black" }}
+          onPress={handleShare}
+        />
+      </SpeedDial>
+  )
+}
 // Image Component
 function GenerationImageView({
   item,
@@ -269,58 +305,20 @@ function CreateVideoItem({
 }
 
 // Button Group Component (renamed from TabButtons)
-function ButtonGroup({
-  currentIndex,
-  onImagePress,
-  onVideoPress,
-  videoType,
-  onDescriptionPress,
-  onDeletePress,
-}: {
-  currentIndex: number;
-  onImagePress: () => void;
-  onVideoPress: () => void;
-  videoType: "video" | "create-video";
-  onDescriptionPress: () => void;
-  onDeletePress: () => void;
-}) {
-  return (
-    <View className="bg-secondary-300 rounded-t-3xl shadow-lg py-4 px-4 overflow-hidden">
-      {/* Tab Buttons */}
 
-      {/* Action Buttons */}
-      <View className="flex-row justify-evenly px-2 gap-3">
-        <TouchableOpacity
-          className="flex-1 flex-row items-center py-2 px-4 bg-secondary-200 rounded-full"
-          onPress={onDescriptionPress}
-        >
-          <Ionicons name="document-text-outline" size={20} color="#3b82f6" />
-          <Text className="text-blue-500 font-bold text-xl ml-2">
-            Description
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="flex-row items-center py-2 px-4 bg-red-200 rounded-full"
-          onPress={onDeletePress}
-        >
-          <Ionicons name="trash-sharp" size={20} color="#ef4444" />
-          <Text className="text-red-500 font-bold ml-2">Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
 
 // Main Component
 export default function GetGeneration({ id }: { id: string }) {
   const [generationsData, setGenerationsData] =
     useState<generationsWithImage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isShareModalVisible, setIsShareModalVisible] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const flashListRef = useRef<FlashList<any>>(null);
   const { testMode } = useUser();
+  const [fabOpen, setFabOpen] = useState(false);
+  
   const service = testMode.enabled ? mockDatabaseService : databaseService;
   const { setVideoGenInput } = useStore();
 
@@ -359,6 +357,10 @@ export default function GetGeneration({ id }: { id: string }) {
     console.log("Description pressed for generation ID:", id);
     // You can implement a modal or navigation to show description details
   };
+
+  const handleSharePress = () => {
+    setIsShareModalVisible(true);
+  }
 
   const handleDeletePress = () => {
     Alert.alert(
@@ -515,14 +517,12 @@ export default function GetGeneration({ id }: { id: string }) {
             contentContainerStyle={{ paddingBottom: 20 }}
           />
           {(generationsData?.state == "failed" || "completed") && (
-            <ButtonGroup
-              currentIndex={currentIndex}
-              onImagePress={navigateToImage}
-              onVideoPress={navigateToVideo}
-              videoType={getVideoType()}
-              onDescriptionPress={handleDescriptionPress}
-              onDeletePress={handleDeletePress}
-            />)}
+           <CustomFab fabOpen={fabOpen} setFabOpen={()=>setFabOpen(true)} setFabClose={()=>setFabOpen(false)} handleDelete={handleDeletePress} handleShare={handleSharePress} /> )}
+          <ShareModal 
+            visible={isShareModalVisible} 
+            onClose={() => setIsShareModalVisible(false)} 
+            imageUrl={generationsData?.generationImageUrl!} 
+            videoUrl={generationsData?.videoUrl} />
         </View>
       )}
     </SafeAreaView>
