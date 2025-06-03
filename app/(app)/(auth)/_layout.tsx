@@ -15,6 +15,7 @@ export default function AuthLayout() {
         />
         <Stack.Screen name="generations" options={{ headerShown: false }} />
         <Stack.Screen name="help" options={{headerShown:false}}/>
+        <Stack.Screen name="newUserPage" options={{headerShown:false}}/>
       </Stack>
     </GestureHandlerRootView>
   );

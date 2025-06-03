@@ -14,6 +14,7 @@ import { router } from "expo-router";
 //import { client } from "@/utils/config/supabase";
 //import { EmailOtpType, Session,User as UserInterface } from '@supabase/supabase-js'// Define types for the user and context
 import { makeRedirectUri } from 'expo-auth-session'
+import { grabUserStatus } from "@/services/config/user-optin";
 
 type User = {
   $id: string;
@@ -251,6 +252,27 @@ export default function UserProvider({
         const loggedIn = await account.get();
         initializeUserId(loggedIn?.$id!);
         setUser(loggedIn!);
+        
+        // Only check user meta if user is logged in and not finished sign-in
+        if (loggedIn) {
+          console.log("User is logged in:", loggedIn);
+          
+          try {
+            const userMeta = await grabUserStatus();
+            if (
+              userMeta.documents &&
+              userMeta.documents[0] &&
+              userMeta.documents[0]["finished-sign-in"] !== "done"
+            ) {
+              router.replace("/(app)/(auth)/newUserPage/newUser");
+              return;
+            }
+          } catch (e) {
+            // If error in fetching user meta, treat as not finished
+            router.replace("/(app)/(auth)/newUserPage/newUser");
+            return;
+          }
+        }
       }
     } catch (err) {
       initializeUserId("");
