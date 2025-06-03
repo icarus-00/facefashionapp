@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "sceneWear",
-    "slug": "renderwear",
+    "slug": "SceneWear",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "assets/images/sceneWearl.png",

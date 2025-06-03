@@ -1,4 +1,4 @@
-import { Databases, Client, Models, Functions } from "@icarus00x/react-native-appwrite-expo-newarch";
+import { Databases, Client, Models, Functions, Query } from "@icarus00x/react-native-appwrite-expo-newarch";
 import storageService from "@/services/config/files";
 import outfit from "../../app/(app)/(auth)/(tabs)/outfit";
 import { getPresignedUrls } from "../generation/gen";
@@ -73,11 +73,13 @@ class DatabaseService {
     // Initialization logic if needed
   }
 
-  async listActors(): Promise<ActorWithImage[]> {
+  async listActors({page=0, limit}:{page?:number, limit?:number}={}): Promise<ActorWithImage[]> {
     try {
       const response = await this.database.listDocuments<Actor>(
         this.databaseId,
-        this.collectionId
+        this.collectionId,
+        [Query.limit(limit ? limit : 100) , Query.offset(page)]
+
       );
 
       const actorsWithImages = await Promise.all(
@@ -89,7 +91,7 @@ class DatabaseService {
           $collectionId: actor.$collectionId,
           $databaseId: actor.$databaseId,
           actorName: actor.actorName,
-          imageUrl: await storageService.getfileview(actor.fileID),
+          imageUrl: await storageService.getfilepreview(actor.fileID ,50),
           fileID: actor.fileID,
           age: actor.age,
           height: actor.height,
@@ -284,11 +286,12 @@ class DatabaseService {
     }
   }
 
-  async ListOutfits(): Promise<OutfitWithImage[]> {
+  async ListOutfits({ page = 0, limit }: { page?: number; limit?: number } = {}): Promise<OutfitWithImage[]> {
     try {
       const response = await this.database.listDocuments<Outfit>(
         this.databaseId,
-        this.outfitCollectionId
+        this.outfitCollectionId,
+        [Query.limit(limit ? limit : 100) , Query.offset(page)]
       );
       const outfitsWithImages = await Promise.all(
         response.documents.map(async (outfit) => ({
@@ -299,7 +302,7 @@ class DatabaseService {
           $collectionId: outfit.$collectionId,
           $databaseId: outfit.$databaseId,
           outfitName: outfit.outfitName,
-          imageUrl: await storageService.getfileview(outfit.fileID),
+          imageUrl: await storageService.getfilepreview(outfit.fileID,50),
           fileID: outfit.fileID,
           brand: outfit.brand,
           size: outfit.size,
@@ -433,11 +436,12 @@ class DatabaseService {
     }
   }
 
-  async listGenerations(): Promise<generationsWithImage[]> {
+  async listGenerations({ page = 0, limit }: { page?: number; limit?: number } = {}): Promise<generationsWithImage[]> {
     try {
       const response = await this.database.listDocuments<generations>(
         this.databaseId,
-        this.generationsCollectionId
+        this.generationsCollectionId,
+        [Query.limit( limit?limit: 100) , Query.offset(page) ]
       );
       console.log("fetching");
       console.log(response);
@@ -460,7 +464,7 @@ class DatabaseService {
           videoGeneration: generation.videoGeneration,
           generationImageUrl:
             generation.state === "completed"
-              ? await storageService.getfileview(generation.generatedFileID , 10)
+              ? await storageService.getfilepreview(generation.generatedFileID , 50)
               : "",
           cachedActorImageUrl: "",
           cachedOutfitImageUrls: [],
