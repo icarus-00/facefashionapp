@@ -14,6 +14,7 @@ export default function AppLayout() {
 
 
   useEffect(() => {
+    
     console.log(current);
     console.log(segments);
     const authgroup = segments[1] == "(auth)";

@@ -22,6 +22,22 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 SplashScreen.preventAutoHideAsync();
 
 const AppLayout = () => {
+  const { isLoading, current } = useUser();
+  const [loaded] = useFonts({
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+  });
+
+  useEffect(() => {
+    if (loaded && !isLoading) {
+      // If fonts are loaded and user data is ready, hide the splash screen
+      SplashScreen.hideAsync();
+    }
+  }, [loaded,isLoading]);
+
+  if (!loaded) {
+    return null;
+  }
+
   return (
     <Stack>
       <Stack.Screen name="(app)" options={{ headerShown: false }} />
@@ -31,20 +47,7 @@ const AppLayout = () => {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
+  
   return (
     <UserProvider>
       <ToastProvider>

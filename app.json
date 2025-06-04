@@ -1,10 +1,10 @@
 {
   "expo": {
     "name": "sceneWear",
-    "slug": "renderwear",
+    "slug": "sceneWear",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "assets/images/sceneWearl.png",
+    "icon": "assets/images/adaptive-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,7 +14,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/rwlogo.png",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.icarus.renderwear",
@@ -33,9 +33,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
+          "image": "./assets/images/splash-icon-light.png",
+          "imageWidth": 400,
+          
           "backgroundColor": "#ffffff"
         }
       ],

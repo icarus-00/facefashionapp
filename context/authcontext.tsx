@@ -14,7 +14,7 @@ import { router } from "expo-router";
 //import { client } from "@/utils/config/supabase";
 //import { EmailOtpType, Session,User as UserInterface } from '@supabase/supabase-js'// Define types for the user and context
 import { makeRedirectUri } from 'expo-auth-session'
-import { grabUserStatus } from "@/services/config/user-optin";
+import { grabUserStatus, ensureUserMeta } from "@/services/config/user-optin";
 
 type User = {
   $id: string;
@@ -122,6 +122,7 @@ export default function UserProvider({
       if (otp) {
         const { email, redirectUrl } = creds as OtpCreds;
         const token = await account.createEmailToken(ID.unique(), email);
+        
         return token;
 
         //await client.auth.signInWithOtp({email:email })
@@ -137,7 +138,7 @@ export default function UserProvider({
 
         setUser(userDetails!);
         console.log(user);
-
+        const userMeta = await ensureUserMeta();
         ToastGlue("Welcome back. You are logged in");
       }
     } catch (error) {
@@ -159,6 +160,7 @@ export default function UserProvider({
         setUser(mockUser);
         initializeUserId(mockUser.$id);
         ToastGlue("Test mode: OTP verified");
+        
         return;
       }
 
@@ -171,7 +173,7 @@ export default function UserProvider({
 
       setUser(userDetails!);
       console.log(user);
-
+      const userMeta = await ensureUserMeta();
       ToastGlue("Welcome back. You are logged in");
     }
     catch (e) {
@@ -189,7 +191,7 @@ export default function UserProvider({
         console.log("Test mode active: Bypassing actual logout");
         initializeUserId("");
         setUser(null);
-        router.replace("/(app)");
+        //router.replace("/(app)");
         ToastGlue("Test mode: Logged out");
         return;
       }
@@ -237,7 +239,6 @@ export default function UserProvider({
   async function checkSession(): Promise<void> {
     try {
       setIsLoading(true);
-
       // If test mode is enabled with mock user data, use that instead of checking session
       if (testMode.enabled && testMode.mockUserId) {
         console.log("Test mode active: Using mock session");
@@ -249,34 +250,43 @@ export default function UserProvider({
         initializeUserId(mockUser.$id);
         setUser(mockUser);
       } else {
-        const loggedIn = await account.get();
-        initializeUserId(loggedIn?.$id!);
-        setUser(loggedIn!);
-        
-        // Only check user meta if user is logged in and not finished sign-in
-        if (loggedIn) {
-          console.log("User is logged in:", loggedIn);
-          
+        let loggedIn = null;
+        try {
+          loggedIn = await account.get();
+        } catch (err) {
+          // No session
+        }
+        if (loggedIn && loggedIn.$id) {
+          initializeUserId(loggedIn.$id);
+          setUser(loggedIn);
+          // Ensure user meta exists
+          let userMeta;
           try {
-            const userMeta = await grabUserStatus();
-            if (
-              userMeta.documents &&
-              userMeta.documents[0] &&
-              userMeta.documents[0]["finished-sign-in"] !== "done"
-            ) {
-              router.replace("/(app)/(auth)/newUserPage/newUser");
-              return;
-            }
+            userMeta = await ensureUserMeta();
           } catch (e) {
-            // If error in fetching user meta, treat as not finished
+            // If error, treat as not finished
             router.replace("/(app)/(auth)/newUserPage/newUser");
             return;
           }
+          // Check finished-sign-in
+          if (
+            !userMeta.documents ||
+            !userMeta.documents[0] ||
+            userMeta.documents[0]["finished-sign-in"] !== "done"
+          ) {
+            router.replace("/(app)/(auth)/newUserPage/newUser");
+            return;
+          }
+        } else {
+          // Not logged in
+          initializeUserId("");
+          setUser(null);
+          // If not on a public route, redirect to login
+          // router.asPath is not available, so always redirect to login if not logged in
+          router.replace("/(app)");
+          return;
         }
       }
-    } catch (err) {
-      initializeUserId("");
-      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -289,6 +299,7 @@ export default function UserProvider({
   // Only check session once on component mount
   useEffect(() => {
     checkSession();
+    
   }, []); // Empty dependency array prevents infinite loop
 
   return (
