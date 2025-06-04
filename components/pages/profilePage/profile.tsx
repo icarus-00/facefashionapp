@@ -21,6 +21,8 @@ import { ScrollView } from "react-native-gesture-handler";
 import { useUser } from "@/context/authcontext";
 import databaseService, { ActorWithImage, OutfitWithImage, generationsWithImage } from "@/services/database/db";
 import Modal from "react-native-modal";
+import { grabUserStatus } from "@/services/config/user-optin";
+import storageService from "@/services/config/files";
 
 const { width } = Dimensions.get("window");
 const numColumns = 3;
@@ -44,14 +46,16 @@ const ProfilePage = ({ onEditProfile }: { onEditProfile: () => void }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
-
+  const [avatarImage, setAvatarImage] = useState<string | null>(null);
   // Fetch user profile data
   const fetchUserProfile = useCallback(async () => {
     try {
       const avatar = new Avatars(client as any);
       const userAccount = await account.get();
       const url = avatar.getInitials(userAccount.name).toString();
-
+      const avatarImage = await grabUserStatus();
+      const avatarImageUrl = avatarImage?.documents?.[0]?  await storageService.getfilepreview(avatarImage.documents[0].avatar_file_id) : null;
+      setAvatarImage(avatarImageUrl || url);
       setUserDetails({
         name: userAccount.name,
         email: userAccount.email,
@@ -239,7 +243,7 @@ const ProfilePage = ({ onEditProfile }: { onEditProfile: () => void }) => {
             <Skeleton width={96} height={96} circle />
           ) : (
             <Image
-              source={{ uri: userDetails?.url }}
+              source={{ uri: avatarImage || userDetails?.url }}
               className="w-24 h-24 rounded-full"
               resizeMode="cover"
 

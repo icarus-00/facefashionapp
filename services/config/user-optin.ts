@@ -24,6 +24,7 @@ async function grabUserStatus()
     const userId = await account.get()
     const database = new Databases(client);
     const user_meta = await database.listDocuments("67e8539c000662f5f358", "683dc86d0029087d2d9d" , [Query.equal("userId",userId.$id)]);
+    
     return user_meta;
 }
 async function updateUserStatus(optin: boolean)

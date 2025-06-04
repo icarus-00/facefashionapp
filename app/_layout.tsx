@@ -26,13 +26,32 @@ const AppLayout = () => {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+  const segments = useSegments();
+  const router = useRouter();
+
+  // Helper: determine if in (auth) group
+  const authgroup = segments[1] === "(auth)";
+  const appgroup = segments[0] === "(app)";
+  // Consider user logged in if current exists
+  const isLoggedIn = !!current;
 
   useEffect(() => {
-    if (loaded && !isLoading) {
-      // If fonts are loaded and user data is ready, hide the splash screen
-      SplashScreen.hideAsync();
+    if (!loaded || isLoading) return;
+
+    // Redirect logic
+    if (isLoggedIn && !authgroup) {
+      // If logged in but in auth group, go to main app
+      router.replace("/(app)/(auth)/(tabs)/home");
+      return;
     }
-  }, [loaded,isLoading]);
+    if (!isLoggedIn && authgroup) {
+      // If not logged in and not in auth group, go to login
+      router.replace("/(app)");
+      return;
+    }
+    // Only hide splash if on correct group
+    SplashScreen.hideAsync();
+  }, [loaded, isLoading, isLoggedIn, authgroup]);
 
   if (!loaded) {
     return null;
